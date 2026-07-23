@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DASH = ROOT / "dashboard"
-BUILDS = ["scripts/build_dashboard.py", "scripts/build_ad_funnel.py"]
+BUILDS = ["scripts/build_dashboard.py", "scripts/build_ad_funnel.py", "scripts/build_unified.py"]
 
 USER = os.environ.get("DASH_USER", "charm")
 PASS = os.environ.get("DASH_PASS", "")
@@ -99,6 +99,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not self._authed():
             return
         if path in ("/", "/index.html"):
+            # the unified single-page dashboard is the default view
+            if (DASH / "index.html").exists():
+                return self._send((DASH / "index.html").read_bytes())
             html = INDEX.format(mins=INTERVAL // 60, at=state["at"] or "pending",
                                 status="ok" if state["ok"] else "building")
             return self._send(html.encode())

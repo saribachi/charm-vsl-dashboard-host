@@ -299,6 +299,7 @@ def main():
     template = (ROOT / "scripts/ad_funnel_template.html").read_text()
     out = ROOT / "dashboard/ad_funnel_dashboard.html"
     out.write_text(template.replace("/*__DATA__*/null", json.dumps(data)))
+    (ROOT / "data/_ad.json").write_text(json.dumps(data))  # for the unified page
     print(f"Wrote {out}")
     print(f"  source: {'SAMPLE' if is_sample else 'data/meta/ad_daily.json'} · "
           f"angles: {len(angles)} · Tier2 unlocked: {not missing_crm}")

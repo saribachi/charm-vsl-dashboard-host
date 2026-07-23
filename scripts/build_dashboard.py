@@ -305,11 +305,17 @@ def main():
             "no_form": len(rb2b_no_form),
             "visitors": rb2b_visitors,
         },
+        "real_form_fills": len(real_subs),
+        "real_bookings": len(real_booked),
+        "meetings_held": meetings_held,
+        "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],
+                   "plays": s["plays"], "watched_50": watched_50},
     }
 
     html = build_html(data)
     out = ROOT / "dashboard/vsl_dashboard.html"
     out.write_text(html)
+    (ROOT / "data/_vsl.json").write_text(json.dumps(data))  # for the unified page
     print(f"Wrote {out}")
 
 

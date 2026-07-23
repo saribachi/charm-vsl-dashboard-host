@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charm VSL — Ad to Cash</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#8733ed; --purple-d:#6f1fd0; --magenta:#d6367f; --amber:#c47f00;
+  --ink:#1c1330; --ink2:#5c5470; --ink3:#8d86a0;
+  --surface:#faf9fc; --card:#fff; --line:#ece8f4; --grid:#f4f2f9; --soft:#f3ecfe;
+  --good-bg:#e6f4ec; --good:#0f7a4f; --good-l:#bfe3cf;
+  --bad-bg:#fdeceb; --bad:#c0362c;
+  --amber-bg:#fdf6e7; --amber-ink:#8a6410; --amber-l:#efdcae;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--surface);color:var(--ink);font-size:14px;line-height:1.5;padding:28px 20px 72px}
+.wrap{max-width:940px;margin:0 auto}
+header{margin-bottom:20px}
+h1{font-size:24px;font-weight:800;letter-spacing:-.01em}
+h1 span{color:var(--purple)}
+.sub{color:var(--ink2);font-size:13px;margin-top:3px}
+.ctx{color:var(--ink3);font-size:12.5px;margin-top:8px}
+.ctx b{color:var(--ink2);font-weight:600}
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 30px}
+@media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;position:relative}
+.kpi .v{font-size:26px;font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.kpi.needs .v{color:var(--ink3);font-size:20px}
+.kpi .l{font-size:12px;color:var(--ink2);font-weight:600;margin-top:6px}
+.kpi .s{font-size:11px;color:var(--ink3);margin-top:2px}
+.kpi .dot{position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%}
+.dot.live{background:#22a06b}.dot.needs{background:var(--amber)}
+/* section */
+.section-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin:0 2px 12px}
+/* funnel */
+.funnel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 10px 6px}
+.stage{display:grid;grid-template-columns:186px 1fr;gap:14px;align-items:center;padding:11px 12px;border-radius:12px}
+.stage+.stage{border-top:1px solid var(--grid)}
+.stage.needs{opacity:.92}
+.st-l{display:flex;flex-direction:column;gap:3px}
+.st-name{font-weight:600;font-size:14px}
+.st-src{font-size:11px;color:var(--ink3)}
+.st-src .chip{display:inline-block;background:var(--grid);border-radius:5px;padding:1px 6px;color:var(--ink2);font-weight:600}
+.st-body{display:flex;align-items:center;gap:14px}
+.st-track{flex:1;height:34px;background:var(--grid);border-radius:8px;position:relative;overflow:hidden;min-width:80px}
+.st-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--purple-d));border-radius:8px;display:flex;align-items:center;min-width:3px;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.st-num{font-size:19px;font-weight:800;color:#fff;padding:0 12px;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.st-num.out{position:absolute;left:12px;color:var(--ink);text-shadow:none}
+.st-right{width:150px;text-align:right;flex:none}
+.st-conv{font-size:13px;font-weight:600;color:var(--ink2)}
+.st-conv .drop{color:var(--magenta)}
+.st-cost{font-size:11px;color:var(--ink3);margin-top:1px}
+.st-note{font-size:11px;color:var(--ink3);margin-top:1px}
+.needs-tag{background:var(--amber-bg);border:1px solid var(--amber-l);color:var(--amber-ink);font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;display:inline-block}
+.needs-track{flex:1;height:34px;border:1.5px dashed var(--amber-l);border-radius:8px;background:repeating-linear-gradient(45deg,#fdf9ef,#fdf9ef 8px,#fbf3df 8px,#fbf3df 16px);display:flex;align-items:center;padding-left:12px;color:var(--amber-ink);font-size:12px;font-weight:600}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--ink3);margin:12px 4px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.banner{background:var(--amber-bg);border:1px solid var(--amber-l);color:var(--amber-ink);border-radius:10px;padding:10px 14px;font-size:12.5px;margin:16px 0}
+/* details */
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:14px;overflow:hidden}
+summary{cursor:pointer;padding:15px 18px;font-weight:600;font-size:14px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary .cnt{font-size:12px;color:var(--ink3);font-weight:500}
+summary:hover{background:var(--grid)}
+.det-body{padding:0 18px 18px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--ink3);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:7px 9px;border-bottom:1px solid var(--line)}
+td{padding:8px 9px;border-bottom:1px solid var(--grid)}
+tr:last-child td{border-bottom:none}
+.tag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px}
+.tag.live{background:var(--good-bg);color:var(--good)}
+.tag.needs{background:var(--bad-bg);color:var(--bad)}
+.tag.proxy,.tag.available{background:var(--amber-bg);color:var(--amber-ink)}
+.tag.test{background:var(--grid);color:var(--ink3)}
+.tag.real{background:var(--soft);color:var(--purple)}
+.mini{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.mini .b{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.mini .bv{font-size:18px;font-weight:700}.mini .bl{font-size:11px;color:var(--ink3);margin-top:2px}
+.mini .bv.insuf{font-size:12px;color:var(--amber-ink);font-family:ui-monospace,Menlo,monospace}
+.chart{position:relative}
+.empty{color:var(--ink3);font-size:13px;padding:10px 0}
+.tip{position:absolute;pointer-events:none;background:#2a2140;color:#fff;font-size:12px;padding:6px 9px;border-radius:7px;opacity:0;transition:opacity .1s;white-space:nowrap;z-index:9}
+footer{color:var(--ink3);font-size:12px;margin-top:22px;text-align:center;line-height:1.7}
+a.plain{color:var(--purple);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Charm <span>VSL</span> — Ad to Cash</h1>
+    <div class="sub">One funnel, top to bottom: every ad dollar followed down to a booked call and cash.</div>
+    <div class="ctx" id="ctx"></div>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="section-h">The funnel — where people drop off</div>
+  <div class="funnel" id="funnel"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:linear-gradient(90deg,var(--purple),var(--purple-d))"></i> live stage (bar = share of link clicks)</span>
+    <span><i class="sw" style="background:var(--amber-bg);border:1px solid var(--amber-l)"></i> NEEDS a source</span>
+    <span><i class="sw" style="background:var(--magenta)"></i> biggest drop</span>
+  </div>
+  <div class="banner" id="phase-note"></div>
+
+  <div class="section-h" style="margin-top:26px">Drill down</div>
+  <div id="details"></div>
+
+  <footer id="footer"></footer>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = id => document.getElementById(id);
+const tip = $('tip');
+document.title = `Charm VSL — Ad to Cash (${DATA.generated_at||''})`;
+
+// context line
+(function(){
+  const c = DATA.context;
+  $('ctx').innerHTML = `<b>${(c.impressions||0).toLocaleString()}</b> impressions · <b>${(c.reach||0).toLocaleString()}</b> reach · <b>${c.cpm||'—'}</b> CPM · <b>${c.ctr||'—'}</b> CTR &nbsp;·&nbsp; data as of ${DATA.generated_at||'—'}`;
+})();
+
+// KPI strip
+$('kpis').innerHTML = DATA.kpis.map(k =>
+  `<div class="kpi ${k.status}"><div class="dot ${k.status}"></div>
+   <div class="v">${k.value||'—'}</div><div class="l">${k.label}</div><div class="s">${k.sub||''}</div></div>`).join('');
+
+// FUNNEL
+(function(){
+  // biggest drop among stages that actually have volume (ignore the test-phase 0s)
+  let biggestDrop = {i:-1, d:0};
+  DATA.funnel.forEach((s,i)=>{
+    const prev = DATA.funnel[i-1];
+    if(s.conv && s.raw>0 && prev && prev.raw>0){ const c=parseFloat(s.conv); const d = 100 - c;
+      if(c<=100 && d > biggestDrop.d){ biggestDrop = {i, d}; } }
+  });
+  $('funnel').innerHTML = DATA.funnel.map((s,i)=>{
+    const srcChip = `<span class="chip">${s.source}</span>`;
+    let body;
+    if(s.status === 'needs'){
+      body = `<div class="st-body"><div class="needs-track">NEEDS: ${s.source} data</div>
+              <div class="st-right"></div></div>`;
+    } else {
+      const w = Math.max(s.bar*100, s.raw>0?4:0);
+      const inside = w > 22;
+      const numHtml = s.raw!=null ? `<span class="st-num ${inside?'':'out'}">${s.value}</span>` : '';
+      const isDrop = i === biggestDrop.i;
+      let conv = '';
+      if(s.conv){
+        const c = parseFloat(s.conv);
+        if(c > 100) conv = `<div class="st-conv" style="color:var(--ink3);font-weight:500">more than ad clicks<div class="st-cost">incl. organic / other traffic</div></div>`;
+        else if(isDrop) conv = `<div class="st-conv"><span class="drop">▼ ${s.conv} — biggest drop</span></div>`;
+        else conv = `<div class="st-conv">${s.conv} <span style="color:var(--ink3);font-weight:400">from prev</span></div>`;
+      }
+      body = `<div class="st-body">
+        <div class="st-track">${inside?'':numHtml}<div class="st-fill" style="width:${w}%">${inside?numHtml:''}</div></div>
+        <div class="st-right">${conv}${s.cost?`<div class="st-cost">${s.cost}</div>`:''}${s.note?`<div class="st-note">${s.note}</div>`:''}</div>
+      </div>`;
+    }
+    return `<div class="stage ${s.status}"><div class="st-l"><span class="st-name">${s.label}</span><span class="st-src">${srcChip}</span></div>${body}</div>`;
+  }).join('');
+})();
+
+$('phase-note').innerHTML = `<b>Early / test phase.</b> Real (non-test) form fills and bookings are still near zero, so the bottom of the funnel and the lead-cost KPIs read as pending — they fill in automatically as real traffic converts. Meta's own Lead event isn't firing yet, so form fills come from GHL.`;
+
+// ---------- DRILL DOWN ----------
+const D = DATA.detail;
+const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+let html = '';
+
+// Video engagement
+html += `<details open><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
+// Follow-up
+const fu = D.followup||{}, S = fu.summary||{};
+html += `<details><summary>Follow-up &amp; speed-to-lead <span class="cnt">${S.real_leads||0} real leads · ${S.never_contacted||0} never contacted</span></summary><div class="det-body" id="fu"></div></details>`;
+// RB2B
+html += `<details><summary>Identified visitors (RB2B) <span class="cnt">${D.rb2b&&D.rb2b.connected?(D.rb2b.count+' people · '+D.rb2b.no_form+' no form'):'feed not connected'}</span></summary><div class="det-body" id="rb2b"></div></details>`;
+// Ad angles
+html += `<details><summary>Ad angles <span class="cnt">${(D.angles||[]).length} angle(s)</span></summary><div class="det-body" id="angles"></div></details>`;
+// Coverage
+html += `<details><summary>Data source coverage <span class="cnt">what's live vs pending</span></summary><div class="det-body" id="coverage"></div></details>`;
+$('details').innerHTML = html;
+
+// engagement curve
+(function(){
+  const curve = D.engagement_curve||[]; const host = $('engage');
+  if(!curve.length){ host.innerHTML='<div class="empty">No engagement data yet.</div>'; return; }
+  const W=880,H=210,P={t:10,r:12,b:24,l:34}, dur=D.video?D.video.duration:0;
+  const x=i=>P.l+i*(W-P.l-P.r)/(curve.length-1), y=v=>H-P.b-v*(H-P.t-P.b)/100;
+  let g='';
+  [0,25,50,75,100].forEach(v=>{g+=`<line x1="${P.l}" y1="${y(v)}" x2="${W-P.r}" y2="${y(v)}" stroke="#f1eef8"/><text x="${P.l-6}" y="${y(v)+4}" font-size="10" fill="#8d86a0" text-anchor="end">${v}%</text>`;});
+  for(let m=0;m<=dur;m+=120) g+=`<text x="${x(Math.round(m/dur*(curve.length-1)))}" y="${H-8}" font-size="10" fill="#8d86a0" text-anchor="middle">${mmss(m)}</text>`;
+  const pts=curve.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  g+=`<polygon points="${P.l},${y(0)} ${pts} ${W-P.r},${y(0)}" fill="#8733ed" opacity=".1"/><polyline points="${pts}" fill="none" stroke="#8733ed" stroke-width="2"/>`;
+  g+=`<line id="ec" x1="0" y1="${P.t}" x2="0" y2="${H-P.b}" stroke="#8d86a0" stroke-dasharray="3 3" opacity="0"/>`;
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%">${g}</svg>`;
+  const svg=host.querySelector('svg'), cross=svg.querySelector('#ec');
+  svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const mx=(e.clientX-r.left)*W/r.width;const i=Math.max(0,Math.min(curve.length-1,Math.round((mx-P.l)/(W-P.l-P.r)*(curve.length-1))));cross.setAttribute('x1',x(i));cross.setAttribute('x2',x(i));cross.setAttribute('opacity',1);tip.style.opacity=1;tip.innerHTML=`<b>${mmss(i/(curve.length-1)*dur)}</b> — ${curve[i]}% still watching`;tip.style.left=(e.pageX+12)+'px';tip.style.top=(e.pageY-8)+'px';});
+  svg.addEventListener('mouseleave',()=>{cross.setAttribute('opacity',0);tip.style.opacity=0;});
+})();
+
+// follow-up
+(function(){
+  const fu=D.followup||{}, S=fu.summary||{}, leads=fu.leads||[];
+  const speed=m=>m==null?'—':m<60?`${m} min`:m<1440?`${(m/60).toFixed(1)} hr`:`${(m/1440).toFixed(1)} d`;
+  const mini=[['Real leads',S.real_leads||0,false],['Never followed up',S.never_contacted||0,false],
+    ['Median speed-to-lead',S.median_speed_min==null?'awaiting leads':speed(S.median_speed_min),S.median_speed_min==null],
+    ['Contacted ≤5 min',S.real_leads?`${S.within_5min||0}/${S.contacted||0}`:'—',false]];
+  let h='<div class="mini">'+mini.map(m=>`<div class="b"><div class="bv ${m[2]?'insuf':''}">${m[1]}</div><div class="bl">${m[0]}</div></div>`).join('')+'</div>';
+  h+= leads.length?`<table><tr><th>Lead</th><th>Form filled</th><th>First touch</th><th>Speed</th><th>Touches</th><th></th></tr>`+
+    leads.map(l=>`<tr><td>${l.name||l.email||''}</td><td>${(l.form_at||'').slice(0,16).replace('T',' ')}</td><td>${l.first_touch_at?l.first_touch_at.slice(0,16).replace('T',' '):'<span style="color:var(--amber-ink)">no follow-up</span>'}</td><td>${speed(l.speed_min)}</td><td>${l.touches}</td><td><span class="tag ${l.test?'test':'real'}">${l.test?'test':'lead'}</span></td></tr>`).join('')+'</table>':'<div class="empty">No submissions yet.</div>';
+  $('fu').innerHTML=h;
+})();
+
+// rb2b
+(function(){
+  const r=D.rb2b||{};
+  if(!r.connected){ $('rb2b').innerHTML='<div class="empty">RB2B receiver connected; visitors appear once the Clay column fires.</div>'; return; }
+  if(!r.count){ $('rb2b').innerHTML='<div class="empty">No identified visitors yet.</div>'; return; }
+  $('rb2b').innerHTML=`<table><tr><th>Name</th><th>Title</th><th>Company</th><th>Visits</th><th>Form?</th></tr>`+
+    r.visitors.map(v=>`<tr><td>${v.linkedin_url?`<a class="plain" href="${v.linkedin_url}" target="_blank">${v.name||'(unknown)'}</a>`:(v.name||'(unknown)')}</td><td>${v.title||''}</td><td>${v.company||''}</td><td>${v.visits||1}</td><td><span class="tag ${v.submitted?'real':'test'}">${v.submitted?'submitted':'no form'}</span></td></tr>`).join('')+'</table>';
+})();
+
+// angles
+(function(){
+  const A=D.angles||[];
+  if(!A.length){ $('angles').innerHTML='<div class="empty">No ad data.</div>'; return; }
+  const g=D.ghl_reconciled||{};
+  let note = g.available ? `<div class="st-note" style="margin-bottom:10px">Cost per form fill (GHL actual): <b>${g.cost_per_form_fill.status==='ok'?('$'+g.cost_per_form_fill.value):g.cost_per_form_fill.text}</b> — spend ÷ real GHL form fills, since Meta's Lead event isn't firing.</div>`:'';
+  $('angles').innerHTML=note+`<table><tr><th>Angle</th><th>Spend</th><th>Impr.</th><th>Clicks</th><th>Form fills</th><th>CPC</th></tr>`+
+    A.map(a=>{const m=Object.fromEntries((a.metrics||[]).map(x=>[x.key,x]));const cpc=m.cost_per_click;return `<tr><td><b>${a.label}</b><div class="st-src">${(a.ad_sets||[]).filter(Boolean).join(', ')}</div></td><td>$${(a.spend||0).toLocaleString(undefined,{maximumFractionDigits:0})}</td><td>${(a.impressions||0).toLocaleString()}</td><td>${(a.link_clicks||0).toLocaleString()}</td><td>${a.form_fills||0}</td><td>${cpc&&cpc.status==='ok'?'$'+cpc.value.toFixed(2):'—'}</td></tr>`;}).join('')+'</table>';
+})();
+
+// coverage
+(function(){
+  const c=D.coverage||[]; const L={live:'LIVE',proxy:'PROXY',available:'AVAILABLE',needs:'NEEDS'};
+  $('coverage').innerHTML=`<table>`+c.map(x=>`<tr><td><b>${x.stage}</b></td><td><span class="tag ${x.status}">${L[x.status]||x.status}</span></td><td class="st-src">${x.source}</td><td style="color:var(--ink3);font-size:12px">${x.detail}</td></tr>`).join('')+'</table>';
+})();
+
+$('footer').innerHTML = `Full detail: <a class="plain" href="/vsl">VSL funnel</a> · <a class="plain" href="/ads">Ad funnel</a> &nbsp;·&nbsp; auto-refreshes hourly`;
+</script>
+</body>
+</html>

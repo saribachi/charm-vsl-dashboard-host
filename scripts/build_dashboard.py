@@ -128,6 +128,15 @@ def main():
     real_booked = [e for e in booked if not e["_test"]]
     dayai_gtm = [c for c in dayai["contacts"] if c["form"] == "GTM Services"]
 
+    # ground-truth GHL counts for the ad funnel to reconcile against (Meta's Lead
+    # event isn't firing, so GHL form fills are the real conversion source)
+    (ROOT / "data/ghl/summary.json").write_text(json.dumps({
+        "generated_at": now.strftime("%Y-%m-%d %H:%M UTC"),
+        "real_form_fills": len(real_subs),
+        "form_fills_incl_test": len(sub_rows),
+        "real_bookings": len(real_booked),
+    }, indent=1))
+
     # ---- RB2B identified visitors (standalone receiver, optional) ----
     rb2b_visitors = []
     rb2b_ok = False

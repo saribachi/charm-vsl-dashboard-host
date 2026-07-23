@@ -246,6 +246,27 @@ def main():
 
     blended = build_group(rows)
 
+    # ---- GHL-reconciled cost per form fill ----
+    # Meta's Lead event isn't firing (pixel logs PageView only), so the export's
+    # form_fills are empty. GHL holds the real submissions. With a single ad set
+    # driving all VSL traffic, blended spend / GHL form fills is a true CPFF.
+    ghl_recon = {"available": False}
+    summary_path = ROOT / "data/ghl/summary.json"
+    if summary_path.exists():
+        summ = json.loads(summary_path.read_text())
+        spend = blended["agg"].get("spend", 0)
+        real_ff = summ.get("real_form_fills", 0)
+        val, ok = safe_div(spend, real_ff)
+        ghl_recon = {
+            "available": True,
+            "spend": spend,
+            "real_form_fills": real_ff,
+            "form_fills_incl_test": summ.get("form_fills_incl_test", 0),
+            "generated_at": summ.get("generated_at"),
+            "cost_per_form_fill": ({"status": "ok", "value": round(val, 2)} if ok
+                                   else {"status": "insufficient", "text": "awaiting real (non-test) form fills"}),
+        }
+
     # data completeness: which fields are missing to unlock Tier 2
     _, present_all = aggregate(rows)
     missing_meta = [f for f in META_FIELDS if not present_all.get(f)]
@@ -272,6 +293,7 @@ def main():
         "angles": angles,
         "blended": {"metrics": blended["metrics"], "agg": blended["agg"],
                     "annotation": blended["annotation"]},
+        "ghl_reconciled": ghl_recon,
     }
 
     template = (ROOT / "scripts/ad_funnel_template.html").read_text()

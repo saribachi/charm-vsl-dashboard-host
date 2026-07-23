@@ -136,6 +136,21 @@ if(DATA.is_sample){
 
 $('reality').innerHTML = `<b>Field-name reality (verified vs Meta Ads API):</b> your <code>spend</code> → <code>amount_spent</code> · <code>link_clicks</code> → <code>actions:link_click</code> · <code>form_fills</code> → <code>lead / onsite_conversion_lead_grouped</code>. The loader accepts both the model names and Meta's native names.`;
 
+// ---- GHL-reconciled cost per form fill (Meta Lead event not firing) ----
+(function(){
+  const g = DATA.ghl_reconciled;
+  if(!g || !g.available) return;
+  const c = g.cost_per_form_fill;
+  const val = c.status === 'ok' ? `$${c.value.toLocaleString()}` : `<span style="color:var(--amber-ink);font-family:ui-monospace">${c.text}</span>`;
+  const el = document.createElement('div');
+  el.className = 'reality';
+  el.style.cssText = 'background:#f3ecfe;border:1px solid #d9c9f7;margin-top:-4px';
+  el.innerHTML = `<b>Cost per form fill (GHL actual): ${val}</b> &mdash; $${(g.spend||0).toLocaleString()} spend ÷ ${g.real_form_fills} real GHL form fill(s). `
+    + `Blended across all ad sets. Uses GHL submissions because Meta's Lead event is not firing (pixel logs PageView only), so the export's form_fills are empty. `
+    + `${g.form_fills_incl_test - g.real_form_fills} test submission(s) excluded.`;
+  $('reality').after(el);
+})();
+
 // ---- blended metrics table (tiered) ----
 (function(){
   const specs = DATA.metric_specs;

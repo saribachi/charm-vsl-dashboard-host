@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HireCharm Ad Funnel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#8733ed; --magenta:#d6367f; --amber:#c47f00;
+  --ink:#221833; --ink2:#5c5470; --ink3:#8d86a0;
+  --surface:#fcfcfb; --card:#fff; --line:#ece8f4; --grid:#f4f2f9;
+  --purple-soft:#f3ecfe;
+  --good-bg:#e6f4ec; --good-ink:#0f7a4f; --good-line:#bfe3cf;
+  --bad-bg:#fdeceb; --bad-ink:#c0362c; --bad-line:#f3c9c5;
+  --amber-bg:#fdf6e7; --amber-ink:#8a6410; --amber-line:#efdcae;
+  --gray-bg:#f2f0f6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--surface);color:var(--ink);font-size:14px;line-height:1.5;padding:32px 24px 64px}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:22px;font-weight:700}
+h1 span{color:var(--purple)}
+.sub{color:var(--ink2);font-size:13px;margin-top:2px}
+.banner{border-radius:10px;padding:12px 16px;font-size:13px;margin:16px 0}
+.banner.sample{background:#efe9fb;border:1px solid #d9c9f7;color:#5b2ea8}
+.banner.needs{background:var(--amber-bg);border:1px solid var(--amber-line);color:var(--amber-ink)}
+.banner.needs b{color:var(--amber-ink)}
+.banner .chips{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:#fff;border:1px solid var(--amber-line);color:var(--amber-ink);font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;font-family:ui-monospace,Menlo,monospace}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:22px}
+.card h2{font-size:15px;font-weight:600}
+.card .hint{font-size:12px;color:var(--ink3);margin-bottom:14px}
+.reality{font-size:12px;color:var(--ink2);background:var(--grid);border-radius:8px;padding:10px 12px;margin-bottom:14px}
+.reality code{font-family:ui-monospace,Menlo,monospace;color:var(--magenta)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--ink3);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--grid);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.metric-row td:first-child{font-weight:500}
+.tier-head td{background:var(--grid);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);font-weight:600;padding:6px 10px}
+.val{font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:6px;font-variant-numeric:tabular-nums}
+.pill.good{background:var(--good-bg);color:var(--good-ink);border:1px solid var(--good-line)}
+.pill.bad{background:var(--bad-bg);color:var(--bad-ink);border:1px solid var(--bad-line)}
+.pill.neutral{background:var(--gray-bg);color:var(--ink2)}
+.needs{color:var(--amber-ink);background:var(--amber-bg);border:1px solid var(--amber-line);font-size:12px;font-weight:600;padding:2px 9px;border-radius:6px;font-family:ui-monospace,Menlo,monospace;display:inline-block}
+.insuff{color:var(--ink3);background:var(--gray-bg);font-size:12px;font-weight:600;padding:2px 9px;border-radius:6px;display:inline-block}
+.target{font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.02em;white-space:nowrap}
+.tag.insufficient{background:var(--gray-bg);color:var(--ink2)}
+.tag.winner{background:var(--good-bg);color:var(--good-ink);border:1px solid var(--good-line)}
+.tag.kill{background:var(--bad-bg);color:var(--bad-ink);border:1px solid var(--bad-line)}
+.tag.hold{background:var(--amber-bg);color:var(--amber-ink);border:1px solid var(--amber-line)}
+.angle-name{font-weight:600}
+.angle-sets{font-size:11px;color:var(--ink3)}
+.blended td{background:#faf8fe;font-weight:600}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink3);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+.scroll{overflow-x:auto}
+footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>HireCharm <span>Ad Funnel</span></h1>
+  <div class="sub">Angle → click → application → booking → qualified → close → cash. Available metrics compute live; blocked metrics show what they need.</div>
+
+  <div id="sample-banner"></div>
+  <div id="completeness"></div>
+
+  <div class="card">
+    <h2>Blended funnel metrics</h2>
+    <div class="hint">All ad sets combined · Tier 1 from Meta, Tier 2 from CRM/calendar</div>
+    <div class="reality" id="reality"></div>
+    <div class="scroll"><table id="blended-table"></table></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--good-bg);border:1px solid var(--good-line)"></i> meets/beats benchmark</span>
+      <span><i class="sw" style="background:var(--bad-bg);border:1px solid var(--bad-line)"></i> misses benchmark</span>
+      <span><i class="sw" style="background:var(--amber-bg);border:1px solid var(--amber-line)"></i> NEEDS a source</span>
+      <span><i class="sw" style="background:var(--gray-bg)"></i> no benchmark / insufficient</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Per-angle breakdown</h2>
+    <div class="hint">Sorted by cost per form fill (ascending) — best available winner proxy until bookings flow</div>
+    <div class="scroll"><table id="angle-table"></table></div>
+  </div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = id => document.getElementById(id);
+const money = v => '$' + (v >= 1000 ? v.toLocaleString(undefined,{maximumFractionDigits:0}) : v.toFixed(2).replace(/\.00$/,''));
+const num = v => v.toLocaleString(undefined,{maximumFractionDigits:0});
+
+function fmt(m){
+  if(m.unit === '$') return money(m.value);
+  if(m.unit === '%') return (m.value*100).toFixed(2).replace(/\.00$/,'') + '%';
+  if(m.unit === 'x') return m.value.toFixed(2) + 'x';
+  if(m.unit === 'ratio') return m.value.toFixed(2);
+  return num(m.value);
+}
+function fmtTarget(m){
+  if(m.target == null) return '';
+  const t = m.unit==='x' ? m.target.toFixed(1)+'x' : (m.unit==='$'? '$'+num(m.target) : m.target);
+  return `target ${m.better==='low'?'≤':'≥'} ${t}`;
+}
+// render a single metric cell
+function cell(m){
+  if(m.status === 'needs') return `<span class="needs" title="${m.note||''}">${m.text}</span>`;
+  if(m.status === 'insufficient') return `<span class="insuff">${m.text}</span>`;
+  const cls = m.meets === true ? 'good' : m.meets === false ? 'bad' : 'neutral';
+  const tgt = m.target != null ? `<div class="target">${fmtTarget(m)}</div>` : '';
+  return `<span class="pill ${cls}">${fmt(m)}</span>${tgt}`;
+}
+
+// ---- sample / completeness banners ----
+if(DATA.is_sample){
+  $('sample-banner').innerHTML = `<div class="banner sample"><b>SAMPLE DATA — not live.</b> No <code style="font-family:ui-monospace">data/meta/ad_daily.json</code> found and the Meta Ads MCP is gated (rollout) in this environment, so Tier 1 is shown against a labeled sample. Drop a real <code style="font-family:ui-monospace">ad_daily.json</code> in <code style="font-family:ui-monospace">data/meta/</code> to go live.</div>`;
+}
+(function(){
+  const c = DATA.completeness;
+  let inner = '';
+  if(c.missing_meta.length){
+    inner += `<div><b>Tier 1 partially blocked.</b> Missing Meta fields: </div><div class="chips">${c.missing_meta.map(f=>`<span class="chip">${f}</span>`).join('')}</div>`;
+  }
+  inner += `<div style="margin-top:${c.missing_meta.length?'10px':'0'}"><b>To unlock Tier 2</b>, wire these ${c.missing_crm.length} field(s) from CRM/calendar:</div>`;
+  inner += `<div class="chips">${c.missing_crm.length ? c.missing_crm.map(f=>`<span class="chip">${f}</span>`).join('') : '<span class="chip">all present ✓</span>'}</div>`;
+  $('completeness').innerHTML = `<div class="banner needs">${inner}</div>`;
+})();
+
+$('reality').innerHTML = `<b>Field-name reality (verified vs Meta Ads API):</b> your <code>spend</code> → <code>amount_spent</code> · <code>link_clicks</code> → <code>actions:link_click</code> · <code>form_fills</code> → <code>lead / onsite_conversion_lead_grouped</code>. The loader accepts both the model names and Meta's native names.`;
+
+// ---- blended metrics table (tiered) ----
+(function(){
+  const specs = DATA.metric_specs;
+  const byKey = Object.fromEntries(DATA.blended.metrics.map(m=>[m.key,m]));
+  let rows = `<tr><th>Metric</th><th>Blended</th><th>Benchmark</th><th>Note</th></tr>`;
+  const tiers = [[1,'Tier 1 — Meta (live)'],[2,'Tier 2 — CRM / calendar']];
+  for(const [t,label] of tiers){
+    rows += `<tr class="tier-head"><td colspan="4">${label}</td></tr>`;
+    for(const s of specs.filter(x=>x.tier===t)){
+      const m = byKey[s.key];
+      const bench = m.target!=null ? (s.unit==='x'?m.target.toFixed(1)+'x':(s.unit==='$'?'$'+num(m.target):m.target)) + (m.better==='low'?' max':' min') : '<span style="color:var(--ink3)">—</span>';
+      rows += `<tr class="metric-row"><td>${s.label}</td><td>${cell(m)}</td><td class="target">${bench}</td><td style="color:var(--ink3);font-size:11px">${s.note||''}</td></tr>`;
+    }
+  }
+  $('blended-table').innerHTML = rows;
+})();
+
+// ---- per-angle table ----
+(function(){
+  const A = DATA.angles;
+  const key = k => A.length ? null : null;
+  const show = ['cpm','ctr','cost_per_click','application_rate','cost_per_form_fill','cost_per_meeting','cost_per_qual_booking','roas'];
+  const heads = {cpm:'CPM',ctr:'CTR',cost_per_click:'CPC',application_rate:'App rate',cost_per_form_fill:'Cost/form fill',cost_per_meeting:'Cost/booking',cost_per_qual_booking:'Cost/qual',roas:'ROAS'};
+  let head = `<tr><th>Angle</th><th>Spend</th><th>Impr.</th><th>Link clicks</th><th>Form fills</th>` +
+    show.map(k=>`<th>${heads[k]}</th>`).join('') + `<th>Status</th></tr>`;
+  const rowFor = (a, blended) => {
+    const byKey = Object.fromEntries((a.metrics||DATA.blended.metrics).map(m=>[m.key,m]));
+    const ann = a.annotation || DATA.blended.annotation;
+    const name = blended ? `<span class="angle-name">Blended (all)</span>` :
+      `<span class="angle-name">${a.label}</span><div class="angle-sets">${(a.ad_sets||[]).filter(Boolean).join(', ')}</div>`;
+    return `<tr class="${blended?'blended':''}">
+      <td>${name}</td>
+      <td class="val">${money(a.spend||DATA.blended.agg.spend)}</td>
+      <td class="val">${num(a.impressions!=null?a.impressions:DATA.blended.agg.impressions)}</td>
+      <td class="val">${num(a.link_clicks!=null?a.link_clicks:DATA.blended.agg.link_clicks)}</td>
+      <td class="val">${num(a.form_fills!=null?a.form_fills:DATA.blended.agg.form_fills)}</td>
+      ${show.map(k=>`<td>${cell(byKey[k])}</td>`).join('')}
+      <td><span class="tag ${ann.kind}" title="${ann.detail}">${ann.label}</span></td>
+    </tr>`;
+  };
+  let rows = head;
+  for(const a of A) rows += rowFor(a,false);
+  rows += rowFor({spend:DATA.blended.agg.spend,impressions:DATA.blended.agg.impressions,link_clicks:DATA.blended.agg.link_clicks,form_fills:DATA.blended.agg.form_fills,metrics:DATA.blended.metrics,annotation:DATA.blended.annotation}, true);
+  $('angle-table').innerHTML = rows;
+})();
+
+$('footer').innerHTML = `<b>Model:</b> Table A (ad_daily, per ad_set/day) → Table B (funnel_metrics, computed). <b>Rebuild:</b> <code>python3 scripts/build_ad_funnel.py</code>. Tier 2 stays in NEEDS until meetings_booked/showed/qualified, deals_closed and cash_collected flow from the CRM/calendar join.`;
+</script>
+</body>
+</html>

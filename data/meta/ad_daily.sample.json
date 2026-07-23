@@ -1,0 +1,13 @@
+{
+  "_note": "SAMPLE DATA — not live. Used only when data/meta/ad_daily.json is absent. Tier-1 (Meta) fields are populated with plausible numbers; Tier-2 (CRM) fields are intentionally omitted so the NEEDS states render. Replace by dropping a real ad_daily.json here (same shape; Meta native field names like amount_spent / actions:link_click / lead are also accepted).",
+  "rows": [
+    {"date": "2026-07-18", "ad_set_id": "as_burned", "ad_set_name": "Burned Before - Video A", "spend": 300, "impressions": 30100, "reach": 22400, "link_clicks": 452, "form_fills": 12},
+    {"date": "2026-07-19", "ad_set_id": "as_burned", "ad_set_name": "Burned Before - Video A", "spend": 305, "impressions": 29800, "reach": 21900, "link_clicks": 441, "form_fills": 13},
+    {"date": "2026-07-18", "ad_set_id": "as_sell", "ad_set_name": "Sell the Targeting - Static B", "spend": 320, "impressions": 28200, "reach": 21000, "link_clicks": 402, "form_fills": 8},
+    {"date": "2026-07-19", "ad_set_id": "as_sell", "ad_set_name": "Sell the Targeting - Static B", "spend": 318, "impressions": 27600, "reach": 20500, "link_clicks": 388, "form_fills": 8},
+    {"date": "2026-07-18", "ad_set_id": "as_infra", "ad_set_name": "Broken Infra - Video C", "spend": 280, "impressions": 26100, "reach": 20100, "link_clicks": 300, "form_fills": 5},
+    {"date": "2026-07-19", "ad_set_id": "as_infra", "ad_set_name": "Broken Infra - Video C", "spend": 285, "impressions": 25700, "reach": 19800, "link_clicks": 291, "form_fills": 5},
+    {"date": "2026-07-18", "ad_set_id": "as_refs", "ad_set_name": "Referrals & Luck - Static D", "spend": 250, "impressions": 20050, "reach": 16100, "link_clicks": 505, "form_fills": 20},
+    {"date": "2026-07-19", "ad_set_id": "as_refs", "ad_set_name": "Referrals & Luck - Static D", "spend": 248, "impressions": 19800, "reach": 15900, "link_clicks": 498, "form_fills": 19}
+  ]
+}

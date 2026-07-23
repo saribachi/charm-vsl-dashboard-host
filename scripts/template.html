@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charm VSL Funnel — GTM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#8733ed; --magenta:#d6367f; --amber:#c47f00;
+  --ink:#221833; --ink2:#5c5470; --ink3:#8d86a0;
+  --surface:#fcfcfb; --card:#ffffff; --line:#ece8f4; --grid:#f1eef8;
+  --purple-soft:#f3ecfe; --warn-bg:#fdf6e7; --warn-ink:#7a5a10;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--surface);color:var(--ink);
+     font-size:14px;line-height:1.5;padding:32px 24px 64px}
+.wrap{max-width:1080px;margin:0 auto}
+header{margin-bottom:24px}
+h1{font-size:22px;font-weight:700}
+h1 span{color:var(--purple)}
+.sub{color:var(--ink2);font-size:13px;margin-top:2px}
+.badges{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.badge{background:var(--purple-soft);color:var(--purple);font-size:12px;font-weight:600;
+       padding:3px 10px;border-radius:999px}
+.badge.gray{background:#f0eef5;color:var(--ink2)}
+.banner{background:var(--warn-bg);color:var(--warn-ink);border:1px solid #f0e2bd;border-radius:10px;
+        padding:10px 14px;font-size:13px;margin-bottom:24px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tile .v{font-size:24px;font-weight:700;line-height:1.2}
+.tile .l{font-size:12px;color:var(--ink2);margin-top:2px}
+.tile .d{font-size:11px;color:var(--ink3);margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:24px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:2px}
+.card .hint{font-size:12px;color:var(--ink3);margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+/* funnel */
+.frow{display:grid;grid-template-columns:150px 1fr 120px;gap:12px;align-items:center;padding:7px 0}
+.frow .name{font-size:13px;color:var(--ink2);text-align:right}
+.frow .barwrap{height:22px;background:var(--grid);border-radius:5px;position:relative}
+.frow .bar{height:100%;background:var(--purple);border-radius:4px;min-width:2px;
+           display:flex;align-items:center;transition:width .5s}
+.frow .bar span{color:#fff;font-size:12px;font-weight:600;padding-left:8px}
+.frow .bar span.out{color:var(--ink);position:absolute;padding-left:6px}
+.frow .conv{font-size:12px;color:var(--ink3)}
+.frow.pending .barwrap{background:repeating-linear-gradient(45deg,#f4f2f9,#f4f2f9 6px,#ecearf4 6px,#ece8f4 12px)}
+.frow.pending .name,.frow.pending .conv{color:var(--ink3);font-style:italic}
+.note-inline{font-size:11px;color:var(--ink3)}
+/* charts */
+.chart{position:relative}
+svg text{font-family:'Poppins',system-ui,sans-serif}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink2);margin-bottom:10px;flex-wrap:wrap}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tooltip{position:absolute;pointer-events:none;background:#2a2140;color:#fff;font-size:12px;
+         padding:7px 10px;border-radius:8px;opacity:0;transition:opacity .12s;white-space:nowrap;z-index:5}
+.tooltip b{font-weight:600}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--ink3);font-weight:500;font-size:12px;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:7px 10px;border-bottom:1px solid var(--grid)}
+tr:last-child td{border-bottom:none}
+.tag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px}
+.tag.test{background:#f0eef5;color:var(--ink3)}
+.tag.real{background:var(--purple-soft);color:var(--purple)}
+.empty{color:var(--ink3);font-size:13px;padding:12px 0}
+.insight{display:flex;gap:10px;padding:8px 0;font-size:13px}
+.insight .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--purple);margin-top:6px}
+.insight.warn .dot{background:var(--amber)}
+.rate-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.rate{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.rate .v{font-size:20px;font-weight:700;line-height:1.1}
+.rate .v.insuf{font-size:13px;font-weight:600;color:var(--amber-ink,#8a6410);background:#fdf6e7;border:1px solid #efdcae;border-radius:6px;padding:2px 8px;display:inline-block;font-family:ui-monospace,Menlo,monospace}
+.rate .l{font-size:12px;color:var(--ink2);margin-top:4px;font-weight:500}
+.rate .o{font-size:11px;color:var(--ink3);margin-top:1px}
+.cov{width:100%;border-collapse:collapse;font-size:13px}
+.cov td{padding:9px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+.cov tr:last-child td{border-bottom:none}
+.cov .stage{font-weight:600;white-space:nowrap}
+.cov .src{color:var(--ink2);white-space:nowrap;font-size:12px}
+.cov .detail{color:var(--ink3);font-size:12px}
+.st{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+.st.live{background:#e6f4ec;color:#0f7a4f;border:1px solid #bfe3cf}
+.st.proxy{background:#fdf6e7;color:#8a6410;border:1px solid #efdcae}
+.st.available{background:#eef3fb;color:#2b5aa8;border:1px solid #c9d9f0}
+.st.needs{background:#fdeceb;color:#c0362c;border:1px solid #f3c9c5}
+footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Charm <span>VSL Funnel</span> — GTM</h1>
+  <div class="sub">One source of truth: Meta ads → VSL page → video engagement → form → meeting → Day AI</div>
+  <div class="badges">
+    <span class="badge" id="b-video"></span>
+    <span class="badge gray" id="b-gen"></span>
+  </div>
+</header>
+
+<div class="banner"><b>Low-sample period.</b> The funnel is in test/early-launch phase — most form submissions are internal tests and traffic volume is small. Percentages below are directional, not statistically stable. <span id="banner-extra"></span></div>
+
+<div class="tiles" id="tiles"></div>
+
+<div class="card">
+  <h2>Funnel — where people drop off</h2>
+  <div class="hint">Each stage as a share of VSL page loads · right column = conversion from the previous stage · *test-phase noise: stage can exceed the one above when test submissions bypass the video</div>
+  <div id="funnel"></div>
+</div>
+
+<div class="card">
+  <h2>Post-ad funnel coverage</h2>
+  <div class="hint">Everything below the ad. Each stage's source and whether it's live — so nothing is missed once Meta connects on top.</div>
+  <div id="rates"></div>
+  <div id="coverage"></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Daily activity</h2>
+    <div class="hint">Page loads, plays, and form submissions per day</div>
+    <div class="legend" id="trend-legend"></div>
+    <div class="chart" id="trend"></div>
+  </div>
+  <div class="card">
+    <h2>Video engagement curve</h2>
+    <div class="hint">% of plays still watching at each point in the video</div>
+    <div class="chart" id="engage"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Drop-off analysis &amp; engagement opportunities</h2>
+  <div class="hint">Computed from the current data — updates on every refresh</div>
+  <div id="insights"></div>
+</div>
+
+<div class="card">
+  <h2>RB2B — who's actually on the VSL page</h2>
+  <div class="hint" id="rb2b-hint"></div>
+  <div id="rb2b-table"></div>
+</div>
+
+<div class="card">
+  <h2>Follow-up &amp; speed-to-lead</h2>
+  <div class="hint">Per lead: time from form fill to first outbound touch, and touch count — live from GHL conversations. The core "optimize follow-up" view.</div>
+  <div id="fu-summary"></div>
+  <div id="fu-table"></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Form submissions</h2>
+    <div class="hint">GTM Services form (VSL only)</div>
+    <div id="subs-table"></div>
+  </div>
+  <div class="card">
+    <h2>Meetings booked</h2>
+    <div class="hint">Charm — GTM VSL ONLY calendar</div>
+    <div id="appt-table"></div>
+    <h2 style="margin-top:20px">Day AI contacts</h2>
+    <div class="hint">Contacts created via the GHL → Day AI bridge · snapshot <span id="dayai-ts"></span></div>
+    <div id="dayai-table"></div>
+  </div>
+</div>
+
+<footer>
+  <b>Sources:</b> Wistia stats API (live) · GoHighLevel API (live) · Day AI (MCP snapshot) · Meta Ads (pending — Ads MCP not yet enabled on the account) · <span id="src-rb2b">RB2B (receiver not connected)</span><br>
+  <b>Refresh:</b> <code>python3 scripts/build_dashboard.py</code> from the project root, then reopen this file.
+</footer>
+</div>
+
+<div class="tooltip" id="tt"></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const C = {purple:'#8733ed', magenta:'#d6367f', amber:'#c47f00', ink3:'#8d86a0', grid:'#f1eef8'};
+const $ = id => document.getElementById(id);
+const tt = $('tt');
+const fmt = n => n === null ? '—' : n.toLocaleString();
+const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
+
+document.title = `Charm VSL Funnel — GTM (${DATA.generated_at})`;
+$('b-video').textContent = `Video: ${DATA.video.name} · ${mmss(DATA.video.duration)}`;
+$('b-gen').textContent = `Data as of ${DATA.generated_at}`;
+$('dayai-ts').textContent = DATA.dayai_pulled_at.slice(0,10);
+if (DATA.rb2b.connected) $('src-rb2b').textContent = 'RB2B (live via receiver)';
+
+// ---- tiles ----
+const f = Object.fromEntries(DATA.funnel.map(x => [x.stage, x.value]));
+const realSubs = DATA.submissions.filter(s => !s.test).length;
+const playRate = f['Unique visitors'] ? (100 * f['Video plays'] / f['Unique visitors']) : 0;
+const tiles = [
+  {v: fmt(f['VSL page loads']), l: 'VSL page loads', d: 'Wistia embed loads'},
+  {v: fmt(f['Unique visitors']), l: 'Unique visitors', d: 'Wistia unique viewers'},
+  {v: playRate.toFixed(0) + '%', l: 'Play rate', d: `${f['Video plays']} plays / ${f['Unique visitors']} visitors`},
+  {v: DATA.avg_percent_watched + '%', l: 'Avg % watched', d: 'per play, incl. rewatch'},
+  {v: fmt(realSubs), l: 'Real leads', d: `${DATA.submissions.length} total incl. tests`},
+  {v: fmt(DATA.real_meetings), l: 'Real meetings booked', d: `${f['Meetings booked']} total incl. tests`},
+  {v: DATA.rb2b.connected ? fmt(DATA.rb2b.count) : '—', l: 'Identified visitors', d: DATA.rb2b.connected ? `${DATA.rb2b.no_form} never submitted` : 'RB2B feed not connected'},
+];
+$('tiles').innerHTML = tiles.map(t =>
+  `<div class="tile"><div class="v">${t.v}</div><div class="l">${t.l}</div><div class="d">${t.d}</div></div>`).join('');
+
+// ---- post-ad conversion rates + coverage ----
+(function(){
+  const order = ['play_rate','watch_through','application_rate','booking_rate','show_rate'];
+  $('rates').innerHTML = '<div class="rate-strip">' + order.map(k => {
+    const r = DATA.rates[k];
+    const v = r.status === 'ok'
+      ? `<div class="v">${r.value}%</div>`
+      : `<div class="v insuf">${r.text}</div>`;
+    return `<div class="rate">${v}<div class="l">${r.label}</div><div class="o">${r.of}</div></div>`;
+  }).join('') + '</div>';
+
+  const LABEL = {live:'LIVE', proxy:'PROXY', available:'AVAILABLE', needs:'NEEDS'};
+  $('coverage').innerHTML = '<table class="cov">' + DATA.coverage.map(c =>
+    `<tr>
+      <td class="stage">${c.stage}</td>
+      <td><span class="st ${c.status}">${LABEL[c.status]}</span></td>
+      <td class="src">${c.source}</td>
+      <td class="detail">${c.detail}</td>
+    </tr>`).join('') + '</table>';
+})();
+
+// ---- funnel ----
+const base = f['VSL page loads'] || 1;
+let prev = null;
+$('funnel').innerHTML = DATA.funnel.map(st => {
+  const pending = st.value === null;
+  const pct = pending ? 0 : Math.max(100 * st.value / base, 0);
+  let conv = '';
+  if (!pending && prev !== null && prev > 0){
+    const c = 100 * st.value / prev;
+    conv = c > 100 ? '>100% of prev*' : c.toFixed(0) + '% of prev';
+  }
+  if (!pending) prev = st.value;
+  const label = pending ? '' :
+    (pct > 18 ? `<span>${fmt(st.value)}</span>` : `<span class="out" style="left:${pct}%">${fmt(st.value)}</span>`);
+  return `<div class="frow${pending ? ' pending' : ''}" data-note="${st.note}">
+    <div class="name">${st.stage}</div>
+    <div class="barwrap">${pending ? `<span class="out" style="position:absolute;left:8px;top:2px;font-size:11px;color:var(--ink3)">${st.note}</span>` : `<div class="bar" style="width:${pct}%">${label}</div>`}</div>
+    <div class="conv">${conv}</div>
+  </div>`;
+}).join('');
+document.querySelectorAll('.frow').forEach(row => {
+  row.addEventListener('mousemove', e => showTT(e, `<b>${row.querySelector('.name').textContent}</b><br>${row.dataset.note}`));
+  row.addEventListener('mouseleave', hideTT);
+});
+
+// ---- shared tooltip ----
+function showTT(e, html){ tt.innerHTML = html; tt.style.opacity = 1;
+  tt.style.left = (e.pageX + 14) + 'px'; tt.style.top = (e.pageY - 10) + 'px'; }
+function hideTT(){ tt.style.opacity = 0; }
+
+// ---- daily trend (3-series line) ----
+(function(){
+  const rows = DATA.daily;
+  const W = 480, H = 220, P = {t:12, r:12, b:28, l:34};
+  const series = [
+    {key:'loads', name:'Page loads', color:C.purple},
+    {key:'plays', name:'Plays', color:C.magenta},
+    {key:'subs', name:'Form submissions', color:C.amber},
+  ];
+  $('trend-legend').innerHTML = series.map(s =>
+    `<span><span class="sw" style="background:${s.color}"></span>${s.name}</span>`).join('');
+  if (!rows.length){ $('trend').innerHTML = '<div class="empty">No daily data yet.</div>'; return; }
+  const maxY = Math.max(4, ...rows.flatMap(r => series.map(s => r[s.key])));
+  const x = i => P.l + (rows.length === 1 ? (W-P.l-P.r)/2 : i * (W-P.l-P.r) / (rows.length-1));
+  const y = v => H - P.b - v * (H-P.t-P.b) / maxY;
+  let g = '';
+  const yticks = 4;
+  for (let i = 0; i <= yticks; i++){
+    const v = Math.round(maxY * i / yticks), yy = y(v);
+    g += `<line x1="${P.l}" y1="${yy}" x2="${W-P.r}" y2="${yy}" stroke="${C.grid}" stroke-width="1"/>`;
+    g += `<text x="${P.l-6}" y="${yy+4}" font-size="10" fill="${C.ink3}" text-anchor="end">${v}</text>`;
+  }
+  const step = Math.max(1, Math.ceil(rows.length / 7));
+  rows.forEach((r, i) => { if ((i % step === 0 && rows.length-1-i >= step) || i === rows.length-1)
+    g += `<text x="${x(i)}" y="${H-8}" font-size="10" fill="${C.ink3}" text-anchor="middle">${r.date.slice(5)}</text>`; });
+  series.forEach(s => {
+    const pts = rows.map((r, i) => `${x(i)},${y(r[s.key])}`).join(' ');
+    g += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>`;
+    rows.forEach((r, i) => { if (r[s.key] > 0)
+      g += `<circle cx="${x(i)}" cy="${y(r[s.key])}" r="3.5" fill="${s.color}" stroke="#fff" stroke-width="2"/>`; });
+  });
+  g += `<rect id="trend-hit" x="${P.l}" y="${P.t}" width="${W-P.l-P.r}" height="${H-P.t-P.b}" fill="transparent"/>`;
+  g += `<line id="trend-cross" x1="0" y1="${P.t}" x2="0" y2="${H-P.b}" stroke="${C.ink3}" stroke-width="1" stroke-dasharray="3 3" opacity="0"/>`;
+  $('trend').innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%">${g}</svg>`;
+  const svg = $('trend').querySelector('svg'), cross = svg.querySelector('#trend-cross');
+  svg.addEventListener('mousemove', e => {
+    const r = svg.getBoundingClientRect();
+    const mx = (e.clientX - r.left) * W / r.width;
+    let best = 0, bd = 1e9;
+    rows.forEach((_, i) => { const d = Math.abs(x(i) - mx); if (d < bd){ bd = d; best = i; } });
+    cross.setAttribute('x1', x(best)); cross.setAttribute('x2', x(best)); cross.setAttribute('opacity', 1);
+    const row = rows[best];
+    showTT(e, `<b>${row.date}</b><br>` + series.map(s => `${s.name}: ${row[s.key]}`).join('<br>'));
+  });
+  svg.addEventListener('mouseleave', () => { cross.setAttribute('opacity', 0); hideTT(); });
+})();
+
+// ---- engagement curve (area) ----
+(function(){
+  const curve = DATA.engagement_curve;
+  if (!curve.length){ $('engage').innerHTML = '<div class="empty">No engagement data yet.</div>'; return; }
+  const W = 480, H = 220, P = {t:12, r:12, b:28, l:38};
+  const dur = DATA.video.duration;
+  const x = i => P.l + i * (W-P.l-P.r) / (curve.length-1);
+  const y = v => H - P.b - v * (H-P.t-P.b) / 100;
+  let g = '';
+  [0,25,50,75,100].forEach(v => {
+    g += `<line x1="${P.l}" y1="${y(v)}" x2="${W-P.r}" y2="${y(v)}" stroke="${C.grid}"/>`;
+    g += `<text x="${P.l-6}" y="${y(v)+4}" font-size="10" fill="${C.ink3}" text-anchor="end">${v}%</text>`;
+  });
+  for (let m = 0; m <= dur; m += 120)
+    g += `<text x="${x(Math.round(m/dur*(curve.length-1)))}" y="${H-8}" font-size="10" fill="${C.ink3}" text-anchor="middle">${mmss(m)}</text>`;
+  const pts = curve.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  g += `<polygon points="${P.l},${y(0)} ${pts} ${W-P.r},${y(0)}" fill="${C.purple}" opacity="0.12"/>`;
+  g += `<polyline points="${pts}" fill="none" stroke="${C.purple}" stroke-width="2"/>`;
+  g += `<rect x="${P.l}" y="${P.t}" width="${W-P.l-P.r}" height="${H-P.t-P.b}" fill="transparent" id="eng-hit"/>`;
+  g += `<line id="eng-cross" x1="0" y1="${P.t}" x2="0" y2="${H-P.b}" stroke="${C.ink3}" stroke-width="1" stroke-dasharray="3 3" opacity="0"/>`;
+  $('engage').innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%">${g}</svg>`;
+  const svg = $('engage').querySelector('svg'), cross = svg.querySelector('#eng-cross');
+  svg.addEventListener('mousemove', e => {
+    const r = svg.getBoundingClientRect();
+    const mx = (e.clientX - r.left) * W / r.width;
+    const i = Math.max(0, Math.min(curve.length-1, Math.round((mx - P.l) / (W-P.l-P.r) * (curve.length-1))));
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1);
+    showTT(e, `<b>${mmss(i / (curve.length-1) * dur)}</b><br>${curve[i]}% still watching`);
+  });
+  svg.addEventListener('mouseleave', () => { cross.setAttribute('opacity', 0); hideTT(); });
+})();
+
+// ---- insights ----
+(function(){
+  const curve = DATA.engagement_curve, dur = DATA.video.duration, out = [];
+  if (curve.length){
+    // biggest drop over a 5% window
+    const win = Math.max(1, Math.round(curve.length * 0.05));
+    let bi = 0, bd = 0;
+    for (let i = 0; i + win < curve.length; i++){
+      const d = curve[i] - curve[i+win];
+      if (d > bd){ bd = d; bi = i; }
+    }
+    const t1 = mmss(bi/(curve.length-1)*dur), t2 = mmss((bi+win)/(curve.length-1)*dur);
+    if (bd > 0) out.push({warn:1, text:`<b>Biggest drop-off:</b> ${bd.toFixed(0)} pts of the audience leave between ${t1} and ${t2}. Whatever happens here is the first thing to test changing.`});
+    const start = Math.max(...curve.slice(0, Math.max(1, Math.round(curve.length*0.02))));
+    const half = curve.findIndex(v => v < start/2);
+    if (half > 0 && start > 0) out.push({warn:1, text:`<b>Half the starting audience is gone by ${mmss(half/(curve.length-1)*dur)}</b> (${((half/(curve.length-1))*100).toFixed(0)}% into the video). If the booking CTA lands after this point, most viewers never see it.`});
+  }
+  const playRate2 = f['Unique visitors'] ? 100*f['Video plays']/f['Unique visitors'] : 0;
+  if (f['Unique visitors'] >= 20 && playRate2 < 30)
+    out.push({warn:1, text:`<b>Play rate is ${playRate2.toFixed(0)}%</b> — most visitors never press play. Thumbnail, autoplay-muted preview, or above-the-fold placement are the levers here.`});
+  const noBook = realSubs - f['Meetings booked'];
+  if (noBook > 0)
+    out.push({warn:0, text:`<b>${noBook} real lead(s) submitted the form but never booked.</b> These are the warmest re-engagement targets — they exist in GHL with contact info and a known interest.`});
+  if (DATA.rb2b.connected)
+    out.push({warn:0, text:`<b>${DATA.rb2b.no_form} identified visitor(s) were on the VSL page but never submitted the form.</b> RB2B named them (person + company) — this is a re-engagement list you couldn't see before. See the RB2B table below.`});
+  else
+    out.push({warn:0, text:`<b>Watched-but-never-submitted viewers are invisible right now.</b> The RB2B receiver + Wistia visitor-level events will identify them for outreach even without a form fill.`});
+  out.push({warn:0, text:`<b>Ad-stage metrics pending:</b> Meta's Ads MCP is not yet enabled on the ad account, so cost per lead / cost per booked call can't be computed yet.`});
+  $('insights').innerHTML = out.map(i =>
+    `<div class="insight${i.warn ? ' warn' : ''}"><div class="dot"></div><div>${i.text}</div></div>`).join('');
+})();
+
+// ---- follow-up / speed-to-lead ----
+(function(){
+  const fu = DATA.followup, S = fu.summary;
+  const speed = m => m == null ? '—' : m < 60 ? `${m} min` : m < 1440 ? `${(m/60).toFixed(1)} hr` : `${(m/1440).toFixed(1)} d`;
+  const tiles = [
+    {v: S.real_leads, l: 'Real leads'},
+    {v: S.never_contacted, l: 'Never followed up', warn: S.never_contacted > 0},
+    {v: S.median_speed_min == null ? 'awaiting real leads' : speed(S.median_speed_min), l: 'Median speed-to-lead', insuf: S.median_speed_min == null},
+    {v: S.real_leads ? `${S.within_5min}/${S.contacted}` : '—', l: 'Contacted ≤ 5 min'},
+  ];
+  $('fu-summary').innerHTML = '<div class="rate-strip">' + tiles.map(t =>
+    `<div class="rate"><div class="v${t.insuf?' insuf':''}"${t.warn?' style="color:var(--amber)"':''}>${t.v}</div><div class="l">${t.l}</div></div>`).join('') + '</div>';
+  $('fu-table').innerHTML = fu.leads.length ? `<table><tr><th>Lead</th><th>Form filled</th><th>First touch</th><th>Speed-to-lead</th><th>Touches</th><th></th></tr>` +
+    fu.leads.map(l => `<tr>
+      <td>${l.name || l.email || ''}</td>
+      <td>${(l.form_at||'').slice(0,16).replace('T',' ')}</td>
+      <td>${l.first_touch_at ? (l.first_touch_at).slice(0,16).replace('T',' ') : '<span style="color:var(--amber-ink,#8a6410)">no follow-up</span>'}</td>
+      <td>${speed(l.speed_min)}</td>
+      <td>${l.touches}</td>
+      <td><span class="tag ${l.test?'test':'real'}" style="${l.test?'':'background:var(--purple-soft);color:var(--purple)'}">${l.test?'test':'lead'}</span></td>
+    </tr>`).join('') + '</table>' : '<div class="empty">No form submissions yet.</div>';
+})();
+
+// ---- tables ----
+$('subs-table').innerHTML = DATA.submissions.length ? `<table><tr><th>Date</th><th>Name</th><th>Email</th><th></th></tr>` +
+  DATA.submissions.map(s => `<tr><td>${(s.ts||'').slice(0,16).replace('T',' ')}</td><td>${s.name||''}</td><td>${s.email||''}</td>
+  <td><span class="tag ${s.test?'test':'real'}">${s.test?'test':'lead'}</span></td></tr>`).join('') + '</table>'
+  : '<div class="empty">No submissions yet.</div>';
+
+$('appt-table').innerHTML = DATA.appointments.length ? `<table><tr><th>Start</th><th>Title</th><th>Status</th><th></th></tr>` +
+  DATA.appointments.map(a => `<tr><td>${(a.start||'').slice(0,16).replace('T',' ')}</td><td>${a.title||''}</td><td>${a.status||''}</td>
+  <td><span class="tag ${a.test?'test':'real'}">${a.test?'test':'lead'}</span></td></tr>`).join('') + '</table>'
+  : '<div class="empty">No meetings booked yet.</div>';
+
+// ---- RB2B identified visitors ----
+(function(){
+  const rb = DATA.rb2b;
+  const hint = $('rb2b-hint'), tbl = $('rb2b-table');
+  if (!rb.connected){
+    hint.textContent = 'RB2B feed not connected yet — set RB2B_ENDPOINT and point the Clay HTTP API column at the receiver.';
+    tbl.innerHTML = '<div class="empty">Once the webhook is live, every identified visitor to the VSL page shows here — with a flag for whether they ever filled out the form.</div>';
+    return;
+  }
+  hint.innerHTML = `${rb.count} identified ${rb.count===1?'person':'people'} on the page · <b>${rb.no_form}</b> never submitted the form (your re-engagement list)`;
+  if (!rb.count){ tbl.innerHTML = '<div class="empty">No identified visitors yet.</div>'; return; }
+  const fmtDate = t => (t||'').slice(0,16).replace('T',' ');
+  tbl.innerHTML = `<table><tr><th>Name</th><th>Title</th><th>Company</th><th>Last seen</th><th>Visits</th><th>Form?</th></tr>` +
+    rb.visitors.map(v => {
+      const who = v.linkedin_url ? `<a href="${v.linkedin_url}" target="_blank" style="color:var(--purple);text-decoration:none">${v.name||'(unknown)'}</a>` : (v.name||'(unknown)');
+      return `<tr><td>${who}</td><td>${v.title||''}</td><td>${v.company||''}${v.company_size?` · ${v.company_size}`:''}</td>
+      <td>${fmtDate(v.last_seen)}</td><td>${v.visits||1}</td>
+      <td><span class="tag ${v.submitted?'real':'test'}">${v.submitted?'submitted':'no form'}</span></td></tr>`;
+    }).join('') + '</table>';
+})();
+
+$('dayai-table').innerHTML = DATA.dayai_contacts.length ? `<table><tr><th>Name</th><th>Email</th><th>Form</th><th>Submitted</th></tr>` +
+  DATA.dayai_contacts.map(c => `<tr><td>${c.name}</td><td>${c.email}</td><td>${c.form}</td><td>${(c.form_submitted||'').slice(0,10)}</td></tr>`).join('') + '</table>'
+  : '<div class="empty">No Day AI contacts from the form yet.</div>';
+</script>
+</body>
+</html>

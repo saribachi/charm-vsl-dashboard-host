@@ -30,6 +30,11 @@ def rebuild():
     DASH.mkdir(exist_ok=True)
     for d in ("data/ghl", "data/wistia", "data/meta", "data/dayai"):
         (ROOT / d).mkdir(parents=True, exist_ok=True)
+    # Manual Meta export injected via env (kept out of the repo). Update this env
+    # var whenever a fresh CSV is imported, until the Ads MCP pull is automated.
+    blob = os.environ.get("AD_DAILY_JSON")
+    if blob:
+        (ROOT / "data/meta/ad_daily.json").write_text(blob)
     ok = True
     for b in BUILDS:
         try:

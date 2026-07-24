@@ -114,18 +114,34 @@ def main():
     watched_50 = round(plays * (curve[n // 2] / 100.0)) if eng else 0
 
     booked = [e for e in events if e.get("appointmentStatus") not in ("cancelled", "noshow")]
-    # resolve appointment contact emails to flag internal test bookings
-    email_cache = {}
+    # resolve appointment contacts: email (test-flagging) + GHL attribution (per-ad UTM)
+    contact_cache = {}
     for e in booked:
         cid = e.get("contactId")
-        if cid and cid not in email_cache:
+        if cid and cid not in contact_cache:
             try:
-                email_cache[cid] = ghl(f"contacts/{cid}").get("contact", {}).get("email")
+                con = ghl(f"contacts/{cid}").get("contact", {})
+                att = con.get("attributionSource") or {}
+                contact_cache[cid] = {"email": con.get("email"),
+                                      "utm_content": att.get("utmContent"),
+                                      "utm_source": att.get("utmSource"),
+                                      "session": att.get("sessionSource")}
             except Exception:
-                email_cache[cid] = None
-        e["_email"] = email_cache.get(cid)
+                contact_cache[cid] = {}
+        info = contact_cache.get(cid, {})
+        e["_email"] = info.get("email")
+        e["_utm_content"] = info.get("utm_content")
+        e["_utm_source"] = info.get("utm_source")
         e["_test"] = is_test(e.get("_email"))
     real_booked = [e for e in booked if not e["_test"]]
+
+    # person-level attribution: bookings grouped by ad (utm_content = ad name).
+    # UTMs were configured Jul 24 2026 — bookings before that read "Direct traffic".
+    bookings_by_ad = {}
+    for e in real_booked:
+        ad = e.get("_utm_content") or "(unattributed / direct)"
+        bookings_by_ad[ad] = bookings_by_ad.get(ad, 0) + 1
+    ad_attributed = sum(v for k, v in bookings_by_ad.items() if k != "(unattributed / direct)")
     dayai_gtm = [c for c in dayai["contacts"] if c["form"] == "GTM Services"]
 
     # ground-truth GHL counts for the ad funnel to reconcile against (Meta's Lead
@@ -307,6 +323,8 @@ def main():
         },
         "real_form_fills": len(real_subs),
         "real_bookings": len(real_booked),
+        "bookings_attribution": {"total_real": len(real_booked), "ad_attributed": ad_attributed,
+                                 "by_ad": bookings_by_ad},
         "meetings_held": meetings_held,
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],
                    "plays": s["plays"], "watched_50": watched_50},

@@ -154,7 +154,7 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
       let conv = '';
       if(s.conv){
         const c = parseFloat(s.conv);
-        if(c > 100) conv = `<div class="st-conv" style="color:var(--ink3);font-weight:500">more than ad clicks<div class="st-cost">incl. organic / other traffic</div></div>`;
+        if(c > 100) conv = `<div class="st-conv" style="color:var(--ink3);font-weight:500">more than prior step<div class="st-cost">paths overlap — not strictly linear</div></div>`;
         else if(isDrop) conv = `<div class="st-conv"><span class="drop">▼ ${s.conv} — biggest drop</span></div>`;
         else conv = `<div class="st-conv">${s.conv} <span style="color:var(--ink3);font-weight:400">from prev</span></div>`;
       }

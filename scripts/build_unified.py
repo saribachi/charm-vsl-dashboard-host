@@ -80,6 +80,12 @@ def main():
 
     landing_note = (f"{rb2b.get('count', 0)} identified by RB2B" if rb2b.get("connected")
                     else "RB2B feed pending")
+    ba = vsl.get("bookings_attribution", {})
+    if ba.get("total_real"):
+        att = ba.get("ad_attributed", 0)
+        booked_note = f"{att} tagged to an ad (utm_content)" if att else "UTMs now live — new bookings will tag to an ad"
+    else:
+        booked_note = None
     funnel = [
         stage("Link clicks", clicks, "Meta", "live", cost=f"{money(cpc)}/click" if cpc else None,
               note=f"{pct(ctr) or '—'} of {impressions:,} impressions"),
@@ -89,7 +95,7 @@ def main():
         stage("Form fills", real_forms, "GHL", "live", prev=watched,
               cost=(f"{money(cpff)}/lead" if cpff else None), note="real leads, tests excluded"),
         stage("Booked calls", real_booked, "GHL", "live", prev=real_forms,
-              cost=(f"{money(cpbooked)}/call" if cpbooked else None)),
+              cost=(f"{money(cpbooked)}/call" if cpbooked else None), note=booked_note),
         stage("Calls held", held, "Day AI", "live" if dayai_on else "needs", prev=real_booked),
         stage("Qualified", None, "CRM", "needs"),
         stage("Deals closed", None, "CRM", "needs"),

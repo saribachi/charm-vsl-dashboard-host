@@ -174,8 +174,12 @@ const D = DATA.detail;
 const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
 let html = '';
 
+// Best ads + lead-to-ad attribution (the report)
+const R = D.report||{};
+html += `<details open><summary>Best ads &amp; lead-to-ad attribution <span class="cnt">${R.total_bookings||0} booking(s) · ${R.ad_attributed||0} tagged to an ad</span></summary><div class="det-body" id="report"></div></details>`;
+
 // Video engagement
-html += `<details open><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
+html += `<details><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
 // Follow-up
 const fu = D.followup||{}, S = fu.summary||{};
 html += `<details><summary>Follow-up &amp; speed-to-lead <span class="cnt">${S.real_leads||0} real leads · ${S.never_contacted||0} never contacted</span></summary><div class="det-body" id="fu"></div></details>`;
@@ -186,6 +190,25 @@ html += `<details><summary>Ad angles <span class="cnt">${(D.angles||[]).length} 
 // Coverage
 html += `<details><summary>Data source coverage <span class="cnt">what's live vs pending</span></summary><div class="det-body" id="coverage"></div></details>`;
 $('details').innerHTML = html;
+
+// report: best ads + which lead booked from which ad
+(function(){
+  const R = D.report||{}, bookings = R.bookings||[];
+  const fmtd = t => (t||'').slice(0,16).replace('T',' ');
+  const byAd = Object.entries(R.by_ad||{}).sort((a,b)=>b[1]-a[1]);
+  let h = '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad</div>';
+  h += bookings.length ? `<table><tr><th>Lead</th><th>Booked</th><th>Ad (utm_content)</th><th>Call held?</th></tr>` +
+    bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
+      `<td>${b.ad?`<span class="tag real">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — before UTM setup</span>'}</td>`+
+      `<td>${b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td></tr>`).join('')+'</table>'
+    : '<div class="empty">No real bookings yet.</div>';
+  h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';
+  h += byAd.length ? `<table><tr><th>Ad (utm_content)</th><th>Bookings</th></tr>` +
+    byAd.map(([ad,n])=>`<tr><td>${ad==='(unattributed / direct)'?`<span style="color:var(--ink3)">${ad}</span>`:`<span class="tag real">${ad}</span>`}</td><td>${n}</td></tr>`).join('')+'</table>'
+    : '<div class="empty">—</div>';
+  h += '<div class="st-note" style="margin-top:12px">Best-ad <b>booking rate</b> (bookings ÷ clicks per ad) and cost-per-booking unlock once the Meta export is broken down by <b>Ad name</b> — the current export is per ad set (one level up). The ad column fills in as new bookings arrive (UTMs went live Jul 24, so bookings before that read "direct").</div>';
+  $('report').innerHTML = h;
+})();
 
 // engagement curve
 (function(){

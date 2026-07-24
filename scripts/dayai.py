@@ -85,6 +85,22 @@ class DayAI:
             timeframeStart=since)
         return len(res.get("native_meetingrecording", {}).get("results", [])) > 0
 
+    def recent_meetings(self, since="2026-06-01T00:00:00Z"):
+        """Recent meeting recordings with their title + linked contact emails (attendees).
+
+        Attendee-email linkage lags in Day AI, so held detection also uses the title
+        (e.g. 'Todd Dugas & Charm'). Returns [{title, attendees:[email,...]}].
+        """
+        res = self.search([{"objectType": "native_meetingrecording"}],
+                          includeRelationships=True, timeframeStart=since)
+        out = []
+        for m in res.get("native_meetingrecording", {}).get("results", []):
+            rels = m.get("relationships") or []
+            atts = [(r.get("objectId") or "").lower() for r in rels
+                    if isinstance(r, dict) and r.get("objectType") == "native_contact"]
+            out.append({"title": (m.get("title") or ""), "attendees": atts})
+        return out
+
 
 if __name__ == "__main__":
     # connection self-test

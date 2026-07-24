@@ -122,7 +122,9 @@ def main():
             try:
                 con = ghl(f"contacts/{cid}").get("contact", {})
                 att = con.get("attributionSource") or {}
-                contact_cache[cid] = {"email": con.get("email"),
+                nm = con.get("contactName") or " ".join(
+                    x for x in [con.get("firstName"), con.get("lastName")] if x)
+                contact_cache[cid] = {"email": con.get("email"), "name": nm,
                                       "utm_content": att.get("utmContent"),
                                       "utm_source": att.get("utmSource"),
                                       "session": att.get("sessionSource")}
@@ -240,17 +242,35 @@ def main():
     }
 
     # ---- held-call status from Day AI (show-rate), guarded to real booked leads ----
+    # Match a booked lead to a Day AI meeting recording by attendee email OR by name
+    # in the meeting title (attendee-email linkage lags in Day AI, e.g. "Todd Dugas & Charm").
     dayai_conn, meetings_held = False, None
     try:
         import dayai as _dayai
         if _dayai.available():
             dayai_conn = True
             day = _dayai.DayAI()
-            booked_emails = [e["_email"] for e in real_booked if e.get("_email")]
-            # a Day AI meeting recording with the lead as attendee = the call was held.
-            # (Reliable for external leads; internal teammates match their own team meetings.)
-            meetings_held = sum(1 for em in booked_emails if day.held_call(em)) if booked_emails else 0
-            print(f"Day AI connected — held calls among {len(booked_emails)} real booked lead(s): {meetings_held}")
+            meetings = day.recent_meetings("2026-06-01T00:00:00Z")
+
+            def is_held(name, email):
+                email = (email or "").lower()
+                toks = [t for t in (name or "").lower().split() if len(t) > 2]
+                for mt in meetings:
+                    title = mt["title"].lower()
+                    if email and email in mt["attendees"]:
+                        return True
+                    if toks and all(t in title for t in toks):
+                        return True
+                    if email and email.split("@")[0] in title:
+                        return True
+                return False
+
+            for e in real_booked:
+                nm = contact_cache.get(e.get("contactId"), {}).get("name")
+                e["_held"] = is_held(nm, e.get("_email"))
+            meetings_held = sum(1 for e in real_booked if e.get("_held"))
+            held_names = [e.get("_email") for e in real_booked if e.get("_held")]
+            print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call: {held_names}")
     except Exception as ex:
         print(f"Day AI held-call pull skipped ({ex})")
 
@@ -325,6 +345,11 @@ def main():
         "real_bookings": len(real_booked),
         "bookings_attribution": {"total_real": len(real_booked), "ad_attributed": ad_attributed,
                                  "by_ad": bookings_by_ad},
+        "real_bookings_detail": [{
+            "name": contact_cache.get(e.get("contactId"), {}).get("name") or e.get("title"),
+            "email": e.get("_email"), "start": e.get("startTime"),
+            "ad": e.get("_utm_content"), "utm_source": e.get("_utm_source"),
+            "held": e.get("_held", False)} for e in real_booked],
         "meetings_held": meetings_held,
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],
                    "plays": s["plays"], "watched_50": watched_50},

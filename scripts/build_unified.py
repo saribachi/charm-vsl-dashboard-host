@@ -115,6 +115,12 @@ def main():
             "followup": vsl.get("followup", {}), "rb2b": rb2b,
             "coverage": vsl.get("coverage", []), "angles": ad.get("angles", []),
             "ghl_reconciled": ghl, "field_reality": ad.get("field_reality", {}),
+            "report": {
+                "bookings": vsl.get("real_bookings_detail", []),
+                "by_ad": ba.get("by_ad", {}),
+                "ad_attributed": ba.get("ad_attributed", 0),
+                "total_bookings": ba.get("total_real", 0),
+            },
         },
     }
 

@@ -30,10 +30,11 @@ VSL_MEDIA_ID = "swyi1909di"          # VSL 005 — live GTM VSL
 GTM_FORM_ID = "XwtroXXXZ58OVpL4pEqy"  # GTM Services form VSL ONLY
 GTM_CALENDAR_ID = "KDdgICxdFa0FJQgNSt8c"  # Charm - GTM VSL ONLY
 
-# Internal/test submitters — excluded from "real lead" counts
+# Internal/test/invalid submitters — excluded from "real lead" counts
 TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
                "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
-               "john.doe@gmail.com"}
+               "john.doe@gmail.com",
+               "ricky@aurevionmarketing.com"}  # 7 repeat submissions Jul 24 — not a real lead
 TEST_DOMAINS = {"hirecharm.com"}
 
 

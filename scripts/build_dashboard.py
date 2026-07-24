@@ -34,8 +34,10 @@ GTM_CALENDAR_ID = "KDdgICxdFa0FJQgNSt8c"  # Charm - GTM VSL ONLY
 TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
                "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
                "john.doe@gmail.com",
-               "ricky@aurevionmarketing.com"}  # 7 repeat submissions Jul 24 — not a real lead
-TEST_DOMAINS = {"hirecharm.com"}
+               "ricky@aurevionmarketing.com",   # 7 repeat submissions Jul 24 — not a real lead
+               "sarah+3@gmail.com",             # "chris boo" test booking
+               "cobooking@yahoo.com"}           # "chris booth" — booking-flow test
+TEST_DOMAINS = {"hirecharm.com", "goober.com"}
 
 
 def http_get(url, headers):
@@ -56,11 +58,14 @@ def ghl(path):
                     {"Authorization": f"Bearer {GHL_TOKEN}", "Version": "2021-07-28"})
 
 
-def is_test(email):
-    if not email:
-        return False
-    e = email.lower()
-    return e in TEST_EMAILS or e.split("@")[-1] in TEST_DOMAINS
+def is_test(email, name=""):
+    e = (email or "").lower()
+    if e and (e in TEST_EMAILS or e.split("@")[-1] in TEST_DOMAINS):
+        return True
+    n = (name or "").lower()
+    if "test" in n or "goober" in n:  # obvious test entries by name
+        return True
+    return False
 
 
 def main():
@@ -104,7 +109,7 @@ def main():
                  "ts": x.get("createdAt"),
                  "email": x.get("email"),
                  "name": x.get("name"),
-                 "test": is_test(x.get("email"))} for x in subs]
+                 "test": is_test(x.get("email"), x.get("name"))} for x in subs]
     real_subs = [x for x in sub_rows if not x["test"]]
 
     eng = engagement.get("engagement_data", [])
@@ -135,7 +140,7 @@ def main():
         e["_email"] = info.get("email")
         e["_utm_content"] = info.get("utm_content")
         e["_utm_source"] = info.get("utm_source")
-        e["_test"] = is_test(e.get("_email"))
+        e["_test"] = is_test(e.get("_email"), info.get("name"))
     real_booked = [e for e in booked if not e["_test"]]
 
     # person-level attribution: bookings grouped by ad (utm_content = ad name).
@@ -226,7 +231,7 @@ def main():
         first = outs[0] if outs else None
         stl = round((parse_ts(first["dateAdded"]) - form_ts) / 60.0, 1) if (first and form_ts) else None
         followup.append({"name": sub.get("name"), "email": sub.get("email"),
-                         "test": is_test(sub.get("email")), "form_at": sub.get("createdAt"),
+                         "test": is_test(sub.get("email"), sub.get("name")), "form_at": sub.get("createdAt"),
                          "first_touch_at": first.get("dateAdded") if first else None,
                          "speed_min": stl, "touches": len(outs), "contacted": bool(first)})
 
@@ -243,8 +248,9 @@ def main():
     }
 
     # ---- held-call status from Day AI (show-rate), guarded to real booked leads ----
-    # Match a booked lead to a Day AI meeting recording by attendee email OR by name
-    # in the meeting title (attendee-email linkage lags in Day AI, e.g. "Todd Dugas & Charm").
+    # A call is "held" only when the booked lead's EMAIL is an attendee on a Day AI
+    # meeting recording. Email-only (deterministic) — no name/title matching, which
+    # produced false positives (e.g. "mark" matching "Go-to-Market").
     dayai_conn, meetings_held = False, None
     try:
         import dayai as _dayai
@@ -253,25 +259,15 @@ def main():
             day = _dayai.DayAI()
             meetings = day.recent_meetings("2026-06-01T00:00:00Z")
 
-            def is_held(name, email):
+            def is_held(email):
                 email = (email or "").lower()
-                toks = [t for t in (name or "").lower().split() if len(t) > 2]
-                for mt in meetings:
-                    title = mt["title"].lower()
-                    if email and email in mt["attendees"]:
-                        return True
-                    if toks and all(t in title for t in toks):
-                        return True
-                    if email and email.split("@")[0] in title:
-                        return True
-                return False
+                return bool(email) and any(email in mt["attendees"] for mt in meetings)
 
             for e in real_booked:
-                nm = contact_cache.get(e.get("contactId"), {}).get("name")
-                e["_held"] = is_held(nm, e.get("_email"))
+                e["_held"] = is_held(e.get("_email"))
             meetings_held = sum(1 for e in real_booked if e.get("_held"))
             held_names = [e.get("_email") for e in real_booked if e.get("_held")]
-            print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call: {held_names}")
+            print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call (by email): {held_names}")
     except Exception as ex:
         print(f"Day AI held-call pull skipped ({ex})")
 

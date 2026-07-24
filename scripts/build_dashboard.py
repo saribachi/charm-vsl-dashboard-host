@@ -127,13 +127,16 @@ def main():
         if cid and cid not in contact_cache:
             try:
                 con = ghl(f"contacts/{cid}").get("contact", {})
-                att = con.get("attributionSource") or {}
+                # prefer the converting session (last touch), fall back to first touch —
+                # so an ad click before booking is captured even for returning leads.
+                last = con.get("lastAttributionSource") or {}
+                first = con.get("attributionSource") or {}
                 nm = con.get("contactName") or " ".join(
                     x for x in [con.get("firstName"), con.get("lastName")] if x)
                 contact_cache[cid] = {"email": con.get("email"), "name": nm,
-                                      "utm_content": att.get("utmContent"),
-                                      "utm_source": att.get("utmSource"),
-                                      "session": att.get("sessionSource")}
+                                      "utm_content": last.get("utmContent") or first.get("utmContent"),
+                                      "utm_source": last.get("utmSource") or first.get("utmSource"),
+                                      "session": last.get("sessionSource") or first.get("sessionSource")}
             except Exception:
                 contact_cache[cid] = {}
         info = contact_cache.get(cid, {})

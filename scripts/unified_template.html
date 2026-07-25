@@ -257,8 +257,15 @@ $('details').innerHTML = html;
   const r=D.rb2b||{};
   if(!r.connected){ $('rb2b').innerHTML='<div class="empty">RB2B receiver connected; visitors appear once the Clay column fires.</div>'; return; }
   if(!r.count){ $('rb2b').innerHTML='<div class="empty">No identified visitors yet.</div>'; return; }
-  $('rb2b').innerHTML=`<table><tr><th>Name</th><th>Title</th><th>Company</th><th>Visits</th><th>Form?</th></tr>`+
-    r.visitors.map(v=>`<tr><td>${v.linkedin_url?`<a class="plain" href="${v.linkedin_url}" target="_blank">${v.name||'(unknown)'}</a>`:(v.name||'(unknown)')}</td><td>${v.title||''}</td><td>${v.company||''}</td><td>${v.visits||1}</td><td><span class="tag ${v.submitted?'real':'test'}">${v.submitted?'submitted':'no form'}</span></td></tr>`).join('')+'</table>';
+  $('rb2b').innerHTML=`<div class="scroll" style="overflow-x:auto"><table><tr><th>Name</th><th>Email</th><th>Title</th><th>Company</th><th>Location</th><th>Visits</th><th>Form?</th></tr>`+
+    r.visitors.map(v=>`<tr>`+
+      `<td>${v.linkedin_url?`<a class="plain" href="${v.linkedin_url}" target="_blank">${v.name||'(unknown)'}</a>`:(v.name||'(unknown)')}</td>`+
+      `<td>${v.email?`<a class="plain" href="mailto:${v.email}">${v.email}</a>`:'<span style="color:var(--ink3)">—</span>'}</td>`+
+      `<td style="font-size:12px">${v.title||''}</td>`+
+      `<td>${v.company||''}${v.company_size?`<div class="st-src">${v.company_size}</div>`:''}</td>`+
+      `<td style="font-size:12px">${v.location||''}</td>`+
+      `<td>${v.visits||1}</td>`+
+      `<td><span class="tag ${v.submitted?'real':'test'}">${v.submitted?'submitted':'no form'}</span></td></tr>`).join('')+'</table></div>';
 })();
 
 // angles

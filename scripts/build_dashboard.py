@@ -6,6 +6,7 @@ dashboard/vsl_dashboard.html. Run: python3 scripts/build_dashboard.py
 """
 import json
 import os
+import re
 import sys
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -278,12 +279,23 @@ def main():
             day = _dayai.DayAI()
             meetings = day.recent_meetings("2026-06-01T00:00:00Z")
 
-            def is_held(email):
+            def is_held(name, email):
                 email = (email or "").lower()
-                return bool(email) and any(email in mt["attendees"] for mt in meetings)
+                if email and any(email in mt["attendees"] for mt in meetings):
+                    return True
+                # exact FULL name (>=2 word-boundary tokens) so "mark" != "market"
+                toks = [t for t in re.findall(r"[a-z]+", (name or "").lower()) if len(t) > 2]
+                if len(toks) >= 2:
+                    pats = [re.compile(r"\b" + re.escape(t) + r"\b") for t in toks]
+                    for mt in meetings:
+                        title = mt["title"].lower()
+                        if all(p.search(title) for p in pats):
+                            return True
+                return False
 
             for e in real_booked:
-                e["_held"] = is_held(e.get("_email"))
+                nm = contact_cache.get(e.get("contactId"), {}).get("name")
+                e["_held"] = is_held(nm, e.get("_email"))
             meetings_held = sum(1 for e in real_booked if e.get("_held"))
             held_names = [e.get("_email") for e in real_booked if e.get("_held")]
             print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call (by email): {held_names}")
@@ -331,7 +343,7 @@ def main():
         "video": {"name": media["name"], "id": VSL_MEDIA_ID, "duration": duration},
         "rates": rates,
         "coverage": coverage,
-        "followup": {"summary": fu_summary, "leads": followup},
+        "followup": {"summary": fu_summary, "leads": real_fu},  # real leads only (tests hidden)
         "funnel": [
             {"stage": "Ad clicks", "value": None, "note": "Meta Ads pending — Ads MCP not yet enabled on the ad account"},
             {"stage": "VSL page loads", "value": s["pageLoads"], "note": "Wistia embed loads (incl. reloads)"},
@@ -345,11 +357,12 @@ def main():
         "avg_percent_watched": s["averagePercentWatched"],
         "engagement_curve": [round(v, 1) for v in curve],
         "daily": daily,
-        "submissions": sub_rows,
+        "submissions": real_subs,  # real submissions only (tests hidden)
         "real_meetings": len(real_booked),
         "appointments": [{"start": e.get("startTime"), "title": e.get("title"),
-                          "status": e.get("appointmentStatus"),
-                          "email": e.get("_email"), "test": e.get("_test", False)} for e in events],
+                          "status": e.get("appointmentStatus"), "email": e.get("_email"),
+                          "held": e.get("_held", False), "test": False}
+                         for e in real_booked],  # real bookings only
         "dayai_contacts": dayai["contacts"],
         "rb2b": {
             "connected": rb2b_ok,

@@ -152,16 +152,23 @@ def main():
         e["_email"] = info.get("email")
         e["_utm_content"] = info.get("utm_content")
         e["_utm_source"] = info.get("utm_source")
+        e["_utm_term"] = info.get("utm_term")   # ad set (e.g. "Retargeting Video Ads")
         e["_test"] = is_test(e.get("_email"), info.get("name"))
     real_booked = [e for e in booked if not e["_test"]]
 
     # person-level attribution: bookings grouped by ad (utm_content = ad name).
     # UTMs were configured Jul 24 2026 — bookings before that read "Direct traffic".
-    bookings_by_ad = {}
+    DIRECT = "(unattributed / direct)"
+    bookings_by_ad, bookings_by_adset = {}, {}
     for e in real_booked:
-        ad = e.get("_utm_content") or "(unattributed / direct)"
+        ad = e.get("_utm_content") or DIRECT
         bookings_by_ad[ad] = bookings_by_ad.get(ad, 0) + 1
-    ad_attributed = sum(v for k, v in bookings_by_ad.items() if k != "(unattributed / direct)")
+        adset = e.get("_utm_term") or DIRECT
+        bookings_by_adset[adset] = bookings_by_adset.get(adset, 0) + 1
+    ad_attributed = sum(v for k, v in bookings_by_ad.items() if k != DIRECT)
+    is_retarget = lambda s: "retarget" in (s or "").lower()
+    retarget_booked = sum(v for k, v in bookings_by_adset.items() if is_retarget(k))
+    prospect_booked = ad_attributed - retarget_booked
     dayai_gtm = [c for c in dayai["contacts"] if c["form"] == "GTM Services"]
 
     # ground-truth GHL counts for the ad funnel to reconcile against (Meta's Lead
@@ -353,11 +360,14 @@ def main():
         "real_form_fills": len(real_subs),
         "real_bookings": len(real_booked),
         "bookings_attribution": {"total_real": len(real_booked), "ad_attributed": ad_attributed,
-                                 "by_ad": bookings_by_ad},
+                                 "by_ad": bookings_by_ad, "by_adset": bookings_by_adset,
+                                 "retarget_booked": retarget_booked, "prospect_booked": prospect_booked},
         "real_bookings_detail": [{
             "name": contact_cache.get(e.get("contactId"), {}).get("name") or e.get("title"),
             "email": e.get("_email"), "start": e.get("startTime"),
-            "ad": e.get("_utm_content"), "utm_source": e.get("_utm_source"),
+            "ad": e.get("_utm_content"), "ad_set": e.get("_utm_term"),
+            "retarget": is_retarget(e.get("_utm_term")),
+            "utm_source": e.get("_utm_source"),
             "held": e.get("_held", False)} for e in real_booked],
         "meetings_held": meetings_held,
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],

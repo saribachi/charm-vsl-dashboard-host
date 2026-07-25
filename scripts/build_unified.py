@@ -118,7 +118,10 @@ def main():
             "report": {
                 "bookings": vsl.get("real_bookings_detail", []),
                 "by_ad": ba.get("by_ad", {}),
+                "by_adset": ba.get("by_adset", {}),
                 "ad_attributed": ba.get("ad_attributed", 0),
+                "retarget_booked": ba.get("retarget_booked", 0),
+                "prospect_booked": ba.get("prospect_booked", 0),
                 "total_bookings": ba.get("total_real", 0),
             },
         },

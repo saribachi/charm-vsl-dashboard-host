@@ -195,18 +195,29 @@ $('details').innerHTML = html;
 (function(){
   const R = D.report||{}, bookings = R.bookings||[];
   const fmtd = t => (t||'').slice(0,16).replace('T',' ');
-  const byAd = Object.entries(R.by_ad||{}).sort((a,b)=>b[1]-a[1]);
-  let h = '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad</div>';
-  h += bookings.length ? `<table><tr><th>Lead</th><th>Booked</th><th>Ad (utm_content)</th><th>Call held?</th></tr>` +
+  const retag = '<span class="tag" style="background:#eef3fb;color:#2b5aa8">retargeting</span>';
+  // per-ad rollup carrying ad set + retarget flag
+  const adInfo = {};
+  bookings.forEach(b=>{ const ad=b.ad||'(unattributed / direct)';
+    (adInfo[ad] = adInfo[ad]||{n:0,adset:b.ad_set,retarget:b.retarget}).n++; });
+  const byAd = Object.entries(adInfo).sort((a,b)=>b[1].n-a[1].n);
+  let h = `<div class="mini" style="grid-template-columns:repeat(3,1fr)">`+
+    `<div class="b"><div class="bv">${R.ad_attributed||0}</div><div class="bl">ad-attributed bookings</div></div>`+
+    `<div class="b"><div class="bv">${R.retarget_booked||0}</div><div class="bl">retargeting (warm)</div></div>`+
+    `<div class="b"><div class="bv">${R.prospect_booked||0}</div><div class="bl">prospecting (cold)</div></div></div>`;
+  h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad</div>';
+  h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Held?</th></tr>` +
     bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
-      `<td>${b.ad?`<span class="tag real">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — before UTM setup</span>'}</td>`+
-      `<td>${b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td></tr>`).join('')+'</table>'
+      `<td>${b.ad?`<span class="tag real">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
+      `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
+      `<td>${b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td></tr>`).join('')+'</table></div>'
     : '<div class="empty">No real bookings yet.</div>';
   h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';
-  h += byAd.length ? `<table><tr><th>Ad (utm_content)</th><th>Bookings</th></tr>` +
-    byAd.map(([ad,n])=>`<tr><td>${ad==='(unattributed / direct)'?`<span style="color:var(--ink3)">${ad}</span>`:`<span class="tag real">${ad}</span>`}</td><td>${n}</td></tr>`).join('')+'</table>'
+  h += byAd.length ? `<table><tr><th>Ad</th><th>Ad set</th><th>Bookings</th></tr>` +
+    byAd.map(([ad,i])=>`<tr><td>${ad==='(unattributed / direct)'?`<span style="color:var(--ink3)">${ad}</span>`:`<span class="tag real">${ad}</span>`}</td>`+
+      `<td style="font-size:12px">${i.adset||'—'} ${i.retarget?retag:''}</td><td>${i.n}</td></tr>`).join('')+'</table>'
     : '<div class="empty">—</div>';
-  h += '<div class="st-note" style="margin-top:12px">Best-ad <b>booking rate</b> (bookings ÷ clicks per ad) and cost-per-booking unlock once the Meta export is broken down by <b>Ad name</b> — the current export is per ad set (one level up). The ad column fills in as new bookings arrive (UTMs went live Jul 24, so bookings before that read "direct").</div>';
+  h += '<div class="st-note" style="margin-top:12px"><b>Read the split, not just the total.</b> Retargeting ad sets convert a warm audience that already engaged, so those bookings aren\'t comparable to cold prospecting — compare the two separately. A true booking <b>rate</b> and cost-per-booking per ad need the Meta export broken down by Ad name (currently per ad set).</div>';
   $('report').innerHTML = h;
 })();
 

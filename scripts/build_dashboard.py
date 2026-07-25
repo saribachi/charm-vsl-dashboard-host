@@ -30,6 +30,16 @@ VSL_MEDIA_ID = "swyi1909di"          # VSL 005 — live GTM VSL
 GTM_FORM_ID = "XwtroXXXZ58OVpL4pEqy"  # GTM Services form VSL ONLY
 GTM_CALENDAR_ID = "KDdgICxdFa0FJQgNSt8c"  # Charm - GTM VSL ONLY
 
+# GHL custom fields that capture the ad UTMs on the contact (written from the booking
+# URL params — NOT in GHL's native attributionSource, which reads "Direct traffic").
+UTM_FIELD_IDS = {
+    "utm_source": "XbqI6HLGdJKCL18xfqrY",
+    "utm_medium": "bCwzhLnzjAG1z0n3BuDg",
+    "utm_campaign": "cADGo06z5WiKVDgULcaM",
+    "utm_content": "XlRkyGbQihyHZeE2Bxxk",   # = ad name  (join key)
+    "utm_term": "evvs35rWaeYbb8jzQNYe",       # = ad set name
+}
+
 # Internal/test/invalid submitters — excluded from "real lead" counts
 TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
                "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
@@ -127,16 +137,15 @@ def main():
         if cid and cid not in contact_cache:
             try:
                 con = ghl(f"contacts/{cid}").get("contact", {})
-                # prefer the converting session (last touch), fall back to first touch —
-                # so an ad click before booking is captured even for returning leads.
-                last = con.get("lastAttributionSource") or {}
-                first = con.get("attributionSource") or {}
+                # UTMs are captured into custom fields on the contact (not native attribution).
+                cf = {f.get("id"): (f.get("value") or None) for f in (con.get("customFields") or [])}
                 nm = con.get("contactName") or " ".join(
                     x for x in [con.get("firstName"), con.get("lastName")] if x)
+                ws = lambda v: " ".join(v.split()) if v else None  # collapse URL-encoding spaces
                 contact_cache[cid] = {"email": con.get("email"), "name": nm,
-                                      "utm_content": last.get("utmContent") or first.get("utmContent"),
-                                      "utm_source": last.get("utmSource") or first.get("utmSource"),
-                                      "session": last.get("sessionSource") or first.get("sessionSource")}
+                                      "utm_content": ws(cf.get(UTM_FIELD_IDS["utm_content"])),
+                                      "utm_source": ws(cf.get(UTM_FIELD_IDS["utm_source"])),
+                                      "utm_term": ws(cf.get(UTM_FIELD_IDS["utm_term"]))}
             except Exception:
                 contact_cache[cid] = {}
         info = contact_cache.get(cid, {})

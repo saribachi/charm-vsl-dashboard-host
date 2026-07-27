@@ -133,11 +133,14 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
 
 // FUNNEL
 (function(){
-  // biggest drop among stages that actually have volume (ignore the test-phase 0s)
+  // biggest drop within the acquisition funnel (ignore 0-volume + post-booking
+  // stages like held/qualified, whose "drop" is just calls scheduled in the future)
+  const postBook = ['Calls held','Qualified','Deals closed','Cash collected'];
   let biggestDrop = {i:-1, d:0};
   DATA.funnel.forEach((s,i)=>{
     const prev = DATA.funnel[i-1];
-    if(s.conv && s.raw>0 && prev && prev.raw>0){ const c=parseFloat(s.conv); const d = 100 - c;
+    if(s.conv && s.raw>0 && prev && prev.raw>0 && !postBook.includes(s.label)){
+      const c=parseFloat(s.conv); const d = 100 - c;
       if(c<=100 && d > biggestDrop.d){ biggestDrop = {i, d}; } }
   });
   $('funnel').innerHTML = DATA.funnel.map((s,i)=>{
@@ -217,7 +220,16 @@ $('details').innerHTML = html;
     byAd.map(([ad,i])=>`<tr><td>${ad==='(unattributed / direct)'?`<span style="color:var(--ink3)">${ad}</span>`:`<span class="tag real">${ad}</span>`}</td>`+
       `<td style="font-size:12px">${i.adset||'—'} ${i.retarget?retag:''}</td><td>${i.n}</td></tr>`).join('')+'</table>'
     : '<div class="empty">—</div>';
-  h += '<div class="st-note" style="margin-top:12px"><b>Read the split, not just the total.</b> Retargeting ad sets convert a warm audience that already engaged, so those bookings aren\'t comparable to cold prospecting — compare the two separately. A true booking <b>rate</b> and cost-per-booking per ad need the Meta export broken down by Ad name (currently per ad set).</div>';
+  // ad-set efficiency: GHL bookings ÷ Meta spend
+  const eff = R.adset_efficiency||[];
+  h += '<div style="font-weight:600;margin:20px 0 8px">Ad set efficiency <span style="color:var(--ink3);font-weight:400;font-size:12px">— cost per booking (GHL bookings × Meta spend)</span></div>';
+  h += eff.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Ad set</th><th>Spend</th><th>Clicks</th><th>Bookings</th><th>Cost / booking</th><th>Book rate</th></tr>` +
+    eff.map(r=>`<tr><td>${r.ad_set} ${r.retarget?retag:''}</td><td>$${(r.spend||0).toLocaleString(undefined,{maximumFractionDigits:0})}</td>`+
+      `<td>${(r.clicks||0).toLocaleString()}</td><td>${r.bookings}</td>`+
+      `<td>${r.cost_per_booking!=null?`<b>$${r.cost_per_booking.toLocaleString(undefined,{maximumFractionDigits:0})}</b>`:'<span style="color:var(--ink3)">no bookings yet</span>'}</td>`+
+      `<td>${r.booking_rate!=null?r.booking_rate+'%':'—'}</td></tr>`).join('')+'</table></div>'
+    : '<div class="empty">Add a Meta ad-set CSV to see cost per booking.</div>';
+  h += '<div class="st-note" style="margin-top:12px"><b>Bookings come from GHL</b> (deterministic, per-lead via utm_content) — not Meta\'s modeled Schedule. Retargeting is cheap per booking because it harvests a warm audience; the <b>cold-prospecting</b> cost-per-booking is the real signal for whether new demand scales. This is per ad <b>set</b>; a per-<b>ad</b> (creative) view would need a Meta export broken down by Ad name.</div>';
   $('report').innerHTML = h;
 })();
 

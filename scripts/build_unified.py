@@ -5,9 +5,45 @@ Reads data/_vsl.json and data/_ad.json (dumped by the two builds) and renders
 one continuous funnel with the headline KPIs on top. Run after both builds.
 """
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def _canon(s):
+    """Canonical ad-set name for joining Meta (uses '+') to GHL utm_term (URL-decoded)."""
+    return re.sub(r"\s+", " ", (s or "").lower().replace("+", " ")).strip()
+
+
+def adset_efficiency(ba):
+    """Per-ad-set: Meta spend/clicks (from ad_daily.json) joined to GHL bookings
+    (bookings_attribution.by_adset, matched on canonicalized ad-set name)."""
+    meta = {}
+    try:
+        for r in json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", []):
+            k = r.get("ad_set_name")
+            if not k:
+                continue
+            m = meta.setdefault(k, {"spend": 0.0, "clicks": 0.0})
+            m["spend"] += r.get("spend", 0) or 0
+            m["clicks"] += r.get("link_clicks", 0) or 0
+    except Exception:
+        return []
+    ghl = {}
+    for k, v in (ba.get("by_adset") or {}).items():
+        if k and k != "(unattributed / direct)":
+            ghl[_canon(k)] = ghl.get(_canon(k), 0) + v
+    rows = []
+    for name, m in meta.items():
+        bk = ghl.get(_canon(name), 0)
+        rows.append({"ad_set": name, "spend": round(m["spend"], 2), "clicks": int(m["clicks"]),
+                     "bookings": bk,
+                     "cost_per_booking": round(m["spend"] / bk, 2) if bk else None,
+                     "booking_rate": round(100 * bk / m["clicks"], 1) if m["clicks"] else None,
+                     "retarget": "retarget" in name.lower()})
+    rows.sort(key=lambda r: (r["cost_per_booking"] is None, r["cost_per_booking"] or 0))
+    return rows
 
 
 def div(n, d):
@@ -123,6 +159,7 @@ def main():
                 "retarget_booked": ba.get("retarget_booked", 0),
                 "prospect_booked": ba.get("prospect_booked", 0),
                 "total_bookings": ba.get("total_real", 0),
+                "adset_efficiency": adset_efficiency(ba),
             },
         },
     }

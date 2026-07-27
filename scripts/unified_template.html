@@ -189,6 +189,10 @@ html += `<details open><summary>Best ads &amp; lead-to-ad attribution <span clas
 const Q = D.qualification||{};
 html += `<details open><summary>Form qualification <span style="color:var(--ink3);font-weight:400;font-size:12px">(automatic gate)</span> <span class="cnt">${Q.with_answers?`${Q.with_answers} classified · ${Q.qualified} qualified`:'form live — awaiting real submissions'}</span></summary><div class="det-body" id="qual"></div></details>`;
 
+// Lead quality + qualifier impact
+const LQ = D.lead_quality||{};
+html += `<details open><summary>Lead quality <span style="color:var(--ink3);font-weight:400;font-size:12px">(who's coming in)</span> <span class="cnt">${LQ.total?`${LQ.company_pct}% company · ${LQ.free_pct}% free-mail`:'awaiting submissions'}</span></summary><div class="det-body" id="quality"></div></details>`;
+
 // Video engagement
 html += `<details><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
 // RB2B
@@ -259,6 +263,31 @@ $('details').innerHTML = html;
   h += '<table><tr><th>Outcome</th><th>Count</th></tr>'+
     ['qualified','dq_capacity','dq_acv_low','dq_revenue_acv'].map(k=>`<tr><td>${k==='qualified'?`<span class="tag live">${labels[k]}</span>`:`<span class="tag needs">${labels[k]}</span>`}</td><td>${mix[k]||0}</td></tr>`).join('')+'</table>';
   h += '<div class="st-note" style="margin-top:12px"><b>Calendar completion</b> (booked ÷ qualified) isolates booking friction from lead quality. <b>DQ mix</b> tells you which gate to loosen — a spike in "ACV under $5K" points at traffic targeting, not the rule.</div>';
+  host.innerHTML = h;
+})();
+
+// lead quality + qualifier impact
+(function(){
+  const L = D.lead_quality||{}, QI = D.qualifier_impact||{}, host = $('quality');
+  if(!L.total){ host.innerHTML = '<div class="empty">Awaiting real submissions.</div>'; return; }
+  const bt = L.by_type||{}, c = bt.company||{}, f = bt.free||{};
+  let h = `<div class="mini" style="grid-template-columns:repeat(4,1fr)">`+
+    `<div class="b"><div class="bv">${L.company_pct}%</div><div class="bl">Company email (${L.company})</div></div>`+
+    `<div class="b"><div class="bv">${L.free_pct}%</div><div class="bl">Free-mail · gmail etc. (${L.free})</div></div>`+
+    `<div class="b"><div class="bv">${L.website_pct}%</div><div class="bl">Gave a website</div></div>`+
+    `<div class="b"><div class="bv">${L.free_with_site!=null?L.free_with_site:'—'}</div><div class="bl">Free-mail w/ real business site</div></div></div>`;
+  h += '<div style="font-weight:600;margin:6px 0 8px">Does email type predict booking?</div>';
+  h += '<table><tr><th>Email type</th><th>Leads</th><th>Booked</th><th>Booking rate</th></tr>'+
+    `<tr><td><span class="tag live">Company domain</span></td><td>${c.n||0}</td><td>${c.booked||0}</td><td>${c.booking_rate!=null?c.booking_rate+'%':'—'}</td></tr>`+
+    `<tr><td><span class="tag test">Free-mail</span></td><td>${f.n||0}</td><td>${f.booked||0}</td><td>${f.booking_rate!=null?f.booking_rate+'%':'—'}</td></tr>`+
+    '</table>';
+  const b = QI.before||{}, a = QI.after||{};
+  h += `<div style="font-weight:600;margin:14px 0 8px">Qualifier impact — before vs after ${QI.gate_date||'Jul 27'}</div>`;
+  h += '<table><tr><th></th><th>Submissions</th><th>Booked</th><th>Booking rate</th></tr>'+
+    `<tr><td>Before gate</td><td>${b.subs||0}</td><td>${b.booked||0}</td><td>${b.booking_rate!=null?b.booking_rate+'%':'—'}</td></tr>`+
+    `<tr><td>After gate</td><td>${a.subs||0}</td><td>${a.booked||0}</td><td>${a.booking_rate!=null?a.booking_rate+'%':'—'}</td></tr>`+
+    '</table>';
+  h += '<div class="st-note" style="margin-top:12px">Free-mail isn\'t automatically low-intent — many run real businesses on gmail (see <b>free-mail w/ site</b>). Watch <b>booking rate by type</b> and the <b>before/after</b> split as post-gate volume builds; a few days in, "after" is still thin.</div>';
   host.innerHTML = h;
 })();
 

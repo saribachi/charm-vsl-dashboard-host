@@ -150,6 +150,7 @@ def main():
                  "ts": x.get("createdAt"),
                  "email": x.get("email"),
                  "name": x.get("name"),
+                 "website": (x.get("others") or {}).get("website"),
                  "qual": classify_qual(x.get("others") or {}),
                  "test": is_test(x.get("email"), x.get("name"))} for x in subs]
     real_subs = [x for x in sub_rows if not x["test"]]
@@ -220,6 +221,55 @@ def main():
         "booked_qualified": booked_qualified,
         "calendar_completion": round(100 * booked_qualified / n_qualified, 1) if n_qualified else None,
     }
+    # ---- qualifier-impact: before vs after the gate went live (Jul 27) ----
+    def cohort(rows):
+        n = len(rows)
+        bk = sum(1 for x in rows if (x.get("email") or "").lower() in booked_emails)
+        return {"subs": n, "booked": bk,
+                "booking_rate": round(100 * bk / n, 1) if n else None}
+    before = [x for x in real_subs if x["date"] and x["date"] < QUALIFIER_FORM_DATE]
+    after = [x for x in real_subs if x["date"] and x["date"] >= QUALIFIER_FORM_DATE]
+    qualifier_impact = {"gate_date": QUALIFIER_FORM_DATE,
+                        "before": cohort(before), "after": cohort(after)}
+
+    # ---- lead quality: free-mail vs company domain, website, email↔site match ----
+    FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "ymail.com",
+                 "hotmail.com", "hotmail.co.uk", "outlook.com", "live.com", "msn.com",
+                 "icloud.com", "me.com", "mac.com", "aol.com", "protonmail.com", "proton.me",
+                 "pm.me", "gmx.com", "gmx.net", "mail.com", "zoho.com", "yandex.com", "hey.com",
+                 "comcast.net", "verizon.net", "sbcglobal.net", "att.net", "cox.net", "fastmail.com"}
+
+    def email_dom(s):
+        s = (s or "").lower().strip()
+        return s.rsplit("@", 1)[-1] if "@" in s else ""
+
+    def site_dom(s):
+        s = (s or "").lower().strip()
+        s = re.sub(r"^https?://", "", s)
+        s = re.sub(r"^www\.", "", s).split("/")[0].split("?")[0]
+        return s.strip()
+
+    def quality_grp(rows):
+        n = len(rows)
+        bk = sum(1 for x in rows if (x.get("email") or "").lower() in booked_emails)
+        return {"n": n, "booked": bk, "booking_rate": round(100 * bk / n, 1) if n else None}
+
+    comp_rows = [x for x in real_subs if email_dom(x.get("email")) and email_dom(x.get("email")) not in FREE_MAIL]
+    free_rows = [x for x in real_subs if email_dom(x.get("email")) in FREE_MAIL]
+    n_subs = len(real_subs)
+    n_site = sum(1 for x in real_subs if site_dom(x.get("website")))
+    free_with_site = sum(1 for x in free_rows if site_dom(x.get("website")))
+    lead_quality = {
+        "total": n_subs,
+        "company": len(comp_rows), "free": len(free_rows),
+        "company_pct": round(100 * len(comp_rows) / n_subs, 1) if n_subs else None,
+        "free_pct": round(100 * len(free_rows) / n_subs, 1) if n_subs else None,
+        "website_pct": round(100 * n_site / n_subs, 1) if n_subs else None,
+        "free_with_site": free_with_site,   # free-mail leads that still have a real business site
+        "free_with_site_pct": round(100 * free_with_site / len(free_rows), 1) if free_rows else None,
+        "by_type": {"company": quality_grp(comp_rows), "free": quality_grp(free_rows)},
+    }
+
     dayai_gtm = [c for c in dayai["contacts"] if c["form"] == "GTM Services"]
 
     # ground-truth GHL counts for the ad funnel to reconcile against (Meta's Lead
@@ -405,6 +455,8 @@ def main():
         "real_form_fills": len(real_subs),
         "real_bookings": len(real_booked),
         "qualification": qualification,
+        "qualifier_impact": qualifier_impact,
+        "lead_quality": lead_quality,
         "bookings_attribution": {"total_real": len(real_booked), "ad_attributed": ad_attributed,
                                  "by_ad": bookings_by_ad, "by_adset": bookings_by_adset,
                                  "retarget_booked": retarget_booked, "prospect_booked": prospect_booked},

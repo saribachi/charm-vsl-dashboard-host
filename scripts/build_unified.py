@@ -164,6 +164,8 @@ def main():
             "coverage": vsl.get("coverage", []), "angles": ad.get("angles", []),
             "ghl_reconciled": ghl, "field_reality": ad.get("field_reality", {}),
             "qualification": vsl.get("qualification", {}),
+            "qualifier_impact": vsl.get("qualifier_impact", {}),
+            "lead_quality": vsl.get("lead_quality", {}),
             "report": {
                 "bookings": vsl.get("real_bookings_detail", []),
                 "by_ad": ba.get("by_ad", {}),

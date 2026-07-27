@@ -39,6 +39,12 @@ def rebuild():
     blob = os.environ.get("AD_DAILY_JSON")
     if blob and not AD_DAILY.exists():
         AD_DAILY.write_text(blob)
+    # Post-call qualification store (has lead PII) — injected via env, kept out of the repo.
+    pc = os.environ.get("POST_CALL_JSON")
+    if pc:
+        pcf = ROOT / "data/manual/post_call.json"
+        pcf.parent.mkdir(parents=True, exist_ok=True)
+        pcf.write_text(pc)
     ok = True
     for b in BUILDS:
         try:

@@ -81,6 +81,7 @@ def main():
     real_booked = int(vsl.get("real_bookings") or 0)
     held = vsl.get("meetings_held")
     dayai_on = held is not None
+    pc = vsl.get("post_call", {})
     rb2b = vsl.get("rb2b", {})
 
     ctr = div(clicks, impressions)
@@ -132,14 +133,18 @@ def main():
               cost=(f"{money(cpff)}/lead" if cpff else None), note="real leads, tests excluded"),
         stage("Booked calls", real_booked, "GHL", "live", prev=real_forms,
               cost=(f"{money(cpbooked)}/call" if cpbooked else None), note=booked_note),
-        stage("Calls held", held, "Day AI", "live" if dayai_on else "needs", prev=real_booked),
-        stage("Qualified", None, "CRM", "needs"),
-        stage("Deals closed", None, "CRM", "needs"),
-        stage("Cash collected", None, "CRM", "needs"),
+        stage("Calls held", held, "Day AI + Chris", "live" if (held or 0) else "needs",
+              prev=real_booked, note=(f"{pc.get('pending',0)} awaiting post-call verdict" if pc.get("pending") else None)),
+        stage("Qualified", (vsl.get("meetings_qualified") if pc.get("held") else None),
+              "Chris (post-call)", "live" if pc.get("held") else "needs", prev=held,
+              note=(f"{pc.get('unqualified',0)} not a fit" if pc.get("unqualified") else None)),
+        stage("Deals closed", None, "CRM (Day AI)", "needs"),
+        stage("Cash collected", None, "CRM (Day AI)", "needs"),
     ]
 
     data = {
         "generated_at": vsl.get("generated_at"),
+        "qualifier_form_date": vsl.get("qualifier_form_date"),
         "context": {"impressions": impressions, "reach": reach, "spend": money(spend),
                     "cpm": money(div(spend, impressions) * 1000) if impressions else None,
                     "ctr": pct(ctr)},

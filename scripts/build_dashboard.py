@@ -63,6 +63,11 @@ def classify_qual(others):
         return "dq_revenue_acv"
     return "qualified"
 
+
+# When the qualifier questions were added — submissions/bookings before this predate
+# the gate, so form-fill and booking rates before/after aren't directly comparable.
+QUALIFIER_FORM_DATE = "2026-07-27"
+
 # Internal/test/invalid submitters — excluded from "real lead" counts
 TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
                "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
@@ -309,6 +314,13 @@ def main():
         "within_1hr": sum(1 for s in speeds if s <= 60),
     }
 
+    # ---- post-call qualification (manual, from Chris) — SEPARATE from the form gate ----
+    pc_path = ROOT / "data/manual/post_call.json"
+    post_call_leads = {}
+    if pc_path.exists():
+        post_call_leads = {k.lower(): v for k, v in
+                           json.loads(pc_path.read_text()).get("leads", {}).items()}
+
     # ---- held-call status from Day AI (show-rate), guarded to real booked leads ----
     # A call is "held" only when the booked lead's EMAIL is an attendee on a Day AI
     # meeting recording. Email-only (deterministic) — no name/title matching, which
@@ -343,6 +355,22 @@ def main():
             print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call (by email): {held_names}")
     except Exception as ex:
         print(f"Day AI held-call pull skipped ({ex})")
+
+    # apply post-call qualification (manual) — a judgment implies the call was HELD.
+    # Kept SEPARATE from the form gate: this is fit-after-the-call, not who-reached-the-calendar.
+    for e in real_booked:
+        pc = post_call_leads.get((e.get("_email") or "").lower())
+        e["_post_call"] = pc
+        if pc:
+            e["_held"] = True
+    meetings_held = sum(1 for e in real_booked if e.get("_held"))
+    post_call = {
+        "held": meetings_held,
+        "qualified": sum(1 for e in real_booked if (e.get("_post_call") or {}).get("qualified") is True),
+        "unqualified": sum(1 for e in real_booked if (e.get("_post_call") or {}).get("qualified") is False),
+        "pending": sum(1 for e in real_booked if e.get("_held") and not e.get("_post_call")),
+    }
+    meetings_qualified = post_call["qualified"]
 
     # ---- post-ad funnel: inter-stage conversion rates (guarded) ----
     def rate(n, d, need):
@@ -424,8 +452,15 @@ def main():
             "ad": e.get("_utm_content"), "ad_set": e.get("_utm_term"),
             "retarget": is_retarget(e.get("_utm_term")),
             "utm_source": e.get("_utm_source"),
-            "held": e.get("_held", False)} for e in real_booked],
+            "held": e.get("_held", False),
+            "post_call": (e.get("_post_call") or {}).get("qualified") if e.get("_post_call") else None,
+            "form_qual": next((x["qual"] for x in sub_rows
+                               if (x.get("email") or "").lower() == (e.get("_email") or "").lower() and x.get("qual")), None),
+            "pre_gate": ((e.get("startTime") or "")[:10] < QUALIFIER_FORM_DATE)} for e in real_booked],
         "meetings_held": meetings_held,
+        "meetings_qualified": meetings_qualified,
+        "post_call": post_call,
+        "qualifier_form_date": QUALIFIER_FORM_DATE,
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],
                    "plays": s["plays"], "watched_50": watched_50},
     }

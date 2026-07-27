@@ -170,7 +170,7 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
   }).join('');
 })();
 
-$('phase-note').innerHTML = `<b>Early / test phase.</b> Real (non-test) form fills and bookings are still near zero, so the bottom of the funnel and the lead-cost KPIs read as pending — they fill in automatically as real traffic converts. Meta's own Lead event isn't firing yet, so form fills come from GHL.`;
+$('phase-note').innerHTML = `<b>Qualifier questions added ${DATA.qualifier_form_date||'Jul 27'}.</b> Submissions and bookings before then predate the gate, so form-fill volume and booking rates aren't directly comparable across that line — the new questions will likely lower form-fill volume and change who books. <b>Two qualification axes, kept separate:</b> the <b>form gate</b> (automatic, who reaches the calendar) and <b>post-call</b> (Chris's fit judgment after the call) — a lead can pass one and fail the other.`;
 
 // ---------- DRILL DOWN ----------
 const D = DATA.detail;
@@ -183,7 +183,7 @@ html += `<details open><summary>Best ads &amp; lead-to-ad attribution <span clas
 
 // Qualification (form gate)
 const Q = D.qualification||{};
-html += `<details open><summary>Qualification <span class="cnt">${Q.with_answers?`${Q.with_answers} classified · ${Q.qualified} qualified`:'form live — awaiting real submissions'}</span></summary><div class="det-body" id="qual"></div></details>`;
+html += `<details open><summary>Form qualification <span style="color:var(--ink3);font-weight:400;font-size:12px">(automatic gate)</span> <span class="cnt">${Q.with_answers?`${Q.with_answers} classified · ${Q.qualified} qualified`:'form live — awaiting real submissions'}</span></summary><div class="det-body" id="qual"></div></details>`;
 
 // Video engagement
 html += `<details><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
@@ -213,11 +213,15 @@ $('details').innerHTML = html;
     `<div class="b"><div class="bv">${R.retarget_booked||0}</div><div class="bl">retargeting (warm)</div></div>`+
     `<div class="b"><div class="bv">${R.prospect_booked||0}</div><div class="bl">prospecting (cold)</div></div></div>`;
   h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad</div>';
-  h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Held?</th></tr>` +
+  const pcCell = b => b.post_call===true ? '<span class="tag live">qualified ✓</span>'
+    : b.post_call===false ? '<span class="tag needs">not a fit</span>'
+    : b.held ? '<span style="color:var(--amber-ink,#8a6410)">pending</span>' : '<span style="color:var(--ink3)">—</span>';
+  h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Held?</th><th>Post-call</th></tr>` +
     bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
       `<td>${b.ad?`<span class="tag real">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
       `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
-      `<td>${b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td></tr>`).join('')+'</table></div>'
+      `<td>${b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td>`+
+      `<td>${pcCell(b)}</td></tr>`).join('')+'</table></div>'
     : '<div class="empty">No real bookings yet.</div>';
   h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';
   h += byAd.length ? `<table><tr><th>Ad</th><th>Ad set</th><th>Bookings</th></tr>` +

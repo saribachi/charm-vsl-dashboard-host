@@ -41,6 +41,28 @@ UTM_FIELD_IDS = {
     "utm_term": "evvs35rWaeYbb8jzQNYe",       # = ad set name
 }
 
+# Qualification gate on the GTM form — three qualifier answers in the submission "others".
+QUAL_FIELDS = {"revenue": "t8kIeNWMhGLyKmelKXYL",       # Annual Revenue
+               "acv": "IUjCRF0gg4GKikd3DmlK",           # Average contract value
+               "capacity": "UX6TIRA7aL6rjW65oKwV"}      # could you service 20 mtgs?
+
+
+def classify_qual(others):
+    """Deterministic per the GTM qualification spec; first match wins. Returns None
+    for submissions that predate the qualifier form (no qualifier answers)."""
+    rev = others.get(QUAL_FIELDS["revenue"])
+    acv = others.get(QUAL_FIELDS["acv"])
+    cap = others.get(QUAL_FIELDS["capacity"])
+    if not (rev or acv or cap):
+        return None
+    if cap == "No, we're at capacity":
+        return "dq_capacity"
+    if acv == "Under $5K":
+        return "dq_acv_low"
+    if rev == "Under $1M" and acv == "$5K to $14K":
+        return "dq_revenue_acv"
+    return "qualified"
+
 # Internal/test/invalid submitters — excluded from "real lead" counts
 TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
                "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
@@ -120,6 +142,7 @@ def main():
                  "ts": x.get("createdAt"),
                  "email": x.get("email"),
                  "name": x.get("name"),
+                 "qual": classify_qual(x.get("others") or {}),
                  "test": is_test(x.get("email"), x.get("name"))} for x in subs]
     real_subs = [x for x in sub_rows if not x["test"]]
 
@@ -170,6 +193,25 @@ def main():
     is_retarget = lambda s: "retarget" in (s or "").lower()
     retarget_booked = sum(v for k, v in bookings_by_adset.items() if is_retarget(k))
     prospect_booked = ad_attributed - retarget_booked
+
+    # ---- qualification gate (GTM form) — submissions carrying qualifier answers ----
+    qual_rows = [x for x in sub_rows if not x["test"] and x.get("qual")]
+    qual_mix = {}
+    for x in qual_rows:
+        qual_mix[x["qual"]] = qual_mix.get(x["qual"], 0) + 1
+    n_with = len(qual_rows)
+    n_qualified = qual_mix.get("qualified", 0)
+    booked_emails = {(e.get("_email") or "").lower() for e in real_booked} - {""}
+    qualified_emails = {(x["email"] or "").lower() for x in qual_rows if x["qual"] == "qualified"} - {""}
+    booked_qualified = len(qualified_emails & booked_emails)
+    qualification = {
+        "with_answers": n_with,                      # real subs carrying the qualifier answers
+        "qualified": n_qualified,
+        "mix": qual_mix,                             # counts by dq_capacity/dq_acv_low/dq_revenue_acv/qualified
+        "qualification_rate": round(100 * n_qualified / n_with, 1) if n_with else None,
+        "booked_qualified": booked_qualified,
+        "calendar_completion": round(100 * booked_qualified / n_qualified, 1) if n_qualified else None,
+    }
     dayai_gtm = [c for c in dayai["contacts"] if c["form"] == "GTM Services"]
 
     # ground-truth GHL counts for the ad funnel to reconcile against (Meta's Lead
@@ -372,6 +414,7 @@ def main():
         },
         "real_form_fills": len(real_subs),
         "real_bookings": len(real_booked),
+        "qualification": qualification,
         "bookings_attribution": {"total_real": len(real_booked), "ad_attributed": ad_attributed,
                                  "by_ad": bookings_by_ad, "by_adset": bookings_by_adset,
                                  "retarget_booked": retarget_booked, "prospect_booked": prospect_booked},

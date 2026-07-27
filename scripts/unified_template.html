@@ -181,6 +181,10 @@ let html = '';
 const R = D.report||{};
 html += `<details open><summary>Best ads &amp; lead-to-ad attribution <span class="cnt">${R.total_bookings||0} booking(s) · ${R.ad_attributed||0} tagged to an ad</span></summary><div class="det-body" id="report"></div></details>`;
 
+// Qualification (form gate)
+const Q = D.qualification||{};
+html += `<details open><summary>Qualification <span class="cnt">${Q.with_answers?`${Q.with_answers} classified · ${Q.qualified} qualified`:'form live — awaiting real submissions'}</span></summary><div class="det-body" id="qual"></div></details>`;
+
 // Video engagement
 html += `<details><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
 // Follow-up
@@ -231,6 +235,26 @@ $('details').innerHTML = html;
     : '<div class="empty">Add a Meta ad-set CSV to see cost per booking.</div>';
   h += '<div class="st-note" style="margin-top:12px"><b>Bookings come from GHL</b> (deterministic, per-lead via utm_content) — not Meta\'s modeled Schedule. Retargeting is cheap per booking because it harvests a warm audience; the <b>cold-prospecting</b> cost-per-booking is the real signal for whether new demand scales. This is per ad <b>set</b>; a per-<b>ad</b> (creative) view would need a Meta export broken down by Ad name.</div>';
   $('report').innerHTML = h;
+})();
+
+// qualification (form gate)
+(function(){
+  const Q = D.qualification||{}, host = $('qual');
+  if(!Q.with_answers){
+    host.innerHTML = '<div class="empty">The qualifier form is live and <b>records all submissions incl. disqualified</b> (verified), so rates will be accurate. Metrics appear once real (non-test) submissions carry the qualifier answers.</div>';
+    return;
+  }
+  const mix = Q.mix||{};
+  const labels = {qualified:'Qualified — reached calendar', dq_capacity:'DQ · at capacity', dq_acv_low:'DQ · ACV under $5K', dq_revenue_acv:'DQ · under $1M rev + $5–14K ACV'};
+  let h = `<div class="mini" style="grid-template-columns:repeat(3,1fr)">`+
+    `<div class="b"><div class="bv">${Q.qualification_rate!=null?Q.qualification_rate+'%':'—'}</div><div class="bl">Qualification rate</div></div>`+
+    `<div class="b"><div class="bv">${Q.calendar_completion!=null?Q.calendar_completion+'%':'—'}</div><div class="bl">Calendar completion (booked ÷ qualified)</div></div>`+
+    `<div class="b"><div class="bv">${Q.with_answers}</div><div class="bl">classified submissions</div></div></div>`;
+  h += '<div style="font-weight:600;margin:6px 0 8px">DQ mix — which gate is firing</div>';
+  h += '<table><tr><th>Outcome</th><th>Count</th></tr>'+
+    ['qualified','dq_capacity','dq_acv_low','dq_revenue_acv'].map(k=>`<tr><td>${k==='qualified'?`<span class="tag live">${labels[k]}</span>`:`<span class="tag needs">${labels[k]}</span>`}</td><td>${mix[k]||0}</td></tr>`).join('')+'</table>';
+  h += '<div class="st-note" style="margin-top:12px"><b>Calendar completion</b> (booked ÷ qualified) isolates booking friction from lead quality. <b>DQ mix</b> tells you which gate to loosen — a spike in "ACV under $5K" points at traffic targeting, not the rule.</div>';
+  host.innerHTML = h;
 })();
 
 // engagement curve

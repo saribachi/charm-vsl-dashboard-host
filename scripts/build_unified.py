@@ -151,6 +151,7 @@ def main():
             "followup": vsl.get("followup", {}), "rb2b": rb2b,
             "coverage": vsl.get("coverage", []), "angles": ad.get("angles", []),
             "ghl_reconciled": ghl, "field_reality": ad.get("field_reality", {}),
+            "qualification": vsl.get("qualification", {}),
             "report": {
                 "bookings": vsl.get("real_bookings_detail", []),
                 "by_ad": ba.get("by_ad", {}),

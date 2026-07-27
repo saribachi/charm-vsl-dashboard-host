@@ -143,13 +143,6 @@ footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
   <div id="rb2b-table"></div>
 </div>
 
-<div class="card">
-  <h2>Follow-up &amp; speed-to-lead</h2>
-  <div class="hint">Per lead: time from form fill to first outbound touch, and touch count — live from GHL conversations. The core "optimize follow-up" view.</div>
-  <div id="fu-summary"></div>
-  <div id="fu-table"></div>
-</div>
-
 <div class="grid2">
   <div class="card">
     <h2>Form submissions</h2>
@@ -366,28 +359,6 @@ function hideTT(){ tt.style.opacity = 0; }
     `<div class="insight${i.warn ? ' warn' : ''}"><div class="dot"></div><div>${i.text}</div></div>`).join('');
 })();
 
-// ---- follow-up / speed-to-lead ----
-(function(){
-  const fu = DATA.followup, S = fu.summary;
-  const speed = m => m == null ? '—' : m < 60 ? `${m} min` : m < 1440 ? `${(m/60).toFixed(1)} hr` : `${(m/1440).toFixed(1)} d`;
-  const tiles = [
-    {v: S.real_leads, l: 'Real leads'},
-    {v: S.never_contacted, l: 'Never followed up', warn: S.never_contacted > 0},
-    {v: S.median_speed_min == null ? 'awaiting real leads' : speed(S.median_speed_min), l: 'Median speed-to-lead', insuf: S.median_speed_min == null},
-    {v: S.real_leads ? `${S.within_5min}/${S.contacted}` : '—', l: 'Contacted ≤ 5 min'},
-  ];
-  $('fu-summary').innerHTML = '<div class="rate-strip">' + tiles.map(t =>
-    `<div class="rate"><div class="v${t.insuf?' insuf':''}"${t.warn?' style="color:var(--amber)"':''}>${t.v}</div><div class="l">${t.l}</div></div>`).join('') + '</div>';
-  $('fu-table').innerHTML = fu.leads.length ? `<table><tr><th>Lead</th><th>Form filled</th><th>First touch</th><th>Speed-to-lead</th><th>Touches</th><th></th></tr>` +
-    fu.leads.map(l => `<tr>
-      <td>${l.name || l.email || ''}</td>
-      <td>${(l.form_at||'').slice(0,16).replace('T',' ')}</td>
-      <td>${l.first_touch_at ? (l.first_touch_at).slice(0,16).replace('T',' ') : '<span style="color:var(--amber-ink,#8a6410)">no follow-up</span>'}</td>
-      <td>${speed(l.speed_min)}</td>
-      <td>${l.touches}</td>
-      <td><span class="tag ${l.test?'test':'real'}" style="${l.test?'':'background:var(--purple-soft);color:var(--purple)'}">${l.test?'test':'lead'}</span></td>
-    </tr>`).join('') + '</table>' : '<div class="empty">No form submissions yet.</div>';
-})();
 
 // ---- tables ----
 $('subs-table').innerHTML = DATA.submissions.length ? `<table><tr><th>Date</th><th>Name</th><th>Email</th><th></th></tr>` +

@@ -261,59 +261,6 @@ def main():
             daily.append({"date": d_, "loads": 0, "plays": 0, "subs": c})
     daily.sort(key=lambda r: r["date"])
 
-    # ---- follow-up / speed-to-lead (GHL conversations, live) ----
-    def parse_ts(iso):
-        if not iso:
-            return None
-        try:
-            return datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp()
-        except Exception:
-            return None
-
-    print("Pulling GHL conversations for follow-up…")
-    followup, msg_cache = [], {}
-    for sub in subs:
-        cid = sub.get("contactId")
-        form_ts = parse_ts(sub.get("createdAt"))
-        if cid and cid not in msg_cache:
-            msgs = []
-            try:
-                for c in ghl(f"conversations/search?contactId={cid}").get("conversations", []):
-                    mm = ghl(f"conversations/{c['id']}/messages").get("messages", {})
-                    arr = mm.get("messages", mm) if isinstance(mm, dict) else mm
-                    if isinstance(arr, list):
-                        msgs += arr
-            except Exception:
-                pass
-            msg_cache[cid] = msgs
-        msgs = msg_cache.get(cid, [])
-        # outbound comms (exclude TYPE_ACTIVITY_* records) that happened at/after the form fill
-        outs = []
-        for m in msgs:
-            t = (m.get("messageType") or m.get("type") or "")
-            mt = parse_ts(m.get("dateAdded"))
-            if m.get("direction") == "outbound" and not t.startswith("TYPE_ACTIVITY") and mt and (form_ts is None or mt >= form_ts):
-                outs.append(m)
-        outs.sort(key=lambda m: m.get("dateAdded", ""))
-        first = outs[0] if outs else None
-        stl = round((parse_ts(first["dateAdded"]) - form_ts) / 60.0, 1) if (first and form_ts) else None
-        followup.append({"name": sub.get("name"), "email": sub.get("email"),
-                         "test": is_test(sub.get("email"), sub.get("name")), "form_at": sub.get("createdAt"),
-                         "first_touch_at": first.get("dateAdded") if first else None,
-                         "speed_min": stl, "touches": len(outs), "contacted": bool(first)})
-
-    real_fu = [f for f in followup if not f["test"]]
-    contacted = [f for f in real_fu if f["contacted"]]
-    speeds = [f["speed_min"] for f in contacted if f["speed_min"] is not None]
-    fu_summary = {
-        "real_leads": len(real_fu),
-        "contacted": len(contacted),
-        "never_contacted": len(real_fu) - len(contacted),
-        "median_speed_min": round(sorted(speeds)[len(speeds) // 2], 1) if speeds else None,
-        "within_5min": sum(1 for s in speeds if s <= 5),
-        "within_1hr": sum(1 for s in speeds if s <= 60),
-    }
-
     # ---- post-call qualification (manual, from Chris) — SEPARATE from the form gate ----
     pc_path = ROOT / "data/manual/post_call.json"
     post_call_leads = {}
@@ -398,8 +345,6 @@ def main():
          "detail": "GTM Services form (VSL only), live via API."},
         {"stage": "Booking", "source": "GHL calendar", "status": "live",
          "detail": "GTM VSL calendar appointments, live via API."},
-        {"stage": "Follow-up / speed-to-lead", "source": "GHL conversations", "status": "live",
-         "detail": "Time-to-first-touch and outbound touch count per lead, computed live from GHL conversations."},
         {"stage": "Show / call held", "source": "Day AI (meeting recordings)", "status": "live" if dayai_conn else "available",
          "detail": ("Connected — a Day AI meeting recording with the lead as attendee = the call was held. Show-rate computes automatically once real leads book."
                     if dayai_conn else "A Day AI meeting recording with the lead as attendee = the call was held. Connection set up; add DAYAI_* creds to .env to activate.")},
@@ -413,7 +358,6 @@ def main():
         "video": {"name": media["name"], "id": VSL_MEDIA_ID, "duration": duration},
         "rates": rates,
         "coverage": coverage,
-        "followup": {"summary": fu_summary, "leads": real_fu},  # real leads only (tests hidden)
         "funnel": [
             {"stage": "Ad clicks", "value": None, "note": "Meta Ads pending — Ads MCP not yet enabled on the ad account"},
             {"stage": "VSL page loads", "value": s["pageLoads"], "note": "Wistia embed loads (incl. reloads)"},

@@ -187,9 +187,6 @@ html += `<details open><summary>Form qualification <span style="color:var(--ink3
 
 // Video engagement
 html += `<details><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
-// Follow-up
-const fu = D.followup||{}, S = fu.summary||{};
-html += `<details><summary>Follow-up &amp; speed-to-lead <span class="cnt">${S.real_leads||0} real leads · ${S.never_contacted||0} never contacted</span></summary><div class="det-body" id="fu"></div></details>`;
 // RB2B
 html += `<details><summary>Identified visitors (RB2B) <span class="cnt">${D.rb2b&&D.rb2b.connected?(D.rb2b.count+' people · '+D.rb2b.no_form+' no form'):'feed not connected'}</span></summary><div class="det-body" id="rb2b"></div></details>`;
 // Ad angles
@@ -277,19 +274,6 @@ $('details').innerHTML = html;
   const svg=host.querySelector('svg'), cross=svg.querySelector('#ec');
   svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const mx=(e.clientX-r.left)*W/r.width;const i=Math.max(0,Math.min(curve.length-1,Math.round((mx-P.l)/(W-P.l-P.r)*(curve.length-1))));cross.setAttribute('x1',x(i));cross.setAttribute('x2',x(i));cross.setAttribute('opacity',1);tip.style.opacity=1;tip.innerHTML=`<b>${mmss(i/(curve.length-1)*dur)}</b> — ${curve[i]}% still watching`;tip.style.left=(e.pageX+12)+'px';tip.style.top=(e.pageY-8)+'px';});
   svg.addEventListener('mouseleave',()=>{cross.setAttribute('opacity',0);tip.style.opacity=0;});
-})();
-
-// follow-up
-(function(){
-  const fu=D.followup||{}, S=fu.summary||{}, leads=fu.leads||[];
-  const speed=m=>m==null?'—':m<60?`${m} min`:m<1440?`${(m/60).toFixed(1)} hr`:`${(m/1440).toFixed(1)} d`;
-  const mini=[['Real leads',S.real_leads||0,false],['Never followed up',S.never_contacted||0,false],
-    ['Median speed-to-lead',S.median_speed_min==null?'awaiting leads':speed(S.median_speed_min),S.median_speed_min==null],
-    ['Contacted ≤5 min',S.real_leads?`${S.within_5min||0}/${S.contacted||0}`:'—',false]];
-  let h='<div class="mini">'+mini.map(m=>`<div class="b"><div class="bv ${m[2]?'insuf':''}">${m[1]}</div><div class="bl">${m[0]}</div></div>`).join('')+'</div>';
-  h+= leads.length?`<table><tr><th>Lead</th><th>Form filled</th><th>First touch</th><th>Speed</th><th>Touches</th><th></th></tr>`+
-    leads.map(l=>`<tr><td>${l.name||l.email||''}</td><td>${(l.form_at||'').slice(0,16).replace('T',' ')}</td><td>${l.first_touch_at?l.first_touch_at.slice(0,16).replace('T',' '):'<span style="color:var(--amber-ink)">no follow-up</span>'}</td><td>${speed(l.speed_min)}</td><td>${l.touches}</td><td><span class="tag ${l.test?'test':'real'}">${l.test?'test':'lead'}</span></td></tr>`).join('')+'</table>':'<div class="empty">No submissions yet.</div>';
-  $('fu').innerHTML=h;
 })();
 
 // rb2b

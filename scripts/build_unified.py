@@ -153,7 +153,7 @@ def main():
         "detail": {
             "video": vsl.get("video"), "avg_watched": vsl.get("avg_percent_watched"),
             "engagement_curve": vsl.get("engagement_curve", []),
-            "followup": vsl.get("followup", {}), "rb2b": rb2b,
+            "rb2b": rb2b,
             "coverage": vsl.get("coverage", []), "angles": ad.get("angles", []),
             "ghl_reconciled": ghl, "field_reality": ad.get("field_reality", {}),
             "qualification": vsl.get("qualification", {}),

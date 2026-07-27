@@ -284,7 +284,7 @@ $('details').innerHTML = html;
   $('coverage').innerHTML=`<table>`+c.map(x=>`<tr><td><b>${x.stage}</b></td><td><span class="tag ${x.status}">${L[x.status]||x.status}</span></td><td class="st-src">${x.source}</td><td style="color:var(--ink3);font-size:12px">${x.detail}</td></tr>`).join('')+'</table>';
 })();
 
-$('footer').innerHTML = `Full detail: <a class="plain" href="/vsl">VSL funnel</a> · <a class="plain" href="/ads">Ad funnel</a> &nbsp;·&nbsp; auto-refreshes hourly`;
+$('footer').innerHTML = `<a class="plain" href="/upload" style="font-weight:600">⬆ Update ad data (drop today's CSV)</a> &nbsp;·&nbsp; <a class="plain" href="/vsl">VSL detail</a> · <a class="plain" href="/ads">Ad detail</a> &nbsp;·&nbsp; auto-refreshes hourly`;
 </script>
 </body>
 </html>

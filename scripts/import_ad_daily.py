@@ -38,26 +38,37 @@ def pick_default():
     return max(hits, key=os.path.getmtime) if hits else None
 
 
+def rows_from_csv_text(text, source="upload"):
+    """Parse Meta ad-set CSV text -> {"_source", "rows":[...]}. Reused by the CLI
+    and the dashboard host's /upload endpoint. Raises ValueError on a bad CSV."""
+    import io
+    reader = csv.DictReader(io.StringIO(text.lstrip("﻿")))
+    if not reader.fieldnames or "Ad set name" not in reader.fieldnames:
+        raise ValueError("CSV missing an 'Ad set name' column — is this the ad-set export?")
+    rows = []
+    for x in reader:
+        if not (x.get("Ad set name") or "").strip():
+            continue
+        row = {}
+        for col, field in COLS.items():
+            raw = (x.get(col) or "").replace(",", "").strip()
+            if raw == "":
+                continue  # omit empties so presence detection -> NEEDS
+            row[field] = float(raw) if field in NUMERIC else raw
+        rows.append(row)
+    if not rows:
+        raise ValueError("No ad-set rows found in the CSV.")
+    return {"_source": f"Meta manual export ({source})", "rows": rows}
+
+
 def main(argv):
     src = argv[1] if len(argv) > 1 else pick_default()
     if not src or not os.path.exists(src):
         print("No CSV given and none found in ~/Downloads. Pass a path.")
         return 1
-    rows = []
     with open(src, newline="", encoding="utf-8-sig") as f:  # utf-8-sig strips Meta's BOM
-        for x in csv.DictReader(f):
-            if not (x.get("Ad set name") or "").strip():
-                continue
-            row = {}
-            for col, field in COLS.items():
-                raw = (x.get(col) or "").replace(",", "").strip()
-                if raw == "":
-                    continue  # omit empties so presence detection -> NEEDS
-                row[field] = float(raw) if field in NUMERIC else raw
-            rows.append(row)
-
-    out = {"_source": f"Meta manual export '{os.path.basename(src)}' — until Ads MCP is enabled",
-           "rows": rows}
+        out = rows_from_csv_text(f.read(), source=os.path.basename(src))
+    rows = out["rows"]
     (ROOT / "data/meta").mkdir(parents=True, exist_ok=True)
     (ROOT / "data/meta/ad_daily.json").write_text(json.dumps(out, indent=1))
 

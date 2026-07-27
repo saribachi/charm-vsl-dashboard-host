@@ -16,7 +16,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Poppins',system-ui,sans-serif;background:var(--surface);color:var(--ink);font-size:14px;line-height:1.5;padding:28px 20px 72px}
-.wrap{max-width:940px;margin:0 auto}
+.wrap{max-width:1060px;margin:0 auto}
 header{margin-bottom:20px}
 h1{font-size:24px;font-weight:800;letter-spacing:-.01em}
 h1 span{color:var(--purple)}
@@ -71,7 +71,11 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;color:var(--ink3);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:7px 9px;border-bottom:1px solid var(--line)}
 td{padding:8px 9px;border-bottom:1px solid var(--grid)}
 tr:last-child td{border-bottom:none}
-.tag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px}
+.tag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:normal}
+.adname{color:var(--purple);font-weight:600;font-size:12px;line-height:1.35}
+td{vertical-align:top}
+.det-body table td{word-break:break-word}
+.det-body th{white-space:normal}
 .tag.live{background:var(--good-bg);color:var(--good)}
 .tag.needs{background:var(--bad-bg);color:var(--bad)}
 .tag.proxy,.tag.available{background:var(--amber-bg);color:var(--amber-ink)}
@@ -215,14 +219,14 @@ $('details').innerHTML = html;
     : b.held ? '<span style="color:var(--amber-ink,#8a6410)">pending</span>' : '<span style="color:var(--ink3)">—</span>';
   h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Held?</th><th>Post-call</th></tr>` +
     bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
-      `<td>${b.ad?`<span class="tag real">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
+      `<td>${b.ad?`<span class="adname">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
       `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
       `<td>${b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td>`+
       `<td>${pcCell(b)}</td></tr>`).join('')+'</table></div>'
     : '<div class="empty">No real bookings yet.</div>';
   h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';
   h += byAd.length ? `<table><tr><th>Ad</th><th>Ad set</th><th>Bookings</th></tr>` +
-    byAd.map(([ad,i])=>`<tr><td>${ad==='(unattributed / direct)'?`<span style="color:var(--ink3)">${ad}</span>`:`<span class="tag real">${ad}</span>`}</td>`+
+    byAd.map(([ad,i])=>`<tr><td>${ad==='(unattributed / direct)'?`<span style="color:var(--ink3)">${ad}</span>`:`<span class="adname">${ad}</span>`}</td>`+
       `<td style="font-size:12px">${i.adset||'—'} ${i.retarget?retag:''}</td><td>${i.n}</td></tr>`).join('')+'</table>'
     : '<div class="empty">—</div>';
   // ad-set efficiency: GHL bookings ÷ Meta spend

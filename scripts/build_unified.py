@@ -88,6 +88,7 @@ def main():
     cpc = div(spend, clicks)
     cpff = div(spend, real_forms)
     cpbooked = div(spend, real_booked)
+    cc = vsl.get("cash_collected")  # VSL-attributed cash from Day AI (0 until a VSL lead closes)
 
     # ── headline KPIs ──
     def kpi(label, value, status, sub):
@@ -100,18 +101,20 @@ def main():
             "GHL actual" if cpff else "awaiting real leads"),
         kpi("Cost / booked call", money(cpbooked) if cpbooked else "—", "live" if cpbooked else "needs",
             "target $270" if not cpbooked else "vs $270 target"),
-        kpi("ROAS", "—", "needs", "needs CRM cash"),
+        kpi("ROAS", (f"{div(cc, spend):.1f}x" if cc else "—"),
+            "live" if cc else "needs",
+            "vs 5.0x target" if cc else "no VSL closes yet"),
     ]
 
     # ── the funnel: click -> cash (bars scaled to link clicks) ──
-    def stage(label, value, source, status, prev=None, cost=None, note=None):
+    def stage(label, value, source, status, prev=None, cost=None, note=None, money_val=False):
         conv = None
-        if value is not None and prev not in (None, 0):
+        if value is not None and prev not in (None, 0) and not money_val:
             conv = pct(div(value, prev))
         bar = 0.0
-        if value is not None and clicks:
+        if value is not None and clicks and not money_val:
             bar = max(0.0, min(1.0, value / clicks))
-        disp = f"{value:,.0f}" if isinstance(value, (int, float)) else None
+        disp = (money(value) if money_val else f"{value:,.0f}") if isinstance(value, (int, float)) else None
         return {"label": label, "value": disp, "raw": value, "bar": bar, "conv": conv,
                 "source": source, "status": status, "cost": cost, "note": note}
 
@@ -138,8 +141,12 @@ def main():
         stage("Qualified", (vsl.get("meetings_qualified") if pc.get("held") else None),
               "Chris (post-call)", "live" if pc.get("held") else "needs", prev=held,
               note=(f"{pc.get('unqualified',0)} not a fit" if pc.get("unqualified") else None)),
-        stage("Deals closed", None, "CRM (Day AI)", "needs"),
-        stage("Cash collected", None, "CRM (Day AI)", "needs"),
+        stage("Deals closed", vsl.get("deals_closed"), "Day AI",
+              "live" if vsl.get("deals_closed") is not None else "needs",
+              prev=vsl.get("meetings_qualified"),
+              note=("no VSL lead closed yet" if vsl.get("deals_closed") == 0 else None)),
+        stage("Cash collected", vsl.get("cash_collected"), "Day AI",
+              "live" if vsl.get("cash_collected") is not None else "needs", money_val=True),
     ]
 
     data = {

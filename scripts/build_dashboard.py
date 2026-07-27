@@ -68,6 +68,9 @@ def classify_qual(others):
 # the gate, so form-fill and booking rates before/after aren't directly comparable.
 QUALIFIER_FORM_DATE = "2026-07-27"
 
+# Day AI "Closed Won" stage — deals_closed/cash for VSL-attributed opportunities.
+CLOSED_WON_STAGE_ID = "bef2d697-5f90-4b8e-a421-b6ee3e359aed"
+
 # Internal/test/invalid submitters — excluded from "real lead" counts
 TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
                "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
@@ -272,7 +275,7 @@ def main():
     # A call is "held" only when the booked lead's EMAIL is an attendee on a Day AI
     # meeting recording. Email-only (deterministic) — no name/title matching, which
     # produced false positives (e.g. "mark" matching "Go-to-Market").
-    dayai_conn, meetings_held = False, None
+    dayai_conn, meetings_held, deals_closed, cash_collected = False, None, None, None
     try:
         import dayai as _dayai
         if _dayai.available():
@@ -300,6 +303,19 @@ def main():
             meetings_held = sum(1 for e in real_booked if e.get("_held"))
             held_names = [e.get("_email") for e in real_booked if e.get("_held")]
             print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call (by email): {held_names}")
+
+            # VSL-attributed closed deals + cash from Day AI Closed Won opps.
+            # Match ONLY real external VSL leads (drop internal reps who are on every deal).
+            vsl_lead_emails = {(x["email"] or "").lower() for x in sub_rows
+                               if not x["test"] and x.get("email")}
+            deals_closed, cash_collected = 0, 0.0
+            for o in day.closed_won(CLOSED_WON_STAGE_ID):
+                ext = [e for e in o["emails"] if not e.endswith("hirecharm.com")]
+                if any(e in vsl_lead_emails for e in ext):
+                    deals_closed += 1
+                    if o.get("amount"):
+                        cash_collected += o["amount"]
+            print(f"Day AI VSL-attributed closed deals: {deals_closed} · cash ${cash_collected:.0f}")
     except Exception as ex:
         print(f"Day AI held-call pull skipped ({ex})")
 
@@ -348,8 +364,10 @@ def main():
         {"stage": "Show / call held", "source": "Day AI (meeting recordings)", "status": "live" if dayai_conn else "available",
          "detail": ("Connected — a Day AI meeting recording with the lead as attendee = the call was held. Show-rate computes automatically once real leads book."
                     if dayai_conn else "A Day AI meeting recording with the lead as attendee = the call was held. Connection set up; add DAYAI_* creds to .env to activate.")},
-        {"stage": "Qualified · Close · Cash", "source": "Day AI / CRM", "status": "needs",
-         "detail": "The CRM join is not wired (this is the ad funnel's Tier 2). Blocks qualified-rate, close-rate, CAC, ROAS."},
+        {"stage": "Qualified (post-call)", "source": "Chris (manual verdict)", "status": "live",
+         "detail": "Chris's fit judgment after each held call — separate from the automatic form gate."},
+        {"stage": "Deals closed · Cash · ROAS", "source": "Day AI (Closed Won + Amount)", "status": "live" if dayai_conn else "needs",
+         "detail": f"Wired to Day AI Closed Won opps, matched to real VSL leads (external contact, internal reps excluded). {deals_closed if deals_closed is not None else '—'} closed / ${cash_collected:,.0f} so far — the VSL funnel is days old, so none have closed yet." if dayai_conn else "Day AI connection unavailable this build."},
     ]
 
     data = {
@@ -403,6 +421,8 @@ def main():
             "pre_gate": ((e.get("startTime") or "")[:10] < QUALIFIER_FORM_DATE)} for e in real_booked],
         "meetings_held": meetings_held,
         "meetings_qualified": meetings_qualified,
+        "deals_closed": deals_closed,
+        "cash_collected": cash_collected,
         "post_call": post_call,
         "qualifier_form_date": QUALIFIER_FORM_DATE,
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],

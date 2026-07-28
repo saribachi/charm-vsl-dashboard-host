@@ -226,7 +226,7 @@ $('details').innerHTML = html;
     bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
       `<td>${b.ad?`<span class="adname">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
       `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
-      `<td>${b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td>`+
+      `<td>${b.no_show?'<span class="tag needs">no-show</span>':b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td>`+
       `<td>${pcCell(b)}</td></tr>`).join('')+'</table></div>'
     : '<div class="empty">No real bookings yet.</div>';
   h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';

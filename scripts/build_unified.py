@@ -137,7 +137,9 @@ def main():
         stage("Booked calls", real_booked, "GHL", "live", prev=real_forms,
               cost=(f"{money(cpbooked)}/call" if cpbooked else None), note=booked_note),
         stage("Calls held", held, "Day AI + Chris", "live" if (held or 0) else "needs",
-              prev=real_booked, note=(f"{pc.get('pending',0)} awaiting post-call verdict" if pc.get("pending") else None)),
+              prev=real_booked, note=" · ".join(
+                  ([f"{pc.get('no_show')} no-show"] if pc.get("no_show") else [])
+                  + ([f"{pc.get('pending')} awaiting post-call verdict"] if pc.get("pending") else [])) or None),
         stage("Qualified", (vsl.get("meetings_qualified") if pc.get("held") else None),
               "Chris (post-call)", "live" if pc.get("held") else "needs", prev=held,
               note=(f"{pc.get('unqualified',0)} not a fit" if pc.get("unqualified") else None)),

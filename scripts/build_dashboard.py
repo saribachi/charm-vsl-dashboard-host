@@ -375,12 +375,17 @@ def main():
         pc = post_call_leads.get((e.get("_email") or "").lower())
         e["_post_call"] = pc
         if pc:
-            e["_held"] = True
+            if pc.get("no_show"):
+                e["_no_show"] = True
+                e["_held"] = False        # a no-show is definitively NOT held (overrides Day AI)
+            else:
+                e["_held"] = True         # a fit verdict implies the call was held
     meetings_held = sum(1 for e in real_booked if e.get("_held"))
     post_call = {
         "held": meetings_held,
         "qualified": sum(1 for e in real_booked if (e.get("_post_call") or {}).get("qualified") is True),
         "unqualified": sum(1 for e in real_booked if (e.get("_post_call") or {}).get("qualified") is False),
+        "no_show": sum(1 for e in real_booked if e.get("_no_show")),
         "pending": sum(1 for e in real_booked if e.get("_held") and not e.get("_post_call")),
     }
     meetings_qualified = post_call["qualified"]
@@ -467,7 +472,8 @@ def main():
             "retarget": is_retarget(e.get("_utm_term")),
             "utm_source": e.get("_utm_source"),
             "held": e.get("_held", False),
-            "post_call": (e.get("_post_call") or {}).get("qualified") if e.get("_post_call") else None,
+            "no_show": e.get("_no_show", False),
+            "post_call": (e.get("_post_call") or {}).get("qualified") if (e.get("_post_call") and not e.get("_no_show")) else None,
             "form_qual": next((x["qual"] for x in sub_rows
                                if (x.get("email") or "").lower() == (e.get("_email") or "").lower() and x.get("qual")), None),
             "pre_gate": ((e.get("startTime") or "")[:10] < QUALIFIER_FORM_DATE)} for e in real_booked],

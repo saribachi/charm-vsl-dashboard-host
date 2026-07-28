@@ -349,7 +349,16 @@ def main():
 
             for e in real_booked:
                 nm = contact_cache.get(e.get("contactId"), {}).get("name")
-                e["_held"] = is_held(nm, e.get("_email"))
+                held = is_held(nm, e.get("_email"))
+                # A call scheduled in the future can't have been held yet. Day AI
+                # creates a meeting-recording object for a booked-but-upcoming call,
+                # which the name match would otherwise count as held (e.g. Ellio).
+                try:
+                    if held and datetime.fromisoformat(e.get("startTime") or "") > now:
+                        held = False
+                except ValueError:
+                    pass
+                e["_held"] = held
             meetings_held = sum(1 for e in real_booked if e.get("_held"))
             held_names = [e.get("_email") for e in real_booked if e.get("_held")]
             print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call (by email): {held_names}")

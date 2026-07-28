@@ -19,8 +19,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DASH = ROOT / "dashboard"
 AD_DAILY = ROOT / "data/meta/ad_daily.json"
+POST_CALL = ROOT / "data/manual/post_call.json"
 sys.path.insert(0, str(ROOT / "scripts"))
 BUILDS = ["scripts/build_dashboard.py", "scripts/build_ad_funnel.py", "scripts/build_unified.py"]
+# A verdict only affects the VSL build + the unified page — skip the ad-funnel rebuild.
+VERDICT_BUILDS = ["scripts/build_dashboard.py", "scripts/build_unified.py"]
 
 USER = os.environ.get("DASH_USER", "charm")
 PASS = os.environ.get("DASH_PASS", "")
@@ -30,23 +33,22 @@ PORT = int(os.environ.get("PORT", "3000"))
 state = {"at": None, "ok": False, "ad_updated": None}
 
 
-def rebuild():
+def rebuild(builds=BUILDS):
     DASH.mkdir(exist_ok=True)
-    for d in ("data/ghl", "data/wistia", "data/meta", "data/dayai"):
+    for d in ("data/ghl", "data/wistia", "data/meta", "data/dayai", "data/manual"):
         (ROOT / d).mkdir(parents=True, exist_ok=True)
     # Seed the manual Meta export from env ONLY if no uploaded file exists, so a
     # user upload persists across restarts and isn't clobbered by the (older) env.
     blob = os.environ.get("AD_DAILY_JSON")
     if blob and not AD_DAILY.exists():
         AD_DAILY.write_text(blob)
-    # Post-call qualification store (has lead PII) — injected via env, kept out of the repo.
+    # Post-call store (lead PII) — seed from env ONLY if no file yet, so verdicts set
+    # via the dashboard dropdowns persist and aren't clobbered by the (older) env.
     pc = os.environ.get("POST_CALL_JSON")
-    if pc:
-        pcf = ROOT / "data/manual/post_call.json"
-        pcf.parent.mkdir(parents=True, exist_ok=True)
-        pcf.write_text(pc)
+    if pc and not POST_CALL.exists():
+        POST_CALL.write_text(pc)
     ok = True
-    for b in BUILDS:
+    for b in builds:
         try:
             r = subprocess.run([sys.executable, b], cwd=ROOT, capture_output=True,
                                text=True, timeout=300)
@@ -168,13 +170,46 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
+    def _verdict(self):
+        try:
+            n = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(n).decode("utf-8", "replace"))
+            email = (body.get("email") or "").strip().lower()
+            outcome = body.get("outcome") or "auto"
+            fit = body.get("fit") or None
+            if not email:
+                raise ValueError("missing email")
+            if outcome not in ("auto", "held", "no_show", "cancelled"):
+                raise ValueError("bad outcome")
+            if fit not in (None, "qualified", "unqualified"):
+                raise ValueError("bad fit")
+            data = json.loads(POST_CALL.read_text()) if POST_CALL.exists() else {"leads": {}}
+            leads = data.setdefault("leads", {})
+            for k in [k for k in leads if k.lower() == email]:  # drop case-variant dupes
+                leads.pop(k)
+            if outcome == "auto" and not fit:
+                pass  # cleared → no entry (falls back to Day AI auto-detection / "not yet")
+            else:
+                leads[email] = {"outcome": outcome, "fit": fit,
+                                "date": time.strftime("%Y-%m-%d", time.gmtime())}
+            POST_CALL.parent.mkdir(parents=True, exist_ok=True)
+            POST_CALL.write_text(json.dumps(data, indent=1))
+            rebuild(VERDICT_BUILDS)  # synchronous — reflect before responding
+            resp = {"ok": True}
+        except Exception as e:
+            resp = {"ok": False, "error": str(e)}
+        self._send(json.dumps(resp), "application/json", 200 if resp.get("ok") else 400)
+
     def do_POST(self):
-        if self.path.split("?")[0] != "/upload":
+        path = self.path.split("?")[0]
+        if path not in ("/upload", "/verdict"):
             self.send_response(404)
             self.end_headers()
             return
         if not self._authed():
             return
+        if path == "/verdict":
+            return self._verdict()
         try:
             n = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(n).decode("utf-8", "replace")

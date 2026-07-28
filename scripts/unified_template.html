@@ -75,8 +75,10 @@ tr:last-child td{border-bottom:none}
 .adname{color:var(--purple);font-weight:600;font-size:12px;line-height:1.35}
 td{vertical-align:top}
 .det-body th{white-space:normal}
-.scroll table{min-width:780px}
+.scroll table{min-width:860px}
 .scroll .st-src{white-space:nowrap}
+.vdd{font-family:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);cursor:pointer;max-width:118px}
+.vdd:disabled{opacity:.45;cursor:default}
 .tag.live{background:var(--good-bg);color:var(--good)}
 .tag.needs{background:var(--bad-bg);color:var(--bad)}
 .tag.proxy,.tag.available{background:var(--amber-bg);color:var(--amber-ink)}
@@ -204,6 +206,25 @@ html += `<details><summary>Ad angles <span class="cnt">${(D.angles||[]).length} 
 html += `<details><summary>Data source coverage <span class="cnt">what's live vs pending</span></summary><div class="det-body" id="coverage"></div></details>`;
 $('details').innerHTML = html;
 
+// save a call-outcome / qualification verdict (dropdowns in the report table)
+async function sv(el){
+  const tr = el.closest('tr'); if(!tr) return;
+  const email = tr.getAttribute('data-email');
+  const outcome = tr.querySelector('select[data-k=outcome]').value;
+  const fitSel = tr.querySelector('select[data-k=fit]');
+  const fit = fitSel.value;
+  const sels = tr.querySelectorAll('select'); sels.forEach(s=>s.disabled=true);
+  el.style.opacity=.5;
+  try{
+    const r = await fetch('/verdict',{method:'POST',headers:{'Content-Type':'application/json'},
+                                      body:JSON.stringify({email,outcome,fit})});
+    const j = await r.json();
+    if(j.ok){ location.reload(); return; }
+    alert('Save failed: '+(j.error||'unknown'));
+  }catch(e){ alert('Save failed: '+e); }
+  sels.forEach(s=>s.disabled=false); el.style.opacity=1;
+}
+
 // report: best ads + which lead booked from which ad
 (function(){
   const R = D.report||{}, bookings = R.bookings||[];
@@ -218,16 +239,18 @@ $('details').innerHTML = html;
     `<div class="b"><div class="bv">${R.ad_attributed||0}</div><div class="bl">ad-attributed bookings</div></div>`+
     `<div class="b"><div class="bv">${R.retarget_booked||0}</div><div class="bl">retargeting (warm)</div></div>`+
     `<div class="b"><div class="bv">${R.prospect_booked||0}</div><div class="bl">prospecting (cold)</div></div></div>`;
-  h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad</div>';
-  const pcCell = b => b.post_call===true ? '<span class="tag live">qualified ✓</span>'
-    : b.post_call===false ? '<span class="tag needs">not a fit</span>'
-    : b.held ? '<span style="color:var(--amber-ink,#8a6410)">pending</span>' : '<span style="color:var(--ink3)">—</span>';
-  h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Held?</th><th>Post-call</th></tr>` +
-    bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
+  h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad <span style="color:var(--ink3);font-weight:400;font-size:12px">— set the outcome &amp; fit; “Auto” trusts Day AI transcript detection</span></div>';
+  const OUT = [['auto','Auto'],['held','Held'],['no_show','No-show'],['cancelled','Cancelled']];
+  const FIT = [['','—'],['qualified','Qualified'],['unqualified','Not a fit']];
+  const opts = (list,cur)=>list.map(([v,l])=>`<option value="${v}"${(cur||'')===v?' selected':''}>${l}</option>`).join('');
+  // on an "Auto" row, show the auto-detected result only when Day AI actually found a held call
+  const autoChip = b => b.held?' <span class="tag live">held ✓ (auto)</span>':'';
+  h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Call outcome</th><th>Qualification</th></tr>` +
+    bookings.map(b=>`<tr data-email="${(b.email||'').replace(/"/g,'&quot;')}"><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
       `<td>${b.ad?`<span class="adname">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
       `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
-      `<td>${b.no_show?'<span class="tag needs">no-show</span>':b.held?'<span class="tag live">held ✓</span>':'<span style="color:var(--ink3)">not yet</span>'}</td>`+
-      `<td>${pcCell(b)}</td></tr>`).join('')+'</table></div>'
+      `<td><select class="vdd" data-k="outcome" onchange="sv(this)">${opts(OUT,b.outcome)}</select>${b.outcome==='auto'?autoChip(b):''}</td>`+
+      `<td><select class="vdd" data-k="fit" onchange="sv(this)"${(b.no_show||b.cancelled)?' disabled':''}>${opts(FIT,b.fit)}</select></td></tr>`).join('')+'</table></div>'
     : '<div class="empty">No real bookings yet.</div>';
   h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';
   h += byAd.length ? `<table><tr><th>Ad</th><th>Ad set</th><th>Bookings</th></tr>` +

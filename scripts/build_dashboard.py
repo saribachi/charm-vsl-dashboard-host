@@ -371,22 +371,45 @@ def main():
 
     # apply post-call qualification (manual) — a judgment implies the call was HELD.
     # Kept SEPARATE from the form gate: this is fit-after-the-call, not who-reached-the-calendar.
+    def _normalize(pc):
+        """Accept the two-axis shape {outcome, fit} and the legacy shapes
+        ({qualified:bool} / {no_show:true}) so old env values still parse."""
+        if not pc:
+            return None
+        if "outcome" in pc or "fit" in pc:
+            return {"outcome": pc.get("outcome") or "auto", "fit": pc.get("fit")}
+        if pc.get("no_show"):
+            return {"outcome": "no_show", "fit": None}
+        if "qualified" in pc:
+            return {"outcome": "held", "fit": "qualified" if pc["qualified"] else "unqualified"}
+        return {"outcome": "auto", "fit": None}
+
     for e in real_booked:
-        pc = post_call_leads.get((e.get("_email") or "").lower())
-        e["_post_call"] = pc
+        pc = _normalize(post_call_leads.get((e.get("_email") or "").lower()))
+        e["_pc"] = pc
         if pc:
-            if pc.get("no_show"):
+            oc, fit = pc["outcome"], pc["fit"]
+            if oc == "no_show":
                 e["_no_show"] = True
-                e["_held"] = False        # a no-show is definitively NOT held (overrides Day AI)
-            else:
-                e["_held"] = True         # a fit verdict implies the call was held
+                e["_held"] = False        # overrides Day AI transcript detection
+            elif oc == "cancelled":
+                e["_cancelled"] = True
+                e["_held"] = False
+            elif oc == "held":
+                e["_held"] = True
+            # oc == "auto" → keep Day AI's _held as-is
+            # a fit verdict implies the call happened (unless explicitly no-show/cancelled)
+            if fit in ("qualified", "unqualified") and oc not in ("no_show", "cancelled"):
+                e["_held"] = True
+            e["_fit"] = fit
     meetings_held = sum(1 for e in real_booked if e.get("_held"))
     post_call = {
         "held": meetings_held,
-        "qualified": sum(1 for e in real_booked if (e.get("_post_call") or {}).get("qualified") is True),
-        "unqualified": sum(1 for e in real_booked if (e.get("_post_call") or {}).get("qualified") is False),
+        "qualified": sum(1 for e in real_booked if e.get("_fit") == "qualified" and e.get("_held")),
+        "unqualified": sum(1 for e in real_booked if e.get("_fit") == "unqualified" and e.get("_held")),
         "no_show": sum(1 for e in real_booked if e.get("_no_show")),
-        "pending": sum(1 for e in real_booked if e.get("_held") and not e.get("_post_call")),
+        "cancelled": sum(1 for e in real_booked if e.get("_cancelled")),
+        "pending": sum(1 for e in real_booked if e.get("_held") and not e.get("_fit")),
     }
     meetings_qualified = post_call["qualified"]
 
@@ -473,7 +496,10 @@ def main():
             "utm_source": e.get("_utm_source"),
             "held": e.get("_held", False),
             "no_show": e.get("_no_show", False),
-            "post_call": (e.get("_post_call") or {}).get("qualified") if (e.get("_post_call") and not e.get("_no_show")) else None,
+            "cancelled": e.get("_cancelled", False),
+            "outcome": (e.get("_pc") or {}).get("outcome", "auto"),   # manual setting → dropdown state
+            "fit": e.get("_fit"),                                     # qualified|unqualified|None → dropdown state
+            "post_call": (True if e.get("_fit") == "qualified" else False if e.get("_fit") == "unqualified" else None) if e.get("_held") else None,
             "form_qual": next((x["qual"] for x in sub_rows
                                if (x.get("email") or "").lower() == (e.get("_email") or "").lower() and x.get("qual")), None),
             "pre_gate": ((e.get("startTime") or "")[:10] < QUALIFIER_FORM_DATE)} for e in real_booked],

@@ -46,6 +46,39 @@ def adset_efficiency(ba):
     return rows
 
 
+def _path_of(name):
+    """Group an ad set into its funnel PATH. Video + Retargeting are one path
+    (video builds the pool, retargeting converts it), so keying efficiency by
+    ad set shows the pool-builder at zero forever — group by path instead."""
+    n = (name or "").lower()
+    if "static" in n:
+        return "Statics — standalone"
+    if "retarget" in n or "video" in n:
+        return "Video → Retargeting funnel"
+    if "cold" in n or "prospect" in n:
+        return "Cold prospecting"
+    return name or "Other"
+
+
+def path_efficiency(eff):
+    """Roll the per-ad-set efficiency rows up to the funnel path."""
+    paths = {}
+    for r in eff:
+        p = _path_of(r.get("ad_set"))
+        d = paths.setdefault(p, {"path": p, "spend": 0.0, "clicks": 0, "bookings": 0, "ad_sets": []})
+        d["spend"] += r.get("spend") or 0
+        d["clicks"] += r.get("clicks") or 0
+        d["bookings"] += r.get("bookings") or 0
+        d["ad_sets"].append(r.get("ad_set"))
+    out = []
+    for d in paths.values():
+        d["spend"] = round(d["spend"], 2)
+        d["cost_per_booking"] = round(d["spend"] / d["bookings"], 2) if d["bookings"] else None
+        out.append(d)
+    out.sort(key=lambda r: (r["cost_per_booking"] is None, r["cost_per_booking"] or 0))
+    return out
+
+
 def div(n, d):
     if not d or n is None:
         return None
@@ -176,7 +209,8 @@ def main():
                 "retarget_booked": ba.get("retarget_booked", 0),
                 "prospect_booked": ba.get("prospect_booked", 0),
                 "total_bookings": ba.get("total_real", 0),
-                "adset_efficiency": adset_efficiency(ba),
+                "adset_efficiency": (_eff := adset_efficiency(ba)),
+                "path_efficiency": path_efficiency(_eff),
             },
         },
     }

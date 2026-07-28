@@ -257,16 +257,27 @@ async function sv(el){
     byAd.map(([ad,i])=>`<tr><td>${ad==='(unattributed / direct)'?`<span style="color:var(--ink3)">${ad}</span>`:`<span class="adname">${ad}</span>`}</td>`+
       `<td style="font-size:12px">${i.adset||'—'} ${i.retarget?retag:''}</td><td>${i.n}</td></tr>`).join('')+'</table>'
     : '<div class="empty">—</div>';
-  // ad-set efficiency: GHL bookings ÷ Meta spend
-  const eff = R.adset_efficiency||[];
-  h += '<div style="font-weight:600;margin:20px 0 8px">Ad set efficiency <span style="color:var(--ink3);font-weight:400;font-size:12px">— cost per booking (GHL bookings × Meta spend)</span></div>';
-  h += eff.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Ad set</th><th>Spend</th><th>Clicks</th><th>Bookings</th><th>Cost / booking</th><th>Book rate</th></tr>` +
-    eff.map(r=>`<tr><td>${r.ad_set} ${r.retarget?retag:''}</td><td>$${(r.spend||0).toLocaleString(undefined,{maximumFractionDigits:0})}</td>`+
-      `<td>${(r.clicks||0).toLocaleString()}</td><td>${r.bookings}</td>`+
-      `<td>${r.cost_per_booking!=null?`<b>$${r.cost_per_booking.toLocaleString(undefined,{maximumFractionDigits:0})}</b>`:'<span style="color:var(--ink3)">no bookings yet</span>'}</td>`+
-      `<td>${r.booking_rate!=null?r.booking_rate+'%':'—'}</td></tr>`).join('')+'</table></div>'
+  // efficiency by PATH (primary) — video + retargeting are one funnel, so an
+  // ad-set-keyed view shows the pool-builder at zero forever.
+  const paths = R.path_efficiency||[];
+  const money0 = v => '$'+(v||0).toLocaleString(undefined,{maximumFractionDigits:0});
+  h += '<div style="font-weight:600;margin:20px 0 8px">Efficiency by path <span style="color:var(--ink3);font-weight:400;font-size:12px">— cost per booking, grouped by funnel path (GHL bookings × Meta spend)</span></div>';
+  h += paths.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Path</th><th>Ad sets</th><th>Spend</th><th>Bookings</th><th>Cost / booking</th></tr>` +
+    paths.map(p=>`<tr><td><b>${p.path}</b></td><td style="font-size:12px;color:var(--ink3)">${(p.ad_sets||[]).join(', ')}</td>`+
+      `<td>${money0(p.spend)}</td><td>${p.bookings}</td>`+
+      `<td>${p.cost_per_booking!=null?`<b>${money0(p.cost_per_booking)}</b>`:'<span style="color:var(--ink3)">no bookings yet</span>'}</td></tr>`).join('')+'</table></div>'
     : '<div class="empty">Add a Meta ad-set CSV to see cost per booking.</div>';
-  h += '<div class="st-note" style="margin-top:12px"><b>Bookings come from GHL</b> (deterministic, per-lead via utm_content) — not Meta\'s modeled Schedule. Retargeting is cheap per booking because it harvests a warm audience; the <b>cold-prospecting</b> cost-per-booking is the real signal for whether new demand scales. This is per ad <b>set</b>; a per-<b>ad</b> (creative) view would need a Meta export broken down by Ad name.</div>';
+  h += '<div class="st-note" style="margin-top:12px"><b>Bookings come from GHL</b> (deterministic, per-lead via utm_content) — not Meta\'s modeled Schedule. <b>Video + Retargeting are one path</b>: video builds the retargeting pool (0 direct bookings by design), retargeting converts it — so their combined cost per booking is the real number, not video at zero. Cold-prospecting cost-per-booking is the signal for whether new demand scales.</div>';
+  // per-ad-set breakdown (detail, collapsed)
+  const eff = R.adset_efficiency||[];
+  if(eff.length){
+    h += '<details style="margin:10px 0 0;border:0;background:transparent"><summary style="padding:6px 0;font-size:12.5px;color:var(--purple)">By ad set (detail)</summary>';
+    h += `<div class="scroll" style="overflow-x:auto"><table><tr><th>Ad set</th><th>Spend</th><th>Clicks</th><th>Bookings</th><th>Cost / booking</th><th>Book rate</th></tr>` +
+      eff.map(r=>`<tr><td>${r.ad_set} ${r.retarget?retag:''}</td><td>${money0(r.spend)}</td>`+
+        `<td>${(r.clicks||0).toLocaleString()}</td><td>${r.bookings}</td>`+
+        `<td>${r.cost_per_booking!=null?`<b>${money0(r.cost_per_booking)}</b>`:'<span style="color:var(--ink3)">no bookings yet</span>'}</td>`+
+        `<td>${r.booking_rate!=null?r.booking_rate+'%':'—'}</td></tr>`).join('')+'</table></div></details>';
+  }
   $('report').innerHTML = h;
 })();
 

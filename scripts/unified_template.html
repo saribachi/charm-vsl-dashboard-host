@@ -184,6 +184,10 @@ const D = DATA.detail;
 const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
 let html = '';
 
+// Daily ad spend — the number to watch as Meta unthrottles now that Lead is live
+const DS = D.daily_spend||[];
+html += `<details open><summary>Daily ad spend <span style="color:var(--ink3);font-weight:400;font-size:12px">— is Meta unthrottling?</span> <span class="cnt">${DS.length?`${DS.length} day(s) · $${D.daily_budget||0}/day budget`:'awaiting ad data'}</span></summary><div class="det-body" id="dspend"></div></details>`;
+
 // Best ads + lead-to-ad attribution (the report)
 const R = D.report||{};
 html += `<details open><summary>Best ads &amp; lead-to-ad attribution <span class="cnt">${R.total_bookings||0} booking(s) · ${R.ad_attributed||0} tagged to an ad</span></summary><div class="det-body" id="report"></div></details>`;
@@ -206,23 +210,69 @@ html += `<details><summary>Ad angles <span class="cnt">${(D.angles||[]).length} 
 html += `<details><summary>Data source coverage <span class="cnt">what's live vs pending</span></summary><div class="det-body" id="coverage"></div></details>`;
 $('details').innerHTML = html;
 
-// save a call-outcome / qualification verdict (dropdowns in the report table)
-async function sv(el){
+// daily ad spend bar chart — the number to watch as Meta unthrottles
+(function(){
+  const host = $('dspend'), days = D.daily_spend||[], budget = D.daily_budget||0;
+  if(!days.length){ host.innerHTML = '<div class="empty">No ad-spend data yet — upload a Meta CSV at /upload.</div>'; return; }
+  const spends = days.map(d=>d.spend);
+  const maxv = (Math.max(budget, ...spends)*1.15) || 1;
+  const avg = spends.reduce((a,b)=>a+b,0)/days.length;
+  const util = budget ? avg/budget*100 : null;
+  const last = days[days.length-1];
+  const shortd = s => s.slice(5).replace('-','/');
+  let h = `<div class="mini" style="grid-template-columns:repeat(3,1fr)">`+
+    `<div class="b"><div class="bv">$${avg.toFixed(0)}</div><div class="bl">avg / day</div></div>`+
+    `<div class="b"><div class="bv">${util!=null?util.toFixed(0)+'%':'—'}</div><div class="bl">budget utilization (vs $${budget}/day)</div></div>`+
+    `<div class="b"><div class="bv">$${last.spend.toFixed(0)}</div><div class="bl">latest · ${shortd(last.date)}</div></div></div>`;
+  const W=880,H=220,P={t:18,r:14,b:30,l:14};
+  const n=days.length, iw=W-P.l-P.r, ih=H-P.t-P.b;
+  const step=iw/n, bw=Math.min(54, step*0.62);
+  const y=v=>P.t+ih-(v/maxv)*ih;
+  let g='';
+  const by=y(budget);
+  g+=`<line x1="${P.l}" y1="${by.toFixed(1)}" x2="${W-P.r}" y2="${by.toFixed(1)}" stroke="var(--magenta)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  g+=`<text x="${W-P.r}" y="${(by-5).toFixed(1)}" font-size="11" fill="var(--magenta)" text-anchor="end">$${budget}/day budget</text>`;
+  days.forEach((d,i)=>{
+    const x=P.l+step*i+(step-bw)/2, yy=y(d.spend), bh=Math.max(0,P.t+ih-yy);
+    const over=d.spend>=budget;
+    g+=`<rect x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="${over?'var(--amber)':'var(--purple)'}"><title>${d.date}: $${d.spend.toFixed(2)}</title></rect>`;
+    g+=`<text x="${(x+bw/2).toFixed(1)}" y="${(yy-5).toFixed(1)}" font-size="10.5" fill="var(--ink2)" text-anchor="middle">$${d.spend.toFixed(0)}</text>`;
+    g+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-10}" font-size="10" fill="var(--ink3)" text-anchor="middle">${shortd(d.date)}</text>`;
+  });
+  h+=`<div class="chart" style="margin-top:6px"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">${g}</svg></div>`;
+  h+='<div class="st-note" style="margin-top:8px">Watch this as Meta digests the now-live <b>Lead</b> event — the account was throttled to ~24% of the $'+budget+'/day budget with no conversion signal to optimize toward. Bars climbing toward the dashed line = delivery unblocking; <b>gold</b> bars hit or exceed budget.</div>';
+  host.innerHTML=h;
+})();
+
+// save a call-outcome / qualification verdict (dropdowns in the report table).
+// DEBOUNCED: changing the outcome AND the qualification batches into ONE save so
+// the second field can't be dropped by the first field's save+reload.
+const svTimers = {};
+function sv(el){
   const tr = el.closest('tr'); if(!tr) return;
   const email = tr.getAttribute('data-email');
-  const outcome = tr.querySelector('select[data-k=outcome]').value;
+  const outSel = tr.querySelector('select[data-k=outcome]');
   const fitSel = tr.querySelector('select[data-k=fit]');
-  const fit = fitSel.value;
+  // no-show / cancelled → qualification is N/A, clear + disable it live
+  if(outSel.value==='no_show' || outSel.value==='cancelled'){ fitSel.value=''; fitSel.disabled=true; }
+  else { fitSel.disabled=false; }
+  const st = tr.querySelector('.svst'); if(st){ st.textContent='• editing'; st.style.color='var(--ink3)'; }
+  clearTimeout(svTimers[email]);
+  svTimers[email] = setTimeout(()=>svSave(tr, email), 1000);
+}
+async function svSave(tr, email){
+  const outcome = tr.querySelector('select[data-k=outcome]').value;
+  const fit = tr.querySelector('select[data-k=fit]').value;
   const sels = tr.querySelectorAll('select'); sels.forEach(s=>s.disabled=true);
-  el.style.opacity=.5;
+  const st = tr.querySelector('.svst'); if(st){ st.textContent='saving… (~20s)'; st.style.color='var(--purple)'; }
   try{
     const r = await fetch('/verdict',{method:'POST',headers:{'Content-Type':'application/json'},
                                       body:JSON.stringify({email,outcome,fit})});
     const j = await r.json();
     if(j.ok){ location.reload(); return; }
-    alert('Save failed: '+(j.error||'unknown'));
-  }catch(e){ alert('Save failed: '+e); }
-  sels.forEach(s=>s.disabled=false); el.style.opacity=1;
+    if(st){ st.textContent='save failed'; st.style.color='var(--bad)'; }
+  }catch(e){ if(st){ st.textContent='save failed'; st.style.color='var(--bad)'; } }
+  sels.forEach(s=>s.disabled=false);
 }
 
 // report: best ads + which lead booked from which ad
@@ -250,7 +300,7 @@ async function sv(el){
       `<td>${b.ad?`<span class="adname">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
       `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
       `<td><select class="vdd" data-k="outcome" onchange="sv(this)">${opts(OUT,b.outcome)}</select>${b.outcome==='auto'?autoChip(b):''}</td>`+
-      `<td><select class="vdd" data-k="fit" onchange="sv(this)"${(b.no_show||b.cancelled)?' disabled':''}>${opts(FIT,b.fit)}</select></td></tr>`).join('')+'</table></div>'
+      `<td><select class="vdd" data-k="fit" onchange="sv(this)"${(b.no_show||b.cancelled)?' disabled':''}>${opts(FIT,b.fit)}</select><span class="svst" style="font-size:11px;margin-left:6px;white-space:nowrap"></span></td></tr>`).join('')+'</table></div>'
     : '<div class="empty">No real bookings yet.</div>';
   h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';
   h += byAd.length ? `<table><tr><th>Ad</th><th>Ad set</th><th>Bookings</th></tr>` +

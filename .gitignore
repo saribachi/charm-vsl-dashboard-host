@@ -4,3 +4,4 @@ data/ghl/*.json
 data/wistia/*.json
 data/dayai/*.json
 __pycache__/
+data/meta/ad_daily.json

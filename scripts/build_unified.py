@@ -92,6 +92,21 @@ def path_efficiency(eff):
     return out
 
 
+def daily_spend():
+    """Per-day total ad spend (summed across ad sets) — the number to watch as
+    Meta's Lead event unthrottles delivery against the daily budget."""
+    try:
+        rows = json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
+    except Exception:
+        return []
+    by = {}
+    for r in rows:
+        d = r.get("date")
+        if d:
+            by[d] = by.get(d, 0.0) + (r.get("spend") or 0)
+    return [{"date": d, "spend": round(by[d], 2)} for d in sorted(by)]
+
+
 def div(n, d):
     if not d or n is None:
         return None
@@ -211,6 +226,8 @@ def main():
             "rb2b": rb2b,
             "coverage": vsl.get("coverage", []), "angles": ad.get("angles", []),
             "ghl_reconciled": ghl, "field_reality": ad.get("field_reality", {}),
+            "daily_spend": daily_spend(),
+            "daily_budget": 200,
             "qualification": vsl.get("qualification", {}),
             "qualifier_impact": vsl.get("qualifier_impact", {}),
             "lead_quality": vsl.get("lead_quality", {}),

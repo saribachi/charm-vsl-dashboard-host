@@ -46,10 +46,23 @@ def adset_efficiency(ba):
     return rows
 
 
+# Explicit ad-set → path map (Chris's roles). Ad-set NAMES don't self-describe
+# because sets get repurposed — e.g. the videos now live in "GTM LinkedIn + Cold
+# Email - REAL", so it's the pool-builder, not cold prospecting. Keyed by _canon.
+ADSET_PATH = {
+    "gtm linkedin cold email - real": "Video → Retargeting funnel",  # pool builder — holds the videos
+    "retargeting video ads": "Video → Retargeting funnel",           # converter
+    "gtm linkedin email statics 1": "Statics — standalone",
+}
+
+
 def _path_of(name):
     """Group an ad set into its funnel PATH. Video + Retargeting are one path
     (video builds the pool, retargeting converts it), so keying efficiency by
-    ad set shows the pool-builder at zero forever — group by path instead."""
+    ad set shows the pool-builder at zero forever — group by path instead.
+    Explicit map wins; keyword fallback classifies any unmapped ad set."""
+    if _canon(name) in ADSET_PATH:
+        return ADSET_PATH[_canon(name)]
     n = (name or "").lower()
     if "static" in n:
         return "Statics — standalone"

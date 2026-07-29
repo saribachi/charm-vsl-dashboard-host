@@ -84,6 +84,7 @@ td{vertical-align:top}
 .oc-name{font-weight:600;font-size:13.5px}
 .oc-sub{font-size:11px;color:var(--ink3)}
 .oc-btns{display:flex;gap:6px;flex-wrap:wrap}
+.oc-h{font-weight:700;font-size:12px;letter-spacing:.02em;text-transform:uppercase;margin:16px 0 4px}
 .ob{font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink2);cursor:pointer;transition:.12s}
 .ob:hover{transform:translateY(-1px)}
 .ob.q{color:var(--good);border-color:var(--good-l)} .ob.q:hover{background:var(--good-bg)}
@@ -320,30 +321,49 @@ function renderOutcomes(){
   const host = $('outcomes'); if(!host) return;
   const bookings = (D.report||{}).bookings||[];
   const now = new Date();
-  const needs=[], logged=[], upcoming=[];
+  const needs=[], g={qualified:[],notfit:[],noshow:[],cancelled:[]}, up=[];
   bookings.forEach(b=>{
     const started = b.start ? (new Date(b.start) <= now) : true;
-    const st = _eff(b).status;
     const em = (b.email||'').toLowerCase();
-    if(!started && !st){ upcoming.push(b); return; }
-    if(st && !_changing[em]) logged.push({b, st}); else needs.push(b);
+    const lv = _local[em]; const outcome = lv?lv.outcome:b.outcome, fit = lv?lv.fit:b.fit;
+    let st = null;
+    if(outcome==='no_show') st='noshow';
+    else if(outcome==='cancelled') st='cancelled';
+    else if(fit==='qualified') st='qualified';
+    else if(fit==='unqualified') st='notfit';
+    if(!started && !st){ up.push(b); return; }
+    if(st && !_changing[em]) g[st].push(b); else needs.push(b);
   });
   const when = b => (b.start||'').slice(5,16).replace('T',' · ').replace('-','/');
   const btns = b => CHOICES.map(c=>`<button class="ob ${c.cls}" onclick="setOutcome('${(b.email||'').replace(/'/g,"\\'")}','${c.outcome}',${c.fit?`'${c.fit}'`:'null'})">${c.label}</button>`).join('');
-  let h = `<div id="oc-save" style="font-size:12px;min-height:16px;margin-bottom:6px"></div>`;
+  const chg = b => `<a class="plain" style="font-size:11px" href="javascript:changeOutcome('${(b.email||'').replace(/'/g,"\\'")}')">change</a>`;
+  let h = `<div id="oc-save" style="font-size:12px;min-height:16px;margin-bottom:8px"></div>`;
+  // at-a-glance summary
+  h += `<div class="mini" style="grid-template-columns:repeat(5,1fr)">`+
+    `<div class="b"><div class="bv" style="color:${needs.length?'var(--amber-ink)':'var(--ink3)'}">${needs.length}</div><div class="bl">need a status</div></div>`+
+    `<div class="b"><div class="bv" style="color:var(--good)">${g.qualified.length}</div><div class="bl">qualified</div></div>`+
+    `<div class="b"><div class="bv">${g.notfit.length}</div><div class="bl">not a fit</div></div>`+
+    `<div class="b"><div class="bv" style="color:var(--bad)">${g.noshow.length}</div><div class="bl">no-show</div></div>`+
+    `<div class="b"><div class="bv">${up.length}</div><div class="bl">upcoming</div></div></div>`;
+  // action queue
   if(needs.length){
-    h += `<div style="font-weight:600;margin:2px 0 6px">Needs a status <span style="color:var(--ink3);font-weight:400">(${needs.length})</span></div>`;
+    h += `<div class="oc-h" style="color:var(--amber-ink)">Needs a status (${needs.length})</div>`;
     h += needs.map(b=>`<div class="oc-row"><div><div class="oc-name">${b.name||b.email||''}</div><div class="oc-sub">${b.email||''} · ${when(b)}</div></div><div class="oc-btns">${btns(b)}</div></div>`).join('');
-  } else {
-    h += `<div class="empty" style="padding:6px 0">Nothing waiting — every call that's happened has a status. 🎉</div>`;
   }
-  if(logged.length){
-    h += `<div style="font-weight:600;margin:16px 0 6px">Logged <span style="color:var(--ink3);font-weight:400">(${logged.length})</span></div>`;
-    h += logged.map(({b,st})=>`<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span> <span class="oc-sub">· ${when(b)}</span></div><div>${_badge(st)} <a class="plain" style="font-size:11px;margin-left:8px" href="javascript:changeOutcome('${(b.email||'').replace(/'/g,"\\'")}')">change</a></div></div>`).join('');
+  // happened, grouped by outcome
+  const grp = (key,label,color)=> g[key].length ?
+    `<div class="oc-h" style="color:${color}">${label} (${g[key].length})</div>` +
+    g[key].map(b=>`<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span> <span class="oc-sub">· ${when(b)}</span></div>${chg(b)}</div>`).join('') : '';
+  h += grp('qualified','Qualified','var(--good)');
+  h += grp('notfit','Not a fit','var(--amber-ink)');
+  h += grp('noshow','No-show','var(--bad)');
+  h += grp('cancelled','Cancelled','var(--ink3)');
+  // upcoming
+  if(up.length){
+    h += `<div class="oc-h" style="color:var(--ink3)">Upcoming — not yet (${up.length})</div>`;
+    h += up.map(b=>`<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span> <span class="oc-sub">· ${when(b)}</span></div><span class="oc-sub">scheduled</span></div>`).join('');
   }
-  if(upcoming.length){
-    h += `<div class="st-note" style="margin-top:14px">${upcoming.length} upcoming call(s) — nothing to log yet: ${upcoming.map(b=>`${(b.name||b.email||'').split(' ')[0]} (${when(b)})`).join(' · ')}</div>`;
-  }
+  if(!bookings.length) h += '<div class="empty">No calls yet.</div>';
   host.innerHTML = h;
   const cnt = $('oc-cnt'); if(cnt) cnt.textContent = needs.length ? `${needs.length} awaiting a status` : 'all logged';
   saveBadge();

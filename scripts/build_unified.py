@@ -16,9 +16,11 @@ def _canon(s):
     return re.sub(r"\s+", " ", (s or "").lower().replace("+", " ")).strip()
 
 
-def adset_efficiency(ba):
+def adset_efficiency(bookings):
     """Per-ad-set: Meta spend/clicks (from ad_daily.json) joined to GHL bookings
-    (bookings_attribution.by_adset, matched on canonicalized ad-set name)."""
+    AND their post-call outcomes (held / qualified / no-show), matched on the
+    canonicalized ad-set name. Cost-per-QUALIFIED is the real efficiency metric —
+    cost-per-booking flatters ad sets whose bookings no-show or aren't a fit."""
     meta = {}
     try:
         for r in json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", []):
@@ -30,16 +32,29 @@ def adset_efficiency(ba):
             m["clicks"] += r.get("link_clicks", 0) or 0
     except Exception:
         return []
-    ghl = {}
-    for k, v in (ba.get("by_adset") or {}).items():
-        if k and k != "(unattributed / direct)":
-            ghl[_canon(k)] = ghl.get(_canon(k), 0) + v
+    # bookings + post-call outcomes per canonicalized ad set (from real_bookings_detail)
+    oc = {}
+    for b in bookings or []:
+        k = _canon(b.get("ad_set"))
+        if not k:                       # direct / pre-UTM — no ad set to credit
+            continue
+        d = oc.setdefault(k, {"bookings": 0, "held": 0, "qualified": 0, "no_show": 0})
+        d["bookings"] += 1
+        if b.get("held"):
+            d["held"] += 1
+        if b.get("fit") == "qualified":
+            d["qualified"] += 1
+        if b.get("no_show"):
+            d["no_show"] += 1
     rows = []
     for name, m in meta.items():
-        bk = ghl.get(_canon(name), 0)
+        o = oc.get(_canon(name), {"bookings": 0, "held": 0, "qualified": 0, "no_show": 0})
+        bk, q, ns = o["bookings"], o["qualified"], o["no_show"]
         rows.append({"ad_set": name, "spend": round(m["spend"], 2), "clicks": int(m["clicks"]),
-                     "bookings": bk,
+                     "bookings": bk, "held": o["held"], "qualified": q, "no_show": ns,
                      "cost_per_booking": round(m["spend"] / bk, 2) if bk else None,
+                     "cost_per_qualified": round(m["spend"] / q, 2) if q else None,
+                     "no_show_rate": round(100 * ns / bk, 1) if bk else None,
                      "booking_rate": round(100 * bk / m["clicks"], 1) if m["clicks"] else None,
                      "retarget": "retarget" in name.lower()})
     rows.sort(key=lambda r: (r["cost_per_booking"] is None, r["cost_per_booking"] or 0))
@@ -78,15 +93,21 @@ def path_efficiency(eff):
     paths = {}
     for r in eff:
         p = _path_of(r.get("ad_set"))
-        d = paths.setdefault(p, {"path": p, "spend": 0.0, "clicks": 0, "bookings": 0, "ad_sets": []})
+        d = paths.setdefault(p, {"path": p, "spend": 0.0, "clicks": 0, "bookings": 0,
+                                 "held": 0, "qualified": 0, "no_show": 0, "ad_sets": []})
         d["spend"] += r.get("spend") or 0
         d["clicks"] += r.get("clicks") or 0
         d["bookings"] += r.get("bookings") or 0
+        d["held"] += r.get("held") or 0
+        d["qualified"] += r.get("qualified") or 0
+        d["no_show"] += r.get("no_show") or 0
         d["ad_sets"].append(r.get("ad_set"))
     out = []
     for d in paths.values():
         d["spend"] = round(d["spend"], 2)
         d["cost_per_booking"] = round(d["spend"] / d["bookings"], 2) if d["bookings"] else None
+        d["cost_per_qualified"] = round(d["spend"] / d["qualified"], 2) if d["qualified"] else None
+        d["no_show_rate"] = round(100 * d["no_show"] / d["bookings"], 1) if d["bookings"] else None
         out.append(d)
     out.sort(key=lambda r: (r["cost_per_booking"] is None, r["cost_per_booking"] or 0))
     return out
@@ -239,7 +260,7 @@ def main():
                 "retarget_booked": ba.get("retarget_booked", 0),
                 "prospect_booked": ba.get("prospect_booked", 0),
                 "total_bookings": ba.get("total_real", 0),
-                "adset_efficiency": (_eff := adset_efficiency(ba)),
+                "adset_efficiency": (_eff := adset_efficiency(vsl.get("real_bookings_detail", []))),
                 "path_efficiency": path_efficiency(_eff),
             },
         },

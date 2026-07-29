@@ -79,6 +79,17 @@ td{vertical-align:top}
 .scroll .st-src{white-space:nowrap}
 .vdd{font-family:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);cursor:pointer;max-width:118px}
 .vdd:disabled{opacity:.45;cursor:default}
+.oc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid var(--grid);flex-wrap:wrap}
+.oc-row:last-child{border-bottom:none}
+.oc-name{font-weight:600;font-size:13.5px}
+.oc-sub{font-size:11px;color:var(--ink3)}
+.oc-btns{display:flex;gap:6px;flex-wrap:wrap}
+.ob{font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink2);cursor:pointer;transition:.12s}
+.ob:hover{transform:translateY(-1px)}
+.ob.q{color:var(--good);border-color:var(--good-l)} .ob.q:hover{background:var(--good-bg)}
+.ob.nf{color:var(--amber-ink);border-color:var(--amber-l)} .ob.nf:hover{background:var(--amber-bg)}
+.ob.ns{color:var(--bad);border-color:#f1c7c3} .ob.ns:hover{background:var(--bad-bg)}
+.ob.ca:hover{background:var(--grid)}
 .tag.live{background:var(--good-bg);color:var(--good)}
 .tag.needs{background:var(--bad-bg);color:var(--bad)}
 .tag.proxy,.tag.available{background:var(--amber-bg);color:var(--amber-ink)}
@@ -184,6 +195,9 @@ const D = DATA.detail;
 const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
 let html = '';
 
+// Call outcomes — focused "what happened on this call?" queue
+html += `<details open><summary>Call outcomes <span style="color:var(--ink3);font-weight:400;font-size:12px">— log what happened</span> <span class="cnt" id="oc-cnt"></span></summary><div class="det-body" id="outcomes"></div></details>`;
+
 // Daily ad spend — the number to watch as Meta unthrottles now that Lead is live
 const DS = D.daily_spend||[];
 html += `<details open><summary>Daily ad spend <span style="color:var(--ink3);font-weight:400;font-size:12px">— is Meta unthrottling?</span> <span class="cnt">${DS.length?`${DS.length} day(s) · $${D.daily_budget||0}/day budget`:'awaiting ad data'}</span></summary><div class="det-body" id="dspend"></div></details>`;
@@ -244,36 +258,97 @@ $('details').innerHTML = html;
   host.innerHTML=h;
 })();
 
-// save a call-outcome / qualification verdict (dropdowns in the report table).
-// DEBOUNCED: changing the outcome AND the qualification batches into ONE save so
-// the second field can't be dropped by the first field's save+reload.
-const svTimers = {};
-function sv(el){
-  const tr = el.closest('tr'); if(!tr) return;
-  const email = tr.getAttribute('data-email');
-  const outSel = tr.querySelector('select[data-k=outcome]');
-  const fitSel = tr.querySelector('select[data-k=fit]');
-  // no-show / cancelled → qualification is N/A, clear + disable it live
-  if(outSel.value==='no_show' || outSel.value==='cancelled'){ fitSel.value=''; fitSel.disabled=true; }
-  else { fitSel.disabled=false; }
-  const st = tr.querySelector('.svst'); if(st){ st.textContent='• editing'; st.style.color='var(--ink3)'; }
-  clearTimeout(svTimers[email]);
-  svTimers[email] = setTimeout(()=>svSave(tr, email), 1000);
+// ── Call-outcomes queue: one question per call, single click, optimistic UI ──
+// Maps the two-axis data model (outcome + fit) onto 4 intuitive answers.
+const CHOICES = [
+  {label:'Qualified',  cls:'q',  outcome:'held',      fit:'qualified'},
+  {label:'Not a fit',  cls:'nf', outcome:'held',      fit:'unqualified'},
+  {label:'No-show',    cls:'ns', outcome:'no_show',   fit:null},
+  {label:'Cancelled',  cls:'ca', outcome:'cancelled', fit:null},
+];
+const _local = {};          // email → {outcome,fit} optimistic overrides
+const _changing = {};       // email → true (re-picking a logged call)
+const _saveQ = []; let _saving = false, _errs = {};
+
+function _eff(b){
+  const lv = _local[(b.email||'').toLowerCase()];
+  const outcome = lv ? lv.outcome : b.outcome, fit = lv ? lv.fit : b.fit;
+  let status = null;
+  if(outcome==='no_show') status='No-show';
+  else if(outcome==='cancelled') status='Cancelled';
+  else if(fit==='qualified') status='Qualified';
+  else if(fit==='unqualified') status='Not a fit';
+  return {status};
 }
-async function svSave(tr, email){
-  const outcome = tr.querySelector('select[data-k=outcome]').value;
-  const fit = tr.querySelector('select[data-k=fit]').value;
-  const sels = tr.querySelectorAll('select'); sels.forEach(s=>s.disabled=true);
-  const st = tr.querySelector('.svst'); if(st){ st.textContent='saving… (~20s)'; st.style.color='var(--purple)'; }
-  try{
-    const r = await fetch('/verdict',{method:'POST',headers:{'Content-Type':'application/json'},
-                                      body:JSON.stringify({email,outcome,fit})});
-    const j = await r.json();
-    if(j.ok){ location.reload(); return; }
-    if(st){ st.textContent='save failed'; st.style.color='var(--bad)'; }
-  }catch(e){ if(st){ st.textContent='save failed'; st.style.color='var(--bad)'; } }
-  sels.forEach(s=>s.disabled=false);
+const _badge = s => s==='Qualified'?'<span class="tag live">Qualified</span>'
+  : s==='Not a fit'?'<span class="tag needs">Not a fit</span>'
+  : s==='No-show'?'<span class="tag needs">No-show</span>'
+  : s==='Cancelled'?'<span class="tag test">Cancelled</span>':'—';
+
+function setOutcome(email, outcome, fit){
+  _local[email.toLowerCase()] = {outcome, fit};
+  delete _changing[email.toLowerCase()];
+  renderOutcomes();
+  _saveQ.push({email, outcome, fit}); drainQ();
 }
+function changeOutcome(email){ _changing[email.toLowerCase()] = true; renderOutcomes(); }
+
+async function drainQ(){
+  if(_saving) return; _saving = true; saveBadge();
+  while(_saveQ.length){
+    const {email, outcome, fit} = _saveQ.shift();
+    try{
+      const r = await fetch('/verdict',{method:'POST',headers:{'Content-Type':'application/json'},
+                                        body:JSON.stringify({email,outcome,fit:fit||''})});
+      const j = await r.json();
+      if(!j.ok){ _errs[email]=1; } else { delete _errs[email]; }
+    }catch(e){ _errs[email]=1; }
+    saveBadge();
+  }
+  _saving = false; saveBadge();
+}
+function saveBadge(){
+  const el = $('oc-save'); if(!el) return;
+  const nerr = Object.keys(_errs).length;
+  if(_saving) el.innerHTML = `<span style="color:var(--purple)">saving…</span>`;
+  else if(nerr) el.innerHTML = `<span style="color:var(--bad)">${nerr} save(s) failed — retry</span>`;
+  else if(Object.keys(_local).length) el.innerHTML = `<span style="color:var(--good)">✓ saved</span> · <a class="plain" href="javascript:location.reload()">↻ refresh totals</a>`;
+  else el.innerHTML = '';
+}
+
+function renderOutcomes(){
+  const host = $('outcomes'); if(!host) return;
+  const bookings = (D.report||{}).bookings||[];
+  const now = new Date();
+  const needs=[], logged=[], upcoming=[];
+  bookings.forEach(b=>{
+    const started = b.start ? (new Date(b.start) <= now) : true;
+    const st = _eff(b).status;
+    const em = (b.email||'').toLowerCase();
+    if(!started && !st){ upcoming.push(b); return; }
+    if(st && !_changing[em]) logged.push({b, st}); else needs.push(b);
+  });
+  const when = b => (b.start||'').slice(5,16).replace('T',' · ').replace('-','/');
+  const btns = b => CHOICES.map(c=>`<button class="ob ${c.cls}" onclick="setOutcome('${(b.email||'').replace(/'/g,"\\'")}','${c.outcome}',${c.fit?`'${c.fit}'`:'null'})">${c.label}</button>`).join('');
+  let h = `<div id="oc-save" style="font-size:12px;min-height:16px;margin-bottom:6px"></div>`;
+  if(needs.length){
+    h += `<div style="font-weight:600;margin:2px 0 6px">Needs a status <span style="color:var(--ink3);font-weight:400">(${needs.length})</span></div>`;
+    h += needs.map(b=>`<div class="oc-row"><div><div class="oc-name">${b.name||b.email||''}</div><div class="oc-sub">${b.email||''} · ${when(b)}</div></div><div class="oc-btns">${btns(b)}</div></div>`).join('');
+  } else {
+    h += `<div class="empty" style="padding:6px 0">Nothing waiting — every call that's happened has a status. 🎉</div>`;
+  }
+  if(logged.length){
+    h += `<div style="font-weight:600;margin:16px 0 6px">Logged <span style="color:var(--ink3);font-weight:400">(${logged.length})</span></div>`;
+    h += logged.map(({b,st})=>`<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span> <span class="oc-sub">· ${when(b)}</span></div><div>${_badge(st)} <a class="plain" style="font-size:11px;margin-left:8px" href="javascript:changeOutcome('${(b.email||'').replace(/'/g,"\\'")}')">change</a></div></div>`).join('');
+  }
+  if(upcoming.length){
+    h += `<div class="st-note" style="margin-top:14px">${upcoming.length} upcoming call(s) — nothing to log yet: ${upcoming.map(b=>`${(b.name||b.email||'').split(' ')[0]} (${when(b)})`).join(' · ')}</div>`;
+  }
+  host.innerHTML = h;
+  const cnt = $('oc-cnt'); if(cnt) cnt.textContent = needs.length ? `${needs.length} awaiting a status` : 'all logged';
+  saveBadge();
+}
+renderOutcomes();
 
 // report: best ads + which lead booked from which ad
 (function(){
@@ -289,18 +364,19 @@ async function svSave(tr, email){
     `<div class="b"><div class="bv">${R.ad_attributed||0}</div><div class="bl">ad-attributed bookings</div></div>`+
     `<div class="b"><div class="bv">${R.retarget_booked||0}</div><div class="bl">retargeting (warm)</div></div>`+
     `<div class="b"><div class="bv">${R.prospect_booked||0}</div><div class="bl">prospecting (cold)</div></div></div>`;
-  h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad <span style="color:var(--ink3);font-weight:400;font-size:12px">— set the outcome &amp; fit; “Auto” trusts Day AI transcript detection</span></div>';
-  const OUT = [['auto','Auto'],['held','Held'],['no_show','No-show'],['cancelled','Cancelled']];
-  const FIT = [['','—'],['qualified','Qualified'],['unqualified','Not a fit']];
-  const opts = (list,cur)=>list.map(([v,l])=>`<option value="${v}"${(cur||'')===v?' selected':''}>${l}</option>`).join('');
-  // on an "Auto" row, show the auto-detected result only when Day AI actually found a held call
-  const autoChip = b => b.held?' <span class="tag live">held ✓ (auto)</span>':'';
-  h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Call outcome</th><th>Qualification</th></tr>` +
-    bookings.map(b=>`<tr data-email="${(b.email||'').replace(/"/g,'&quot;')}"><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
+  h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad <span style="color:var(--ink3);font-weight:400;font-size:12px">— status is set in “Call outcomes” above</span></div>';
+  // read-only status (editing lives in the Call outcomes queue)
+  const stCell = b => b.no_show?'<span class="tag needs">No-show</span>'
+    : b.cancelled?'<span class="tag test">Cancelled</span>'
+    : b.fit==='qualified'?'<span class="tag live">Qualified</span>'
+    : b.fit==='unqualified'?'<span class="tag needs">Not a fit</span>'
+    : b.held?'<span style="color:var(--amber-ink,#8a6410)">held · needs verdict</span>'
+    : '<span style="color:var(--ink3)">not yet</span>';
+  h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Status</th></tr>` +
+    bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
       `<td>${b.ad?`<span class="adname">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
       `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
-      `<td><select class="vdd" data-k="outcome" onchange="sv(this)">${opts(OUT,b.outcome)}</select>${b.outcome==='auto'?autoChip(b):''}</td>`+
-      `<td><select class="vdd" data-k="fit" onchange="sv(this)"${(b.no_show||b.cancelled)?' disabled':''}>${opts(FIT,b.fit)}</select><span class="svst" style="font-size:11px;margin-left:6px;white-space:nowrap"></span></td></tr>`).join('')+'</table></div>'
+      `<td>${stCell(b)}</td></tr>`).join('')+'</table></div>'
     : '<div class="empty">No real bookings yet.</div>';
   h += '<div style="font-weight:600;margin:18px 0 8px">Bookings by ad</div>';
   h += byAd.length ? `<table><tr><th>Ad</th><th>Ad set</th><th>Bookings</th></tr>` +

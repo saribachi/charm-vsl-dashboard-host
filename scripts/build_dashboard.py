@@ -404,11 +404,14 @@ def main():
             elif oc == "cancelled":
                 e["_cancelled"] = True
                 e["_held"] = False
+            elif oc == "rescheduled":
+                e["_rescheduled"] = True
+                e["_held"] = False        # moved to a new time — didn't happen (yet)
             elif oc == "held":
                 e["_held"] = True
             # oc == "auto" → keep Day AI's _held as-is
-            # a fit verdict implies the call happened (unless explicitly no-show/cancelled)
-            if fit in ("qualified", "unqualified") and oc not in ("no_show", "cancelled"):
+            # a fit verdict implies the call happened (unless explicitly not-held)
+            if fit in ("qualified", "unqualified") and oc not in ("no_show", "cancelled", "rescheduled"):
                 e["_held"] = True
             e["_fit"] = fit
     meetings_held = sum(1 for e in real_booked if e.get("_held"))
@@ -418,6 +421,7 @@ def main():
         "unqualified": sum(1 for e in real_booked if e.get("_fit") == "unqualified" and e.get("_held")),
         "no_show": sum(1 for e in real_booked if e.get("_no_show")),
         "cancelled": sum(1 for e in real_booked if e.get("_cancelled")),
+        "rescheduled": sum(1 for e in real_booked if e.get("_rescheduled")),
         "pending": sum(1 for e in real_booked if e.get("_held") and not e.get("_fit")),
     }
     meetings_qualified = post_call["qualified"]
@@ -506,6 +510,7 @@ def main():
             "held": e.get("_held", False),
             "no_show": e.get("_no_show", False),
             "cancelled": e.get("_cancelled", False),
+            "rescheduled": e.get("_rescheduled", False),
             "outcome": (e.get("_pc") or {}).get("outcome", "auto"),   # manual setting → dropdown state
             "fit": e.get("_fit"),                                     # qualified|unqualified|None → dropdown state
             "post_call": (True if e.get("_fit") == "qualified" else False if e.get("_fit") == "unqualified" else None) if e.get("_held") else None,

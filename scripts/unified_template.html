@@ -90,6 +90,7 @@ td{vertical-align:top}
 .ob.q{color:var(--good);border-color:var(--good-l)} .ob.q:hover{background:var(--good-bg)}
 .ob.nf{color:var(--amber-ink);border-color:var(--amber-l)} .ob.nf:hover{background:var(--amber-bg)}
 .ob.ns{color:var(--bad);border-color:#f1c7c3} .ob.ns:hover{background:var(--bad-bg)}
+.ob.rs{color:#2b5aa8;border-color:#c3d4ec} .ob.rs:hover{background:#eef3fb}
 .ob.ca:hover{background:var(--grid)}
 .tag.live{background:var(--good-bg);color:var(--good)}
 .tag.needs{background:var(--bad-bg);color:var(--bad)}
@@ -262,10 +263,11 @@ $('details').innerHTML = html;
 // ── Call-outcomes queue: one question per call, single click, optimistic UI ──
 // Maps the two-axis data model (outcome + fit) onto 4 intuitive answers.
 const CHOICES = [
-  {label:'Qualified',  cls:'q',  outcome:'held',      fit:'qualified'},
-  {label:'Not a fit',  cls:'nf', outcome:'held',      fit:'unqualified'},
-  {label:'No-show',    cls:'ns', outcome:'no_show',   fit:null},
-  {label:'Cancelled',  cls:'ca', outcome:'cancelled', fit:null},
+  {label:'Qualified',   cls:'q',  outcome:'held',        fit:'qualified'},
+  {label:'Not a fit',   cls:'nf', outcome:'held',        fit:'unqualified'},
+  {label:'No-show',     cls:'ns', outcome:'no_show',     fit:null},
+  {label:'Reschedule',  cls:'rs', outcome:'rescheduled', fit:null},
+  {label:'Cancelled',   cls:'ca', outcome:'cancelled',   fit:null},
 ];
 const _local = {};          // email → {outcome,fit} optimistic overrides
 const _changing = {};       // email → true (re-picking a logged call)
@@ -321,7 +323,7 @@ function renderOutcomes(){
   const host = $('outcomes'); if(!host) return;
   const bookings = (D.report||{}).bookings||[];
   const now = new Date();
-  const needs=[], g={qualified:[],notfit:[],noshow:[],cancelled:[]}, up=[];
+  const needs=[], g={qualified:[],notfit:[],noshow:[],rescheduled:[],cancelled:[]}, up=[];
   bookings.forEach(b=>{
     const started = b.start ? (new Date(b.start) <= now) : true;
     const em = (b.email||'').toLowerCase();
@@ -329,6 +331,7 @@ function renderOutcomes(){
     let st = null;
     if(outcome==='no_show') st='noshow';
     else if(outcome==='cancelled') st='cancelled';
+    else if(outcome==='rescheduled') st='rescheduled';
     else if(fit==='qualified') st='qualified';
     else if(fit==='unqualified') st='notfit';
     if(!started && !st){ up.push(b); return; }
@@ -339,11 +342,12 @@ function renderOutcomes(){
   const chg = b => `<a class="plain" style="font-size:11px" href="javascript:changeOutcome('${(b.email||'').replace(/'/g,"\\'")}')">change</a>`;
   let h = `<div id="oc-save" style="font-size:12px;min-height:16px;margin-bottom:8px"></div>`;
   // at-a-glance summary
-  h += `<div class="mini" style="grid-template-columns:repeat(5,1fr)">`+
+  h += `<div class="mini" style="grid-template-columns:repeat(6,1fr)">`+
     `<div class="b"><div class="bv" style="color:${needs.length?'var(--amber-ink)':'var(--ink3)'}">${needs.length}</div><div class="bl">need a status</div></div>`+
     `<div class="b"><div class="bv" style="color:var(--good)">${g.qualified.length}</div><div class="bl">qualified</div></div>`+
     `<div class="b"><div class="bv">${g.notfit.length}</div><div class="bl">not a fit</div></div>`+
     `<div class="b"><div class="bv" style="color:var(--bad)">${g.noshow.length}</div><div class="bl">no-show</div></div>`+
+    `<div class="b"><div class="bv" style="color:#2b5aa8">${g.rescheduled.length}</div><div class="bl">rescheduled</div></div>`+
     `<div class="b"><div class="bv">${up.length}</div><div class="bl">upcoming</div></div></div>`;
   // action queue
   if(needs.length){
@@ -357,6 +361,7 @@ function renderOutcomes(){
   h += grp('qualified','Qualified','var(--good)');
   h += grp('notfit','Not a fit','var(--amber-ink)');
   h += grp('noshow','No-show','var(--bad)');
+  h += grp('rescheduled','Rescheduled','#2b5aa8');
   h += grp('cancelled','Cancelled','var(--ink3)');
   // upcoming
   if(up.length){
@@ -388,6 +393,7 @@ renderOutcomes();
   // read-only status (editing lives in the Call outcomes queue)
   const stCell = b => b.no_show?'<span class="tag needs">No-show</span>'
     : b.cancelled?'<span class="tag test">Cancelled</span>'
+    : b.rescheduled?'<span class="tag" style="background:#eef3fb;color:#2b5aa8">Rescheduled</span>'
     : b.fit==='qualified'?'<span class="tag live">Qualified</span>'
     : b.fit==='unqualified'?'<span class="tag needs">Not a fit</span>'
     : b.held?'<span style="color:var(--amber-ink,#8a6410)">held · needs verdict</span>'

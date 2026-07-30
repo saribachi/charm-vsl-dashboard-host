@@ -179,7 +179,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             fit = body.get("fit") or None
             if not email:
                 raise ValueError("missing email")
-            if outcome not in ("auto", "held", "no_show", "cancelled"):
+            if outcome not in ("auto", "held", "no_show", "cancelled", "rescheduled"):
                 raise ValueError("bad outcome")
             if fit not in (None, "qualified", "unqualified"):
                 raise ValueError("bad fit")

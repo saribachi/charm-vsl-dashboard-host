@@ -58,6 +58,13 @@ def rebuild(builds=BUILDS):
         except Exception as e:
             ok = False
             print(f"[build] {b} EXC {e}", flush=True)
+        if not ok:
+            # Stop the chain: build_unified renders from the _vsl.json/_ad.json that
+            # the upstream builds write, so continuing after a failure would publish a
+            # freshly-stamped page built from stale inputs. Better to leave the last
+            # good page (or nothing, on a cold start) than to serve stale data as current.
+            print(f"[build] halting chain after {b} failed", flush=True)
+            break
     state.update(at=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), ok=ok)
     print(f"[rebuild] ok={ok} at={state['at']}", flush=True)
 

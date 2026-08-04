@@ -5,3 +5,5 @@ data/wistia/*.json
 data/dayai/*.json
 __pycache__/
 data/meta/ad_daily.json
+data/_vsl.json
+data/_ad.json

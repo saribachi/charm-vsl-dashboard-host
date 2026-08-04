@@ -113,19 +113,41 @@ def path_efficiency(eff):
     return out
 
 
+def _ad_rows():
+    try:
+        return json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
+    except Exception:
+        return []
+
+
 def daily_spend():
     """Per-day total ad spend (summed across ad sets) — the number to watch as
     Meta's Lead event unthrottles delivery against the daily budget."""
-    try:
-        rows = json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
-    except Exception:
-        return []
+    rows = _ad_rows()
     by = {}
     for r in rows:
         d = r.get("date")
         if d:
             by[d] = by.get(d, 0.0) + (r.get("spend") or 0)
     return [{"date": d, "spend": round(by[d], 2)} for d in sorted(by)]
+
+
+def spend_window():
+    """Human date range actually covered by ad_daily.json, e.g. "Jul 20 - Aug 4".
+    Derived, never hardcoded: the KPI sub-label read "Jul 20-23" for two weeks
+    after the data had moved on, which is how a truncated upload went unnoticed."""
+    ds = [r["date"] for r in daily_spend()]
+    if not ds:
+        return None, 0
+    def fmt(s):
+        y, m, d = (int(x) for x in s.split("-"))
+        return f"{MONTHS[m-1]} {d}"
+    lo, hi = fmt(ds[0]), fmt(ds[-1])
+    return (lo if lo == hi else f"{lo} - {hi}"), len(ds)
+
+
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
 def div(n, d):
@@ -176,13 +198,18 @@ def main():
     def kpi(label, value, status, sub):
         return {"label": label, "value": value, "status": status, "sub": sub}
 
+    window, window_days = spend_window()
+    n_sets = len({r.get("ad_set_name") for r in _ad_rows() if r.get("ad_set_name")})
+
     kpis = [
-        kpi("Ad spend", money(spend), "live", "GTM ad set · Jul 20-23"),
+        kpi("Ad spend", money(spend), "live",
+            f"{n_sets} ad set{'s' if n_sets != 1 else ''} · {window}" if window
+            else "awaiting ad data"),
         kpi("Cost / click", money(cpc), "live" if cpc else "needs", f"{pct(ctr) or '—'} CTR"),
         kpi("Cost / form fill", money(cpff) if cpff else "—", "live" if cpff else "needs",
-            "GHL actual" if cpff else "awaiting real leads"),
+            f"GHL actual · {window}" if cpff else "awaiting real leads"),
         kpi("Cost / booked call", money(cpbooked) if cpbooked else "—", "live" if cpbooked else "needs",
-            "target $270" if not cpbooked else "vs $270 target"),
+            "target $270" if not cpbooked else f"vs $270 target · {window}"),
         kpi("ROAS", (f"{div(cc, spend):.1f}x" if cc else "—"),
             "live" if cc else "needs",
             "vs 5.0x target" if cc else "no VSL closes yet"),

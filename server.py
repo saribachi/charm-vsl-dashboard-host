@@ -100,7 +100,8 @@ button:disabled{{opacity:.5;cursor:default}}
 <div id="drop"><div class="big">Drop CSV here</div><div class="small">or click to choose &middot; the file from Ads Manager &rarr; Export (per ad set)</div>
 <input id="file" type="file" accept=".csv,text/csv" style="display:none"></div>
 <div id="out"></div>
-<div class="steps"><b>How to export:</b> Ads Manager &rarr; your GTM campaign &rarr; breakdown by <b>Ad set</b> &rarr; Reports/Export &rarr; CSV. Columns needed: Ad set name, Day, Reach, Impressions, Amount spent, Link clicks (and Schedule, once added).</div>
+<div class="steps"><b>How to export:</b> Ads Manager &rarr; your GTM campaign &rarr; breakdown by <b>Ad set</b> &rarr; Reports/Export &rarr; CSV. Columns needed: Ad set name, Day, Reach, Impressions, Amount spent, Link clicks (and Schedule, once added).
+<br><b>Date range doesn't matter</b> &mdash; uploads merge into history, so a few recent days is fine. Re-uploading a day you already sent just corrects it.</div>
 <a class="back" href="/">&larr; Back to dashboard</a>
 <script>
 const drop=document.getElementById('drop'),file=document.getElementById('file'),out=document.getElementById('out');
@@ -117,7 +118,7 @@ function send(f){{
     try{{
       const res=await fetch('/upload',{{method:'POST',headers:{{'Content-Type':'text/csv'}},body:r.result}});
       const j=await res.json();
-      if(j.ok) out.innerHTML='<span class="ok">&#10003; Updated &mdash; '+j.ad_sets+' ad set(s), '+j.rows+' day-rows. Dashboard refreshed.</span>';
+      if(j.ok) out.innerHTML='<span class="ok">&#10003; Merged &mdash; '+j.added+' new day-row(s), '+j.restated+' restated.</span><br><span class="small">History now '+j.days+' day(s), '+j.range+' &middot; '+j.ad_sets+' ad set(s) &middot; $'+j.spend.toLocaleString()+' total. Dashboard refreshed.</span>';
       else out.innerHTML='<span class="err">'+ (j.error||'upload failed') +'</span>';
     }}catch(e){{out.innerHTML='<span class="err">'+e+'</span>';}}
   }};
@@ -214,14 +215,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             n = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(n).decode("utf-8", "replace")
             import import_ad_daily
-            out = import_ad_daily.rows_from_csv_text(
+            parsed = import_ad_daily.rows_from_csv_text(
                 body, source="uploaded " + time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()))
-            AD_DAILY.parent.mkdir(parents=True, exist_ok=True)
-            AD_DAILY.write_text(json.dumps(out))
+            # MERGE, never replace: Meta exports whatever range was selected in Ads
+            # Manager, so a short export must add to history rather than wipe it.
+            out, st = import_ad_daily.merge_into_file(parsed, root=ROOT)
             state["ad_updated"] = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
             rebuild()  # synchronous — reflect the new data before responding
-            resp = {"ok": True, "rows": len(out["rows"]),
-                    "ad_sets": len({r["ad_set_name"] for r in out["rows"]})}
+            resp = {"ok": True, "rows": st["total_rows"], "ad_sets": st["ad_sets"],
+                    "added": st["added"], "restated": st["updated"],
+                    "range": f"{st['date_from']} to {st['date_to']}",
+                    "days": st["days"], "spend": st["spend"]}
         except Exception as e:
             resp = {"ok": False, "error": str(e)}
         self._send(json.dumps(resp), "application/json", 200 if resp.get("ok") else 400)

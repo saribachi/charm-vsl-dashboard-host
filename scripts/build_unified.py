@@ -61,6 +61,59 @@ def adset_efficiency(bookings):
     return rows
 
 
+def qualified_by_ad(bookings, eff=None):
+    """Per AD (creative = utm_content): who booked, who turned out to be a fit,
+    and the names behind the numbers. The ad-SET view can't answer "which ads
+    bring the good ones" because one set runs several creatives — Statics 1 alone
+    holds nine.
+
+    Deliberately NO cost-per-qualified column here: the Meta export is broken down
+    by ad SET, so per-creative spend does not exist yet (needs an "Ad name"
+    breakdown in the export). Ad-set cost/qualified is carried alongside as the
+    closest available proxy, labelled as the SET's number, not the ad's."""
+    set_cost = {_canon(r["ad_set"]): r.get("cost_per_qualified") for r in (eff or [])}
+    ads = {}
+    for b in bookings or []:
+        ad = b.get("ad")
+        key = ad or DIRECT_AD
+        d = ads.setdefault(key, {"ad": ad, "ad_set": b.get("ad_set"), "retarget": b.get("retarget"),
+                                 "bookings": 0, "held": 0, "qualified": 0, "no_show": 0,
+                                 "pending": 0, "people": []})
+        d["bookings"] += 1
+        if b.get("held"):
+            d["held"] += 1
+        if b.get("no_show"):
+            d["no_show"] += 1
+        if b.get("fit") == "qualified":
+            d["qualified"] += 1
+            d["people"].append({"name": b.get("name") or b.get("email"), "email": b.get("email"),
+                                "start": b.get("start")})
+        elif not b.get("fit") and not b.get("no_show") and not b.get("cancelled"):
+            d["pending"] += 1     # no verdict yet — keeps the rate honest
+    rows = []
+    for key, d in ads.items():
+        bk, q = d["bookings"], d["qualified"]
+        d["name"] = key
+        d["path"] = _path_of(d["ad_set"]) if d["ad_set"] else None
+        d["qualified_rate"] = round(100 * q / bk, 1) if bk else None
+        d["set_cost_per_qualified"] = set_cost.get(_canon(d["ad_set"])) if d["ad_set"] else None
+        d["people"].sort(key=lambda p: p.get("start") or "")
+        rows.append(d)
+    # Best first: most qualified, then best hit-rate, then most bookings.
+    rows.sort(key=lambda r: (-r["qualified"], -(r["qualified_rate"] or 0), -r["bookings"]))
+    tot_q = sum(r["qualified"] for r in rows)
+    return {"rows": rows,
+            "total_qualified": tot_q,
+            "attributed_qualified": sum(r["qualified"] for r in rows if r["ad"]),
+            "unattributed_qualified": sum(r["qualified"] for r in rows if not r["ad"]),
+            "pending_verdicts": sum(r["pending"] for r in rows),
+            "ads_with_qualified": len([r for r in rows if r["qualified"]]),
+            "per_ad_cost_available": False}
+
+
+DIRECT_AD = "(direct / pre-UTM)"
+
+
 # Explicit ad-set → path map (Chris's roles). Ad-set NAMES don't self-describe
 # because sets get repurposed — e.g. the videos now live in "GTM LinkedIn + Cold
 # Email - REAL", so it's the pool-builder, not cold prospecting. Keyed by _canon.
@@ -289,6 +342,7 @@ def main():
                 "total_bookings": ba.get("total_real", 0),
                 "adset_efficiency": (_eff := adset_efficiency(vsl.get("real_bookings_detail", []))),
                 "path_efficiency": path_efficiency(_eff),
+                "qualified_by_ad": qualified_by_ad(vsl.get("real_bookings_detail", []), _eff),
             },
         },
     }

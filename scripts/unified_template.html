@@ -92,6 +92,22 @@ td{vertical-align:top}
 .ob.ns{color:var(--bad);border-color:#f1c7c3} .ob.ns:hover{background:var(--bad-bg)}
 .ob.rs{color:#2b5aa8;border-color:#c3d4ec} .ob.rs:hover{background:#eef3fb}
 .ob.ca:hover{background:var(--grid)}
+/* collapsible outcome groups — the call list gets long fast, so every settled
+   group stays shut until asked for. Open state is kept in _ocOpen across the
+   optimistic re-render, or a save would snap every group closed again. */
+.ocg{border:1px solid var(--line);border-radius:10px;margin:7px 0;overflow:hidden;background:#fff}
+.ocg>summary{list-style:none;cursor:pointer;padding:9px 12px;display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600}
+.ocg>summary::-webkit-details-marker{display:none}
+.ocg>summary:hover{background:var(--grid)}
+.ocg .chev{margin-left:auto;color:var(--ink3);font-size:10px;transition:transform .15s}
+.ocg[open] .chev{transform:rotate(90deg)}
+.ocg[open]>summary{border-bottom:1px solid var(--grid)}
+.ocg-body{padding:2px 12px 6px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.ocg .n{color:var(--ink3);font-weight:500}
+.oc-card{cursor:pointer;transition:.12s}
+.oc-card:hover{background:var(--grid);transform:translateY(-1px)}
+.qa-people{font-size:11.5px;color:var(--ink2);line-height:1.6}
 .tag.live{background:var(--good-bg);color:var(--good)}
 .tag.needs{background:var(--bad-bg);color:var(--bad)}
 .tag.proxy,.tag.available{background:var(--amber-bg);color:var(--amber-ink)}
@@ -200,6 +216,10 @@ let html = '';
 // Call outcomes — focused "what happened on this call?" queue
 html += `<details open><summary>Call outcomes <span style="color:var(--ink3);font-weight:400;font-size:12px">— log what happened</span> <span class="cnt" id="oc-cnt"></span></summary><div class="det-body" id="outcomes"></div></details>`;
 
+// Where the QUALIFIED leads come from — the ad-level answer to "what's working"
+const QA = (D.report||{}).qualified_by_ad||{};
+html += `<details open><summary>Where qualified leads come from <span style="color:var(--ink3);font-weight:400;font-size:12px">— by ad creative</span> <span class="cnt">${QA.total_qualified?`${QA.total_qualified} qualified · ${QA.ads_with_qualified} ad(s) producing`:'no qualified calls yet'}</span></summary><div class="det-body" id="qbyad"></div></details>`;
+
 // Daily ad spend — the number to watch as Meta unthrottles now that Lead is live
 const DS = D.daily_spend||[];
 html += `<details open><summary>Daily ad spend <span style="color:var(--ink3);font-weight:400;font-size:12px">— is Meta unthrottling?</span> <span class="cnt">${DS.length?`${DS.length} day(s) · $${D.daily_budget||0}/day budget`:'awaiting ad data'}</span></summary><div class="det-body" id="dspend"></div></details>`;
@@ -272,6 +292,16 @@ const CHOICES = [
 const _local = {};          // email → {outcome,fit} optimistic overrides
 const _changing = {};       // email → true (re-picking a logged call)
 const _saveQ = []; let _saving = false, _errs = {};
+// Which outcome groups are expanded. Survives the optimistic re-render after a
+// save — otherwise logging one verdict would collapse everything you had open.
+// Only the action queue starts open; settled groups stay shut until asked for.
+const _ocOpen = {needs:true};
+function openGroup(key){
+  const el = document.getElementById('ocg-'+key);
+  if(!el) return;
+  _ocOpen[key] = el.open = true;
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
 
 function _eff(b){
   const lv = _local[(b.email||'').toLowerCase()];
@@ -341,39 +371,86 @@ function renderOutcomes(){
   const btns = b => CHOICES.map(c=>`<button class="ob ${c.cls}" onclick="setOutcome('${(b.email||'').replace(/'/g,"\\'")}','${c.outcome}',${c.fit?`'${c.fit}'`:'null'})">${c.label}</button>`).join('');
   const chg = b => `<a class="plain" style="font-size:11px" href="javascript:changeOutcome('${(b.email||'').replace(/'/g,"\\'")}')">change</a>`;
   let h = `<div id="oc-save" style="font-size:12px;min-height:16px;margin-bottom:8px"></div>`;
-  // at-a-glance summary
+  // at-a-glance summary — each card opens its group
+  const card = (key,n,label,color) =>
+    `<div class="b oc-card" onclick="openGroup('${key}')" title="Show the ${label} list">`+
+    `<div class="bv" style="color:${color}">${n}</div><div class="bl">${label}</div></div>`;
   h += `<div class="mini" style="grid-template-columns:repeat(6,1fr)">`+
-    `<div class="b"><div class="bv" style="color:${needs.length?'var(--amber-ink)':'var(--ink3)'}">${needs.length}</div><div class="bl">need a status</div></div>`+
-    `<div class="b"><div class="bv" style="color:var(--good)">${g.qualified.length}</div><div class="bl">qualified</div></div>`+
-    `<div class="b"><div class="bv">${g.notfit.length}</div><div class="bl">not a fit</div></div>`+
-    `<div class="b"><div class="bv" style="color:var(--bad)">${g.noshow.length}</div><div class="bl">no-show</div></div>`+
-    `<div class="b"><div class="bv" style="color:#2b5aa8">${g.rescheduled.length}</div><div class="bl">rescheduled</div></div>`+
-    `<div class="b"><div class="bv">${up.length}</div><div class="bl">upcoming</div></div></div>`;
-  // action queue
-  if(needs.length){
-    h += `<div class="oc-h" style="color:var(--amber-ink)">Needs a status (${needs.length})</div>`;
-    h += needs.map(b=>`<div class="oc-row"><div><div class="oc-name">${b.name||b.email||''}</div><div class="oc-sub">${b.email||''} · ${when(b)}</div></div><div class="oc-btns">${btns(b)}</div></div>`).join('');
-  }
-  // happened, grouped by outcome
-  const grp = (key,label,color)=> g[key].length ?
-    `<div class="oc-h" style="color:${color}">${label} (${g[key].length})</div>` +
-    g[key].map(b=>`<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span> <span class="oc-sub">· ${when(b)}</span></div>${chg(b)}</div>`).join('') : '';
-  h += grp('qualified','Qualified','var(--good)');
-  h += grp('notfit','Not a fit','var(--amber-ink)');
-  h += grp('noshow','No-show','var(--bad)');
-  h += grp('rescheduled','Rescheduled','#2b5aa8');
-  h += grp('cancelled','Cancelled','var(--ink3)');
-  // upcoming
-  if(up.length){
-    h += `<div class="oc-h" style="color:var(--ink3)">Upcoming — not yet (${up.length})</div>`;
-    h += up.map(b=>`<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span> <span class="oc-sub">· ${when(b)}</span></div><span class="oc-sub">scheduled</span></div>`).join('');
-  }
+    card('needs', needs.length, 'need a status', needs.length?'var(--amber-ink)':'var(--ink3)')+
+    card('qualified', g.qualified.length, 'qualified', 'var(--good)')+
+    card('notfit', g.notfit.length, 'not a fit', 'var(--ink)')+
+    card('noshow', g.noshow.length, 'no-show', 'var(--bad)')+
+    card('rescheduled', g.rescheduled.length, 'rescheduled', '#2b5aa8')+
+    card('upcoming', up.length, 'upcoming', 'var(--ink)')+`</div>`;
+  // Every group is a collapsed drawer: click the header (or its summary card) to
+  // see the people and their emails. Only the action queue opens by default.
+  const grp = (key,label,color,rows,rowFn) => rows.length ?
+    `<details class="ocg" id="ocg-${key}"${_ocOpen[key]?' open':''} ontoggle="_ocOpen['${key}']=this.open">`+
+    `<summary><span class="dot" style="background:${color}"></span>${label} <span class="n">${rows.length}</span><span class="chev">&#9654;</span></summary>`+
+    `<div class="ocg-body">${rows.map(rowFn).join('')}</div></details>` : '';
+  const actionRow = b => `<div class="oc-row"><div><div class="oc-name">${b.name||b.email||''}</div>`+
+    `<div class="oc-sub">${b.email||''} · ${when(b)}</div></div><div class="oc-btns">${btns(b)}</div></div>`;
+  const settledRow = b => `<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span>`+
+    `<div class="oc-sub">${b.email||''} · ${when(b)}</div></div>${chg(b)}</div>`;
+  const upcomingRow = b => `<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span>`+
+    `<div class="oc-sub">${b.email||''} · ${when(b)}</div></div><span class="oc-sub">scheduled</span></div>`;
+  h += grp('needs','Needs a status','var(--amber-ink)',needs,actionRow);
+  h += grp('qualified','Qualified','var(--good)',g.qualified,settledRow);
+  h += grp('notfit','Not a fit','var(--amber-ink)',g.notfit,settledRow);
+  h += grp('noshow','No-show','var(--bad)',g.noshow,settledRow);
+  h += grp('rescheduled','Rescheduled','#2b5aa8',g.rescheduled,settledRow);
+  h += grp('cancelled','Cancelled','var(--ink3)',g.cancelled,settledRow);
+  h += grp('upcoming','Upcoming — not yet','var(--ink3)',up,upcomingRow);
   if(!bookings.length) h += '<div class="empty">No calls yet.</div>';
   host.innerHTML = h;
   const cnt = $('oc-cnt'); if(cnt) cnt.textContent = needs.length ? `${needs.length} awaiting a status` : 'all logged';
   saveBadge();
 }
 renderOutcomes();
+
+// Where qualified leads come from — ranked by ad creative, names behind each row
+(function(){
+  const host = $('qbyad'); if(!host) return;
+  const rows = QA.rows||[];
+  if(!rows.length){ host.innerHTML = '<div class="empty">No bookings yet.</div>'; return; }
+  const money0 = v => '$'+(v||0).toLocaleString(undefined,{maximumFractionDigits:0});
+  const producing = rows.filter(r=>r.qualified>0);
+  let h = `<div class="mini" style="grid-template-columns:repeat(4,1fr)">`+
+    `<div class="b"><div class="bv" style="color:var(--good)">${QA.total_qualified||0}</div><div class="bl">qualified so far</div></div>`+
+    `<div class="b"><div class="bv">${QA.ads_with_qualified||0}</div><div class="bl">ads producing them</div></div>`+
+    `<div class="b"><div class="bv">${QA.attributed_qualified||0}</div><div class="bl">traced to an ad</div></div>`+
+    `<div class="b"><div class="bv" style="color:${QA.pending_verdicts?'var(--amber-ink)':'var(--ink3)'}">${QA.pending_verdicts||0}</div><div class="bl">awaiting a verdict</div></div></div>`;
+  // The answer, up top: which creatives actually produced a fit, and who.
+  h += '<div style="font-weight:600;margin:4px 0 8px">Ads that produced a qualified lead</div>';
+  h += producing.length ? producing.map(r=>{
+    const people = r.people.map(p=>`${p.name}${p.email?` <span style="color:var(--ink3)">&lt;${p.email}&gt;</span>`:''}`).join(' · ');
+    return `<div style="border:1px solid var(--good-l,var(--line));background:var(--good-bg);border-radius:10px;padding:10px 12px;margin-bottom:7px">`+
+      `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">`+
+      `<span class="adname" style="font-size:13px">${r.ad||r.name}</span>`+
+      `<span class="tag live">${r.qualified} qualified</span>`+
+      `<span style="font-size:11.5px;color:var(--ink3)">${r.qualified} of ${r.bookings} booked · ${r.qualified_rate}% hit rate</span></div>`+
+      `<div style="font-size:11.5px;color:var(--ink3);margin-top:3px">${r.ad_set||'—'}${r.path?` · ${r.path}`:''}</div>`+
+      `<div class="qa-people" style="margin-top:6px">${people}</div></div>`;
+  }).join('') : '<div class="empty">No qualified calls logged yet.</div>';
+  // Full ranking, collapsed — every ad that booked, including the duds.
+  h += `<details class="ocg" id="ocg-allads"${_ocOpen.allads?' open':''} ontoggle="_ocOpen.allads=this.open" style="margin-top:14px">`+
+    `<summary><span class="dot" style="background:var(--ink3)"></span>All ads that booked a call <span class="n">${rows.length}</span><span class="chev">&#9654;</span></summary>`+
+    `<div class="ocg-body"><div class="scroll" style="overflow-x:auto"><table>`+
+    `<tr><th>Ad</th><th>Ad set</th><th>Booked</th><th>Qualified</th><th>Hit rate</th><th>No-show</th><th>Set cost / qualified</th></tr>`+
+    rows.map(r=>`<tr><td>${r.ad?`<span class="adname">${r.ad}</span>`:`<span style="color:var(--ink3)">${r.name}</span>`}</td>`+
+      `<td style="font-size:12px">${r.ad_set||'<span style="color:var(--ink3)">—</span>'}</td>`+
+      `<td>${r.bookings}</td>`+
+      `<td>${r.qualified?`<b style="color:var(--good)">${r.qualified}</b>`:'<span style="color:var(--ink3)">0</span>'}</td>`+
+      `<td>${r.qualified?`${r.qualified_rate}%`:'<span style="color:var(--ink3)">—</span>'}</td>`+
+      `<td>${r.no_show||'<span style="color:var(--ink3)">0</span>'}</td>`+
+      `<td>${r.set_cost_per_qualified!=null?`<span style="color:var(--ink3)">${money0(r.set_cost_per_qualified)}</span>`:'<span style="color:var(--ink3)">—</span>'}</td></tr>`).join('')+
+    `</table></div></div></details>`;
+  h += `<div class="note" style="margin-top:10px;font-size:11.5px;color:var(--ink3)">`+
+    `Counts are per <b>ad creative</b> (from the lead's <code>utm_content</code>) — the ad-set view can't show this, since one set runs several creatives. `+
+    `There is no cost-per-qualified <i>per ad</i>: Meta's export is broken down by ad set, so the last column is the whole <b>set's</b> figure, shared by every creative in it. `+
+    `Small samples — treat hit rates as direction, not proof.</div>`;
+  host.innerHTML = h;
+})();
 
 // report: best ads + which lead booked from which ad
 (function(){

@@ -71,6 +71,27 @@ QUALIFIER_FORM_DATE = "2026-07-27"
 # Day AI "Closed Won" stage — deals_closed/cash for VSL-attributed opportunities.
 CLOSED_WON_STAGE_ID = "bef2d697-5f90-4b8e-a421-b6ee3e359aed"
 
+# Day AI "Committed" stage — verbal yes, contract out for signature, NOT yet paid.
+# Tracked separately from Closed Won on purpose: a committed deal is a real win to
+# reference, but its Amount is contracted value, not cash. Cash and ROAS stay wired
+# to Closed Won only, so nothing here can inflate collected revenue.
+COMMITTED_STAGE_ID = "559edc45-0431-483b-abcd-f9d960469c63"
+
+# Real contract terms per deal, keyed by the VSL lead's email.
+# Day AI's Amount field is NOT reliable for committed deals: Macmoor's reads $129,000,
+# which is the annualized CEILING ((4,500 base + 6,250 max scaling) x 12), not what was
+# agreed. Chris confirmed the actual terms. Drop an entry once the CRM Amount is
+# corrected — the fallback uses Amount whenever a deal has no override.
+#
+# Lives in the COMMITTED_TERMS_JSON env (like POST_CALL_JSON / AD_DAILY_JSON), NEVER in
+# source: this is client email + commercial terms, and the deploy repo is PUBLIC.
+# Shape: {"lead@example.com": {"monthly": 4500, "setup": 1000}}
+try:
+    COMMITTED_TERMS = json.loads(ENV.get("COMMITTED_TERMS_JSON") or "{}")
+except ValueError:
+    print("COMMITTED_TERMS_JSON is not valid JSON — falling back to CRM Amount")
+    COMMITTED_TERMS = {}
+
 # Internal/test/invalid submitters — excluded from "real lead" counts
 TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
                "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
@@ -326,6 +347,8 @@ def main():
     # meeting recording. Email-only (deterministic) — no name/title matching, which
     # produced false positives (e.g. "mark" matching "Go-to-Market").
     dayai_conn, meetings_held, deals_closed, cash_collected = False, None, None, None
+    deals_committed, committed_value, committed_detail = None, None, []
+    committed_first_invoice = None
     try:
         import dayai as _dayai
         if _dayai.available():
@@ -367,14 +390,58 @@ def main():
             # Match ONLY real external VSL leads (drop internal reps who are on every deal).
             vsl_lead_emails = {(x["email"] or "").lower() for x in sub_rows
                                if not x["test"] and x.get("email")}
+            def vsl_contact(o):
+                """The external VSL lead on a deal, or None. Internal reps are on
+                every deal, so they must never be what makes a deal match."""
+                for e in o["emails"]:
+                    if not e.endswith("hirecharm.com") and e in vsl_lead_emails:
+                        return e
+                return None
+
             deals_closed, cash_collected = 0, 0.0
-            for o in day.closed_won(CLOSED_WON_STAGE_ID):
-                ext = [e for e in o["emails"] if not e.endswith("hirecharm.com")]
-                if any(e in vsl_lead_emails for e in ext):
+            for o in day.opps_in_stage(CLOSED_WON_STAGE_ID):
+                if vsl_contact(o):
                     deals_closed += 1
                     if o.get("amount"):
                         cash_collected += o["amount"]
             print(f"Day AI VSL-attributed closed deals: {deals_closed} · cash ${cash_collected:.0f}")
+
+            # Committed = verbal yes + contract out, payment NOT collected.
+            # Counted and shown, but deliberately kept out of cash/ROAS.
+            deals_committed, committed_value, committed_first_invoice = 0, 0.0, 0.0
+            for o in day.opps_in_stage(COMMITTED_STAGE_ID):
+                lead = vsl_contact(o)
+                if lead:
+                    deals_committed += 1
+                    terms = COMMITTED_TERMS.get(lead)
+                    if terms:
+                        monthly, setup = terms["monthly"], terms.get("setup", 0)
+                        year_one, first_invoice = monthly * 12 + setup, monthly + setup
+                    else:
+                        # No confirmed terms — fall back to the CRM Amount as year-one
+                        # value, and leave first-invoice unknown rather than guessing.
+                        monthly = setup = first_invoice = None
+                        year_one = o.get("amount") or 0
+                    committed_value += year_one
+                    committed_first_invoice += first_invoice or 0
+                    bk = next((e for e in real_booked
+                               if (e.get("_email") or "").lower() == lead), None)
+                    committed_detail.append({
+                        "title": o.get("title"),
+                        "email": lead,
+                        "name": (contact_cache.get(bk.get("contactId"), {}).get("name")
+                                 if bk else None),
+                        "monthly": monthly,
+                        "setup": setup,
+                        "first_invoice": first_invoice,
+                        "year_one": year_one,
+                        "crm_amount": o.get("amount"),
+                        "ad": bk.get("_utm_content") if bk else None,
+                        "ad_set": bk.get("_utm_term") if bk else None,
+                    })
+            print(f"Day AI VSL-attributed COMMITTED deals: {deals_committed} · "
+                  f"year-one ${committed_value:,.0f} · first invoice "
+                  f"${committed_first_invoice:,.0f} (not cash until paid)")
     except Exception as ex:
         print(f"Day AI held-call pull skipped ({ex})")
 
@@ -457,8 +524,15 @@ def main():
                     if dayai_conn else "A Day AI meeting recording with the lead as attendee = the call was held. Connection set up; add DAYAI_* creds to .env to activate.")},
         {"stage": "Qualified (post-call)", "source": "Chris (manual verdict)", "status": "live",
          "detail": "Chris's fit judgment after each held call — separate from the automatic form gate."},
+        {"stage": "Committed (verbal yes)", "source": "Day AI (Committed stage)", "status": "live" if dayai_conn else "needs",
+         "detail": (f"{deals_committed if deals_committed is not None else '—'} VSL-attributed deal(s) committed · "
+                    f"${committed_value or 0:,.0f} year-one contracted, ${committed_first_invoice or 0:,.0f} first invoice. "
+                    f"Committed = the prospect said yes and the contract is out for signature. Deliberately NOT counted as "
+                    f"cash or in ROAS — those stay wired to Closed Won, which requires a signed MSA and first payment. "
+                    f"Values come from confirmed contract terms (COMMITTED_TERMS), not Day AI's Amount field, which holds "
+                    f"the un-corrected ceiling.") if dayai_conn else "Day AI connection unavailable this build."},
         {"stage": "Deals closed · Cash · ROAS", "source": "Day AI (Closed Won + Amount)", "status": "live" if dayai_conn else "needs",
-         "detail": f"Wired to Day AI Closed Won opps, matched to real VSL leads (external contact, internal reps excluded). {deals_closed if deals_closed is not None else '—'} closed / ${cash_collected:,.0f} so far — the VSL funnel is days old, so none have closed yet." if dayai_conn else "Day AI connection unavailable this build."},
+         "detail": f"Wired to Day AI Closed Won opps, matched to real VSL leads (external contact, internal reps excluded). {deals_closed if deals_closed is not None else '—'} closed / ${cash_collected:,.0f} collected — a deal only lands here once the MSA is signed AND first payment clears." if dayai_conn else "Day AI connection unavailable this build."},
     ]
 
     data = {
@@ -521,6 +595,10 @@ def main():
         "meetings_qualified": meetings_qualified,
         "deals_closed": deals_closed,
         "cash_collected": cash_collected,
+        "deals_committed": deals_committed,
+        "committed_value": committed_value,                  # year-one contracted
+        "committed_first_invoice": committed_first_invoice,  # what should land first
+        "committed_detail": committed_detail,
         "post_call": post_call,
         "qualifier_form_date": QUALIFIER_FORM_DATE,
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],

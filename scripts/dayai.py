@@ -76,25 +76,45 @@ class DayAI:
         txt = (r.get("result", {}).get("content") or [{}])[0].get("text", "")
         return json.loads(txt) if txt else {}
 
-    def closed_won(self, stage_id, since="2026-06-01T00:00:00Z"):
-        """Closed Won opportunities with deal Amount + related contact emails.
+    def opps_in_stage(self, stage_id, since="2026-06-01T00:00:00Z"):
+        """Opportunities in one pipeline stage, with deal Amount + contact emails.
         Caller must filter to the funnel's real (external) leads — every deal also
-        lists the internal rep (chris@hirecharm.com) as a related contact."""
+        lists the internal rep (chris@hirecharm.com) as a related contact.
+
+        Emails come from BOTH the `roles` property and the contact relationships.
+        A contact relationship's objectId is an email only sometimes — Day AI stores
+        newer contacts as a UUID (Macmoor's Ellio is one), which silently matched
+        nothing and made a real VSL deal look unattributed. `roles` carries
+        personEmail reliably, so it is the primary source.
+        """
         res = self.search(
             [{"objectType": "native_opportunity",
               "where": {"propertyId": "stageId", "operator": "contains", "value": stage_id}}],
             includeRelationships=True,
-            propertiesToReturn=["title", "89ed34c4-c3cc-45df-b6aa-32c894dc3d51"],  # Amount
+            propertiesToReturn=["title", "89ed34c4-c3cc-45df-b6aa-32c894dc3d51", "roles"],  # Amount
             timeframeStart=since)
         out = []
         for o in res.get("native_opportunity", {}).get("results", []):
-            rels = o.get("relationships") or []
-            emails = [(r.get("objectId") or "").lower() for r in rels
-                      if isinstance(r, dict) and r.get("objectType") == "native_contact"]
+            props = o.get("properties", {})
+            emails = set()
+            try:
+                for r in json.loads(props.get("roles") or "[]"):
+                    if r.get("personEmail"):
+                        emails.add(r["personEmail"].lower())
+            except (ValueError, AttributeError, TypeError):
+                pass
+            for r in (o.get("relationships") or []):
+                oid = (r.get("objectId") or "") if isinstance(r, dict) else ""
+                if r.get("objectType") == "native_contact" and "@" in oid:
+                    emails.add(oid.lower())
             out.append({"title": o.get("title"),
-                        "amount": o.get("properties", {}).get("Amount"),
-                        "emails": emails})
+                        "amount": props.get("Amount"),
+                        "emails": sorted(emails)})
         return out
+
+    def closed_won(self, stage_id, since="2026-06-01T00:00:00Z"):
+        """Back-compat alias — Closed Won is just one stage."""
+        return self.opps_in_stage(stage_id, since)
 
     def held_call(self, email, since="2026-01-01T00:00:00Z"):
         """True if the contact has >= 1 Day AI meeting recording (i.e. a call was held)."""

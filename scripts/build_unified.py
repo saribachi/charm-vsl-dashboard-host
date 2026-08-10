@@ -246,6 +246,7 @@ def main():
     cpff = div(spend, real_forms)
     cpbooked = div(spend, real_booked)
     cc = vsl.get("cash_collected")  # VSL-attributed cash from Day AI (0 until a VSL lead closes)
+    n_committed = vsl.get("deals_committed") or 0  # verbal yes, not yet cash — never feeds ROAS
 
     # ── headline KPIs ──
     def kpi(label, value, status, sub):
@@ -265,7 +266,9 @@ def main():
             "target $270" if not cpbooked else f"vs $270 target · {window}"),
         kpi("ROAS", (f"{div(cc, spend):.1f}x" if cc else "—"),
             "live" if cc else "needs",
-            "vs 5.0x target" if cc else "no VSL closes yet"),
+            "vs 5.0x target" if cc
+            else (f"{n_committed} committed, awaiting first payment" if n_committed
+                  else "no VSL closes yet")),
     ]
 
     # ── the funnel: click -> cash (bars scaled to link clicks) ──
@@ -288,6 +291,28 @@ def main():
         booked_note = f"{att} tagged to an ad (utm_content)" if att else "UTMs now live — new bookings will tag to an ad"
     else:
         booked_note = None
+
+    # Committed = verbal yes, contract out, payment not collected. Named on the funnel
+    # because the first one is a milestone worth seeing, but never folded into cash.
+    cd = vsl.get("committed_detail") or []
+    if cd:
+        def _terms(c):
+            name = c.get("title") or c.get("email") or "—"
+            if c.get("monthly"):
+                bits = f"{money(c['monthly'])}/mo"
+                if c.get("setup"):
+                    bits += f" + {money(c['setup'])} setup"
+                return f"{name} — {bits}"
+            return f"{name} — {money(c.get('year_one') or 0)} year one"
+        who = " · ".join(_terms(c) for c in cd[:3])
+        first = vsl.get("committed_first_invoice") or 0
+        year_one = vsl.get("committed_value") or 0
+        tail = (f"{money(first)} first invoice · {money(year_one)} year one" if first
+                else f"{money(year_one)} year one")
+        committed_note = f"{who} · {tail} — awaiting signature + first payment"
+    else:
+        committed_note = None
+
     funnel = [
         stage("Link clicks", clicks, "Meta", "live", cost=f"{money(cpc)}/click" if cpc else None,
               note=f"{pct(ctr) or '—'} of {impressions:,} impressions"),
@@ -305,10 +330,14 @@ def main():
         stage("Qualified", (vsl.get("meetings_qualified") if pc.get("held") else None),
               "Chris (post-call)", "live" if pc.get("held") else "needs", prev=held,
               note=(f"{pc.get('unqualified',0)} not a fit" if pc.get("unqualified") else None)),
+        stage("Committed (verbal yes)", vsl.get("deals_committed"), "Day AI",
+              "live" if vsl.get("deals_committed") else "needs",
+              prev=vsl.get("meetings_qualified"),
+              note=(committed_note or "no VSL lead committed yet")),
         stage("Deals closed", vsl.get("deals_closed"), "Day AI",
               "live" if vsl.get("deals_closed") is not None else "needs",
-              prev=vsl.get("meetings_qualified"),
-              note=("no VSL lead closed yet" if vsl.get("deals_closed") == 0 else None)),
+              prev=(vsl.get("deals_committed") or vsl.get("meetings_qualified")),
+              note=("signed + paid; none yet" if vsl.get("deals_closed") == 0 else None)),
         stage("Cash collected", vsl.get("cash_collected"), "Day AI",
               "live" if vsl.get("cash_collected") is not None else "needs", money_val=True),
     ]

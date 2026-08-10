@@ -92,13 +92,22 @@ except ValueError:
     print("COMMITTED_TERMS_JSON is not valid JSON — falling back to CRM Amount")
     COMMITTED_TERMS = {}
 
-# Internal/test/invalid submitters — excluded from "real lead" counts
-TEST_EMAILS = {"sarah@hirecharm.com", "sarah+1@hirecharm.com",
-               "bachmeiersj@gmail.com", "sarahpodemski@gmail.com",
-               "john.doe@gmail.com",
-               "ricky@aurevionmarketing.com",   # 7 repeat submissions Jul 24 — not a real lead
-               "sarah+3@gmail.com",             # "chris boo" test booking
-               "cobooking@yahoo.com"}           # "chris booth" — booking-flow test
+# Internal/test/invalid submitters — excluded from "real lead" counts.
+#
+# The individual addresses live in the TEST_EMAILS_JSON env, NEVER in source: they are
+# personal addresses (and one real person who spam-submitted) and this deploy repo is
+# PUBLIC. Shape: ["a@example.com", "b@example.com"].
+# Domain-level exclusions stay in source — company domains, not personal data.
+try:
+    TEST_EMAILS = {e.strip().lower()
+                   for e in json.loads(ENV.get("TEST_EMAILS_JSON") or "[]") if e.strip()}
+except ValueError:
+    print("TEST_EMAILS_JSON is not valid JSON — no per-address test exclusions applied")
+    TEST_EMAILS = set()
+if not TEST_EMAILS:
+    # Loud on purpose: with no exclusions, test submissions count as REAL leads and
+    # silently inflate form fills, bookings, and every cost-per metric derived from them.
+    print("WARNING: TEST_EMAILS_JSON is empty — test submitters will count as real leads")
 TEST_DOMAINS = {"hirecharm.com", "goober.com"}
 
 

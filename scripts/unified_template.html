@@ -415,11 +415,12 @@ renderOutcomes();
   if(!rows.length){ host.innerHTML = '<div class="empty">No bookings yet.</div>'; return; }
   const money0 = v => '$'+(v||0).toLocaleString(undefined,{maximumFractionDigits:0});
   const producing = rows.filter(r=>r.qualified>0);
-  let h = `<div class="mini" style="grid-template-columns:repeat(4,1fr)">`+
+  let h = `<div class="mini" style="grid-template-columns:repeat(5,1fr)">`+
     `<div class="b"><div class="bv" style="color:var(--good)">${QA.total_qualified||0}</div><div class="bl">qualified so far</div></div>`+
     `<div class="b"><div class="bv">${QA.ads_with_qualified||0}</div><div class="bl">ads producing them</div></div>`+
     `<div class="b"><div class="bv">${QA.attributed_qualified||0}</div><div class="bl">traced to an ad</div></div>`+
-    `<div class="b"><div class="bv" style="color:${QA.pending_verdicts?'var(--amber-ink)':'var(--ink3)'}">${QA.pending_verdicts||0}</div><div class="bl">awaiting a verdict</div></div></div>`;
+    `<div class="b"><div class="bv" style="color:${QA.awaiting_verdicts?'var(--amber-ink)':'var(--ink3)'}">${QA.awaiting_verdicts||0}</div><div class="bl">awaiting a verdict</div></div>`+
+    `<div class="b"><div class="bv" style="color:var(--ink3)">${QA.upcoming_calls||0}</div><div class="bl">calls scheduled</div></div></div>`;
   // The answer, up top: which creatives actually produced a fit, and who.
   h += '<div style="font-weight:600;margin:4px 0 8px">Ads that produced a qualified lead</div>';
   h += producing.length ? producing.map(r=>{

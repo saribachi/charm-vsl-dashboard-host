@@ -102,11 +102,26 @@ def qualified_by_ad(bookings, eff=None):
     # Best first: most qualified, then best hit-rate, then most bookings.
     rows.sort(key=lambda r: (-r["qualified"], -(r["qualified_rate"] or 0), -r["bookings"]))
     tot_q = sum(r["qualified"] for r in rows)
+    # Split the unresolved bookings into the two things they actually are. `pending`
+    # (above) stays as-is because qualified_rate needs every unresolved booking in its
+    # denominator — but it is NOT a to-do list: it counts calls that have not happened
+    # yet. Only a call that was HELD and has no fit is genuinely awaiting a verdict.
+    # Deduped by email, since a reschedule leaves the old row and adds a new one, which
+    # otherwise counts one serial rescheduler several times over.
+    awaiting, upcoming = set(), set()
+    for b in bookings or []:
+        if b.get("fit") or b.get("no_show") or b.get("cancelled"):
+            continue
+        who = (b.get("email") or "").strip().lower() or f"_row{id(b)}"
+        (awaiting if b.get("held") else upcoming).add(who)
+    upcoming -= awaiting          # a held-but-unjudged call is not also "upcoming"
     return {"rows": rows,
             "total_qualified": tot_q,
             "attributed_qualified": sum(r["qualified"] for r in rows if r["ad"]),
             "unattributed_qualified": sum(r["qualified"] for r in rows if not r["ad"]),
             "pending_verdicts": sum(r["pending"] for r in rows),
+            "awaiting_verdicts": len(awaiting),
+            "upcoming_calls": len(upcoming),
             "ads_with_qualified": len([r for r in rows if r["qualified"]]),
             "per_ad_cost_available": False}
 

@@ -16,6 +16,53 @@ def _canon(s):
     return re.sub(r"\s+", " ", (s or "").lower().replace("+", " ")).strip()
 
 
+_IDENTITY = None
+
+
+def _identity():
+    """Resolve ad sets by ID, not by name — Meta ad sets get RENAMED IN PLACE.
+
+    Ad set 120248643976320447 was "GTM LinkedIn + Cold Email - REAL" through
+    Jul 31 and "GTM LinkedIn + Cold Email - Videos" from Aug 1. Keying on the
+    name split one ad set into two rows: the old name kept all the bookings
+    (GHL stamped utm_term at click time) and the new name kept all the August
+    spend, so the account's biggest spender read "$2,698, 0 bookings" while the
+    old name read a flattering "$42/booking". Both numbers were fiction.
+
+    Returns (display_by_id, id_by_canon_name): the most RECENT name is the one
+    shown, and every name the set has ever carried aliases to its ID so old
+    utm_terms still join."""
+    global _IDENTITY
+    if _IDENTITY is None:
+        display, alias = {}, {}
+        try:
+            rows = json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
+        except Exception:
+            rows = []
+        for r in sorted(rows, key=lambda r: r.get("date") or ""):
+            i, n = r.get("ad_set_id"), r.get("ad_set_name")
+            if not i or not n:
+                continue
+            display[i] = n          # ascending by date, so last write = current name
+            alias[_canon(n)] = i
+        _IDENTITY = (display, alias)
+    return _IDENTITY
+
+
+def _adset_key(name):
+    """Stable join key for an ad-set name from either side (Meta row or GHL
+    utm_term): its ID when we know it, else the canonical name."""
+    _, alias = _identity()
+    c = _canon(name)
+    return alias.get(c, c)
+
+
+def _adset_display(name):
+    """Current name for whatever name we were handed (old utm_terms included)."""
+    display, alias = _identity()
+    return display.get(alias.get(_canon(name)), name)
+
+
 def adset_efficiency(bookings):
     """Per-ad-set: Meta spend/clicks (from ad_daily.json) joined to GHL bookings
     AND their post-call outcomes (held / qualified / no-show), matched on the
@@ -24,18 +71,21 @@ def adset_efficiency(bookings):
     meta = {}
     try:
         for r in json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", []):
-            k = r.get("ad_set_name")
+            k = _adset_key(r.get("ad_set_name"))   # by ID: survives renames
             if not k:
                 continue
-            m = meta.setdefault(k, {"spend": 0.0, "clicks": 0.0})
+            m = meta.setdefault(k, {"name": _adset_display(r.get("ad_set_name")),
+                                    "spend": 0.0, "clicks": 0.0})
             m["spend"] += r.get("spend", 0) or 0
             m["clicks"] += r.get("link_clicks", 0) or 0
     except Exception:
         return []
-    # bookings + post-call outcomes per canonicalized ad set (from real_bookings_detail)
+    # bookings + post-call outcomes per ad set (from real_bookings_detail). GHL
+    # stamped utm_term with whatever the set was called on the day of the click,
+    # so resolve through the alias table or renamed sets lose their bookings.
     oc = {}
     for b in bookings or []:
-        k = _canon(b.get("ad_set"))
+        k = _adset_key(b.get("ad_set"))
         if not k:                       # direct / pre-UTM — no ad set to credit
             continue
         d = oc.setdefault(k, {"bookings": 0, "held": 0, "qualified": 0, "no_show": 0})
@@ -47,8 +97,9 @@ def adset_efficiency(bookings):
         if b.get("no_show"):
             d["no_show"] += 1
     rows = []
-    for name, m in meta.items():
-        o = oc.get(_canon(name), {"bookings": 0, "held": 0, "qualified": 0, "no_show": 0})
+    for key, m in meta.items():
+        name = m["name"]
+        o = oc.get(key, {"bookings": 0, "held": 0, "qualified": 0, "no_show": 0})
         bk, q, ns = o["bookings"], o["qualified"], o["no_show"]
         rows.append({"ad_set": name, "spend": round(m["spend"], 2), "clicks": int(m["clicks"]),
                      "bookings": bk, "held": o["held"], "qualified": q, "no_show": ns,
@@ -71,7 +122,7 @@ def qualified_by_ad(bookings, eff=None):
     by ad SET, so per-creative spend does not exist yet (needs an "Ad name"
     breakdown in the export). Ad-set cost/qualified is carried alongside as the
     closest available proxy, labelled as the SET's number, not the ad's."""
-    set_cost = {_canon(r["ad_set"]): r.get("cost_per_qualified") for r in (eff or [])}
+    set_cost = {_adset_key(r["ad_set"]): r.get("cost_per_qualified") for r in (eff or [])}
     ads = {}
     for b in bookings or []:
         ad = b.get("ad")
@@ -96,7 +147,7 @@ def qualified_by_ad(bookings, eff=None):
         d["name"] = key
         d["path"] = _path_of(d["ad_set"]) if d["ad_set"] else None
         d["qualified_rate"] = round(100 * q / bk, 1) if bk else None
-        d["set_cost_per_qualified"] = set_cost.get(_canon(d["ad_set"])) if d["ad_set"] else None
+        d["set_cost_per_qualified"] = set_cost.get(_adset_key(d["ad_set"])) if d["ad_set"] else None
         d["people"].sort(key=lambda p: p.get("start") or "")
         rows.append(d)
     # Best first: most qualified, then best hit-rate, then most bookings.
@@ -134,26 +185,36 @@ DIRECT_AD = "(direct / pre-UTM)"
 # Email - REAL", so it's the pool-builder, not cold prospecting. Keyed by _canon.
 ADSET_PATH = {
     "gtm linkedin cold email - real": "Video → Retargeting funnel",  # pool builder — holds the videos
+    "gtm linkedin cold email - videos": "Video → Retargeting funnel",  # same set, renamed Aug 1
     "retargeting video ads": "Video → Retargeting funnel",           # converter
     "gtm linkedin email statics 1": "Statics — standalone",
 }
+
+# Ad sets launched since the last mapping review. Their PATH is Chris's call —
+# the names describe the ad body, not the set's role in the funnel — so they are
+# surfaced as unmapped rather than guessed at. The keyword fallback below would
+# have filed "Your Prospect Might" under Cold prospecting purely on the word
+# "prospect" in the ad copy, which is exactly the kind of confident-wrong
+# grouping the explicit map exists to prevent.
+UNMAPPED_LABEL = "Unmapped — needs a path"
 
 
 def _path_of(name):
     """Group an ad set into its funnel PATH. Video + Retargeting are one path
     (video builds the pool, retargeting converts it), so keying efficiency by
     ad set shows the pool-builder at zero forever — group by path instead.
-    Explicit map wins; keyword fallback classifies any unmapped ad set."""
-    if _canon(name) in ADSET_PATH:
-        return ADSET_PATH[_canon(name)]
+
+    Resolves renames first (the explicit map is keyed by name, and a set that
+    gets renamed would otherwise silently fall through to the keyword guess)."""
+    for key in (_canon(name), _canon(_adset_display(name))):
+        if key in ADSET_PATH:
+            return ADSET_PATH[key]
     n = (name or "").lower()
     if "static" in n:
         return "Statics — standalone"
-    if "retarget" in n or "video" in n:
+    if "retarget" in n:
         return "Video → Retargeting funnel"
-    if "cold" in n or "prospect" in n:
-        return "Cold prospecting"
-    return name or "Other"
+    return UNMAPPED_LABEL if name else "Other"
 
 
 def path_efficiency(eff):

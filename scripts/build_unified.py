@@ -329,7 +329,9 @@ def main():
         return {"label": label, "value": value, "status": status, "sub": sub}
 
     window, window_days = spend_window()
-    n_sets = len({r.get("ad_set_name") for r in _ad_rows() if r.get("ad_set_name")})
+    # Count by ID, not name — a renamed ad set is one ad set, not two.
+    n_sets = len({r.get("ad_set_id") or _canon(r.get("ad_set_name"))
+                  for r in _ad_rows() if r.get("ad_set_name")})
 
     kpis = [
         kpi("Ad spend", money(spend), "live",

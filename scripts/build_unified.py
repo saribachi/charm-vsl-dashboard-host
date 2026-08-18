@@ -436,6 +436,10 @@ def main():
             "ghl_reconciled": ghl, "field_reality": ad.get("field_reality", {}),
             "daily_spend": daily_spend(),
             "daily_budget": 200,
+            # The CS funnel rides alongside GTM rather than being merged into it: same
+            # dataset and bridge, different offer, page, video, form and calendar.
+            # Merging the two would make both unreadable.
+            "cs": vsl.get("cs", {}),
             "qualification": vsl.get("qualification", {}),
             "qualifier_impact": vsl.get("qualifier_impact", {}),
             "lead_quality": vsl.get("lead_quality", {}),

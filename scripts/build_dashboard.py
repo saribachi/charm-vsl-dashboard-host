@@ -129,14 +129,167 @@ def ghl(path):
                     {"Authorization": f"Bearer {GHL_TOKEN}", "Version": "2021-07-28"})
 
 
+def _plus_stripped(e):
+    """name+anything@gmail.com is the same inbox as name@gmail.com, so a tester who
+    varies the suffix to get a fresh CRM contact is still the same person. Without
+    this every new +suffix reads as a brand-new real lead and quietly inflates the
+    funnel — which is exactly what +cs1 and +cs2 did to the CS numbers."""
+    local, sep, domain = (e or "").partition("@")
+    return (local.split("+", 1)[0] + sep + domain) if sep else e
+
+
 def is_test(email, name=""):
-    e = (email or "").lower()
-    if e and (e in TEST_EMAILS or e.split("@")[-1] in TEST_DOMAINS):
+    e = (email or "").lower().strip()
+    if e and (e in TEST_EMAILS or _plus_stripped(e) in TEST_EMAILS
+              or e.split("@")[-1] in TEST_DOMAINS):
         return True
     n = (name or "").lower()
     if "test" in n or "goober" in n:  # obvious test entries by name
         return True
     return False
+
+
+# ---------------------------------------------------------------- CS funnel --
+# The CS (customer-success) funnel launched 2026-08-18 alongside GTM. It shares the
+# Meta dataset, the bridge and this dashboard, but it is a separate offer with its own
+# page, video, form and calendar — so it gets its own funnel rather than being folded
+# into GTM's numbers, which would make both unreadable.
+#
+# Deliberately additive: nothing above this block changes. The GTM funnel is live and
+# was only just repaired, so a refactor to parameterise both funnels is not worth the
+# regression risk today.
+CS_MEDIA_ID = "lk17fifkvg"                  # CS VSL video on cs.hirecharm.com
+CS_FORM_ID = "jQbgnP7paIZUM6BiqvOy"         # CS Services form VSL Only
+CS_CALENDAR_ID = "UiG1GyVkQwBqa4tbHkEN"     # Charm - CS VSL ONLY
+
+# CS qualifier questions. Unlike GTM these have no disqualification rules yet — the
+# answers are reported as a mix so the shape of incoming demand is visible, and a gate
+# can be defined once there is enough real data to know what a bad fit looks like.
+CS_QUAL_FIELDS = {
+    "who_handles_support": "GOS9ePxFcZVLcxICP2Xc",
+    "volume_driver": "I1Uzm4LbH3SmM21M07Yq",
+    "ticket_types": "i1S56AS9bJVItMrsJ6IP",
+}
+
+# Which Meta ad sets belong to CS. Explicit prefix, not a guess: ad set NAMES get
+# repurposed (GTM's "- REAL" became "- Videos" mid-flight and split one set into two on
+# this very dashboard). If the CS ad sets are renamed away from this prefix, update it.
+CS_ADSET_PREFIX = "cs flex"
+
+
+def cs_ad_spend():
+    """Meta spend + clicks for CS ad sets only, from the shared daily export."""
+    try:
+        rows = json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
+    except Exception:
+        return {"spend": 0.0, "clicks": 0, "impressions": 0, "ad_sets": []}
+    hit = [r for r in rows if (r.get("ad_set_name") or "").lower().startswith(CS_ADSET_PREFIX)]
+    return {
+        "spend": round(sum(r.get("spend") or 0 for r in hit), 2),
+        "clicks": int(sum(r.get("link_clicks") or 0 for r in hit)),
+        "impressions": int(sum(r.get("impressions") or 0 for r in hit)),
+        "ad_sets": sorted({r.get("ad_set_name") for r in hit if r.get("ad_set_name")}),
+    }
+
+
+def cs_funnel(now):
+    """The CS funnel, end to end. Mirrors the GTM computation but stands alone."""
+    # --- video ---
+    # Stats live on medias/{id}/stats.json. The plain medias/{id}.json returns the
+    # media record with stats:null, which silently reads as a video nobody watched.
+    try:
+        stats = (wistia(f"medias/{CS_MEDIA_ID}/stats.json") or {}).get("stats", {}) or {}
+    except Exception:
+        stats = {}
+
+    # --- form fills ---
+    subs, page = [], 1
+    while True:
+        try:
+            d = ghl(f"forms/submissions?formId={CS_FORM_ID}&limit=100&page={page}")
+        except Exception:
+            break
+        batch = d.get("submissions", [])
+        subs.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
+    real_subs = [x for x in subs if not is_test(x.get("email"), x.get("name"))]
+
+    # --- bookings ---
+    start_ms = int(datetime(2026, 8, 1, tzinfo=timezone.utc).timestamp() * 1000)
+    end_ms = int((now + timedelta(days=60)).timestamp() * 1000)
+    try:
+        events = ghl(f"calendars/events?calendarId={CS_CALENDAR_ID}"
+                     f"&startTime={start_ms}&endTime={end_ms}").get("events", [])
+    except Exception:
+        events = []
+    booked = [e for e in events if e.get("appointmentStatus") not in ("cancelled", "noshow")]
+
+    # Resolve each booking's contact for the test flag and the per-ad UTMs. Same
+    # gotcha as GTM: UTMs live on contact CUSTOM FIELDS, never on the submission.
+    detail, by_ad, by_adset = [], {}, {}
+    cache = {}
+    for e in booked:
+        cid = e.get("contactId")
+        if cid and cid not in cache:
+            try:
+                con = ghl(f"contacts/{cid}").get("contact", {})
+                cf = {f.get("id"): (f.get("value") or None) for f in (con.get("customFields") or [])}
+                ws = lambda v: " ".join(v.split()) if v else None
+                cache[cid] = {
+                    "email": con.get("email"),
+                    "name": con.get("contactName") or " ".join(
+                        x for x in [con.get("firstName"), con.get("lastName")] if x),
+                    "ad": ws(cf.get(UTM_FIELD_IDS["utm_content"])),
+                    "ad_set": ws(cf.get(UTM_FIELD_IDS["utm_term"])),
+                }
+            except Exception:
+                cache[cid] = {}
+        info = cache.get(cid, {})
+        if is_test(info.get("email"), info.get("name")):
+            continue
+        detail.append({"name": info.get("name"), "email": info.get("email"),
+                       "start": e.get("startTime"), "ad": info.get("ad"),
+                       "ad_set": info.get("ad_set")})
+        if info.get("ad"):
+            by_ad[info["ad"]] = by_ad.get(info["ad"], 0) + 1
+        if info.get("ad_set"):
+            by_adset[info["ad_set"]] = by_adset.get(info["ad_set"], 0) + 1
+
+    # --- qualifier answer mix (no gate yet — see CS_QUAL_FIELDS) ---
+    mix = {k: {} for k in CS_QUAL_FIELDS}
+    for x in real_subs:
+        others = x.get("others") or {}
+        for key, fid in CS_QUAL_FIELDS.items():
+            v = others.get(fid)
+            for item in (v if isinstance(v, list) else [v]):
+                if item:
+                    mix[key][str(item)] = mix[key].get(str(item), 0) + 1
+
+    ad = cs_ad_spend()
+    plays = stats.get("plays") or 0
+    fills, books = len(real_subs), len(detail)
+    div = lambda a, b: round(a / b, 2) if b else None
+    return {
+        "ad": ad,
+        "video": {"loads": stats.get("pageLoads") or 0,
+                  "visitors": stats.get("visitors") or 0,
+                  "plays": plays,
+                  "play_rate": round(100 * plays / stats["pageLoads"], 1)
+                               if stats.get("pageLoads") else None},
+        "form_fills": fills,
+        "form_fills_all": len(subs),          # incl. tests, so the gap is visible
+        "booked": books,
+        "bookings_detail": sorted(detail, key=lambda d: d.get("start") or ""),
+        "by_ad": by_ad,
+        "by_adset": by_adset,
+        "qualifier_mix": mix,
+        "cost_per_fill": div(ad["spend"], fills),
+        "cost_per_booking": div(ad["spend"], books),
+        "fill_rate": round(100 * fills / ad["clicks"], 1) if ad["clicks"] else None,
+        "booking_rate": round(100 * books / fills, 1) if fills else None,
+    }
 
 
 def main():
@@ -613,6 +766,16 @@ def main():
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],
                    "plays": s["plays"], "watched_50": watched_50},
     }
+
+    # The CS funnel is computed independently and attached alongside. A failure here
+    # must never take the GTM dashboard down with it — CS is new, GTM pays the bills.
+    try:
+        data["cs"] = cs_funnel(now)
+        print(f"CS funnel: {data['cs']['form_fills']} real form fill(s), "
+              f"{data['cs']['booked']} booking(s), ${data['cs']['ad']['spend']:,.2f} spend")
+    except Exception as e:
+        data["cs"] = {"error": str(e)}
+        print(f"CS funnel FAILED (GTM unaffected): {e}")
 
     html = build_html(data)
     out = ROOT / "dashboard/vsl_dashboard.html"

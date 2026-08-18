@@ -236,6 +236,11 @@ html += `<details open><summary>Form qualification <span style="color:var(--ink3
 const LQ = D.lead_quality||{};
 html += `<details open><summary>Lead quality <span style="color:var(--ink3);font-weight:400;font-size:12px">(who's coming in)</span> <span class="cnt">${LQ.total?`${LQ.company_pct}% company · ${LQ.free_pct}% free-mail`:'awaiting submissions'}</span></summary><div class="det-body" id="quality"></div></details>`;
 
+// CS Flex funnel — the second funnel, kept separate from GTM's numbers on purpose
+const CS = D.cs||{};
+const csLive = !CS.error && ((CS.form_fills||0)+(CS.booked||0)+(CS.ad&&CS.ad.spend||0))>0;
+html += `<details${csLive?' open':''}><summary>CS Flex funnel <span style="color:var(--ink3);font-weight:400;font-size:12px">— cs.hirecharm.com</span> <span class="cnt">${CS.error?'unavailable':(csLive?`${CS.form_fills} fill(s) · ${CS.booked} booked`:'launched — awaiting real traffic')}</span></summary><div class="det-body" id="csflex"></div></details>`;
+
 // Video engagement
 html += `<details><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
 // RB2B
@@ -511,6 +516,55 @@ renderOutcomes();
         `<td>${r.cost_per_qualified!=null?`<b>${money0(r.cost_per_qualified)}</b>`:(r.bookings?'no qual yet':'—')}</td></tr>`).join('')+'</table></div></details>';
   }
   $('report').innerHTML = h;
+})();
+
+// CS Flex funnel — its own funnel, not merged into GTM's numbers
+(function(){
+  const C = D.cs||{}, host = $('csflex');
+  if(!host) return;
+  if(C.error){ host.innerHTML = `<div class="empty">CS funnel unavailable: ${C.error}</div>`; return; }
+  const ad = C.ad||{}, v = C.video||{};
+  const money = n => n==null?'—':'$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+  const pct = n => n==null?'—':n+'%';
+
+  let h = `<div class="mini" style="grid-template-columns:repeat(4,1fr)">`+
+    `<div class="b"><div class="bv">${money(ad.spend)}</div><div class="bl">Ad spend${ad.ad_sets&&ad.ad_sets.length?'':' · no CS ad sets in export yet'}</div></div>`+
+    `<div class="b"><div class="bv">${(ad.clicks||0).toLocaleString()}</div><div class="bl">Link clicks</div></div>`+
+    `<div class="b"><div class="bv">${C.form_fills||0}</div><div class="bl">Form fills (real)</div></div>`+
+    `<div class="b"><div class="bv">${C.booked||0}</div><div class="bl">Booked calls</div></div></div>`;
+
+  h += '<table style="margin-top:12px"><tr><th>Stage</th><th>Value</th><th>Rate</th></tr>'+
+    `<tr><td>Landing page loads</td><td>${(v.loads||0).toLocaleString()}</td><td>${v.visitors||0} visitors</td></tr>`+
+    `<tr><td>Video plays</td><td>${v.plays||0}</td><td>${pct(v.play_rate)} of loads</td></tr>`+
+    `<tr><td>Form fills</td><td>${C.form_fills||0}</td><td>${C.fill_rate!=null?pct(C.fill_rate)+' of clicks':'—'}</td></tr>`+
+    `<tr><td>Booked calls</td><td>${C.booked||0}</td><td>${C.booking_rate!=null?pct(C.booking_rate)+' of fills':'—'}</td></tr>`+
+    `<tr><td>Cost per fill</td><td>${money(C.cost_per_fill)}</td><td></td></tr>`+
+    `<tr><td>Cost per booking</td><td>${money(C.cost_per_booking)}</td><td></td></tr>`+
+    '</table>';
+
+  const byAd = C.by_ad||{};
+  if(Object.keys(byAd).length){
+    h += '<div style="font-weight:600;margin:14px 0 8px">Bookings by ad creative</div><table><tr><th>Ad</th><th>Booked</th></tr>'+
+      Object.entries(byAd).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<tr><td class="adname">${k}</td><td>${n}</td></tr>`).join('')+'</table>';
+  }
+
+  const mix = C.qualifier_mix||{};
+  const mixLabels = {who_handles_support:'Who handles support today', volume_driver:'What drives volume', ticket_types:'Ticket types'};
+  const hasMix = Object.values(mix).some(m => m && Object.keys(m).length);
+  if(hasMix){
+    h += '<div style="font-weight:600;margin:14px 0 8px">Qualifier answers — the shape of demand</div>';
+    for(const [k,label] of Object.entries(mixLabels)){
+      const m = mix[k]||{}; if(!Object.keys(m).length) continue;
+      h += `<div style="margin:0 0 6px"><span style="color:var(--ink3);font-size:12px">${label}</span><table>`+
+        Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([a,n])=>`<tr><td>${a}</td><td>${n}</td></tr>`).join('')+'</table></div>';
+    }
+  }
+
+  if(!C.form_fills && !C.booked){
+    h += `<div class="empty" style="margin-top:12px">Launched 18 Aug. ${C.form_fills_all||0} submission(s) so far, all internal or test — those are excluded here and never sent to Meta as conversions. Real numbers appear as ad traffic arrives.</div>`;
+  }
+  h += '<div class="st-note" style="margin-top:12px"><b>CS has no post-call verdicts or qualification gate yet</b>, so there is no held / qualified stage — unlike GTM, cost per <i>qualified</i> is not available for this funnel. Judge on cost per booking until those exist. Ad spend is matched to ad sets named <code>CS Flex…</code>; rename them and this reads zero.</div>';
+  host.innerHTML = h;
 })();
 
 // qualification (form gate)

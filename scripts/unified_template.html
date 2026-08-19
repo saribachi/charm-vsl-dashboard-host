@@ -195,7 +195,9 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
 // the strip exists so neither funnel reads as a footnote to the other.
 (function(){
   const host = $('fcompare'); if(!host) return;
-  const CS = D.cs||{}, F = {};
+  // DATA.detail directly, NOT the `D` const — that is declared further down, and
+  // touching it from here is a TDZ ReferenceError that kills every render below.
+  const CS = (DATA.detail||{}).cs||{}, F = {};
   DATA.funnel.forEach(s => { F[s.label] = s.value; });
   const csAd = CS.ad||{};
   const money = n => (n===null||n===undefined) ? '—' : '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});

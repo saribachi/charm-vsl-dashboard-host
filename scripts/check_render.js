@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 
 const file = process.argv[2] || path.join(__dirname, '..', 'dashboard', 'index.html');
-const REQUIRED = ['kpis', 'funnel', 'fcompare', 'csflex', 'details'];
+const REQUIRED = ['kpis', 'funnel', 'ftabs', 'csflex', 'details'];
 
 const html = fs.readFileSync(file, 'utf8');
 const m = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/) || html.match(/<script>([\s\S]*)<\/script>/);
@@ -45,6 +45,8 @@ global.window = {
   matchMedia: () => ({ matches: false, addEventListener() {} }), setTimeout, clearTimeout,
 };
 global.navigator = { userAgent: 'node' };
+global.localStorage = { _v: {}, getItem(k){ return this._v[k] ?? null; }, setItem(k, v){ this._v[k] = String(v); } };
+global.window.localStorage = global.localStorage;
 // The page fetches RB2B and posts verdicts. Neither should run here, and neither is
 // allowed to fail the check — only synchronous render errors matter.
 global.fetch = () => Promise.reject(new Error('network disabled in check_render'));

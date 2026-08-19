@@ -70,7 +70,9 @@ def adset_efficiency(bookings):
     cost-per-booking flatters ad sets whose bookings no-show or aren't a fit."""
     meta = {}
     try:
-        for r in json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", []):
+        # GTM scope: this table is a GTM drill-down, and a CS ad set listed here would
+        # always read zero bookings because CS bookings live on the CS calendar.
+        for r in _ad_rows("gtm"):
             k = _adset_key(r.get("ad_set_name"))   # by ID: survives renames
             if not k:
                 continue
@@ -242,11 +244,41 @@ def path_efficiency(eff):
     return out
 
 
-def _ad_rows():
+# Must match CS_ADSET_PREFIX in build_dashboard.py. Two funnels now share one Meta
+# export, so every GTM number has to exclude CS ad sets or GTM's spend, CPC and cost
+# per booking all silently absorb the other funnel's budget.
+CS_ADSET_PREFIX = "cs flex"
+
+
+def _is_cs_row(r):
+    return (r.get("ad_set_name") or "").lower().startswith(CS_ADSET_PREFIX)
+
+
+def _ad_rows(scope="gtm"):
+    """Ad rows for one funnel. Defaults to GTM because every existing caller is a GTM
+    view — a caller that wants everything has to ask for it explicitly."""
     try:
-        return json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
+        rows = json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
     except Exception:
         return []
+    if scope == "all":
+        return rows
+    if scope == "cs":
+        return [r for r in rows if _is_cs_row(r)]
+    return [r for r in rows if not _is_cs_row(r)]
+
+
+def gtm_agg():
+    """GTM-only spend/impressions/reach/clicks. The blended agg in _ad.json covers
+    every ad set in the export, which now includes CS."""
+    out = {"spend": 0.0, "impressions": 0, "reach": 0, "link_clicks": 0}
+    for r in _ad_rows("gtm"):
+        out["spend"] += r.get("spend") or 0
+        out["impressions"] += int(r.get("impressions") or 0)
+        out["reach"] += int(r.get("reach") or 0)
+        out["link_clicks"] += int(r.get("link_clicks") or 0)
+    out["spend"] = round(out["spend"], 2)
+    return out
 
 
 def daily_spend():
@@ -299,7 +331,8 @@ def main():
     vsl = json.loads((ROOT / "data/_vsl.json").read_text())
     ad = json.loads((ROOT / "data/_ad.json").read_text())
 
-    agg = ad["blended"]["agg"]
+    # GTM-only: _ad.json's blended agg covers every ad set in the export, CS included.
+    agg = gtm_agg()
     ghl = ad.get("ghl_reconciled") or {}
     W = vsl["wistia"]
 
@@ -331,7 +364,7 @@ def main():
     window, window_days = spend_window()
     # Count by ID, not name — a renamed ad set is one ad set, not two.
     n_sets = len({r.get("ad_set_id") or _canon(r.get("ad_set_name"))
-                  for r in _ad_rows() if r.get("ad_set_name")})
+                  for r in _ad_rows("gtm") if r.get("ad_set_name")})
 
     kpis = [
         kpi("Ad spend", money(spend), "live",

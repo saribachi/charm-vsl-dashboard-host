@@ -138,15 +138,21 @@ def _plus_stripped(e):
     return (local.split("+", 1)[0] + sep + domain) if sep else e
 
 
+# test@, test1@, test6@ … — the shape testers reach for when they need a fresh address.
+# Anchored and digits-only after "test" on purpose: it must not catch a real person at
+# testa@ or tester@ (Testa is a surname).
+_TEST_LOCAL = re.compile(r"^test\d*@")
+
+
 def is_test(email, name=""):
     e = (email or "").lower().strip()
     if e and (e in TEST_EMAILS or _plus_stripped(e) in TEST_EMAILS
-              or e.split("@")[-1] in TEST_DOMAINS):
+              or e.split("@")[-1] in TEST_DOMAINS
+              or _TEST_LOCAL.match(e)):
         return True
-    n = (name or "").lower()
-    if "test" in n or "goober" in n:  # obvious test entries by name
-        return True
-    return False
+    # Whole word only. A substring match excludes real people — "Marco Testa" contains
+    # "test", and a surname is a silent, permanent exclusion with nothing to show it.
+    return bool(re.search(r"\b(test|goober)\b", (name or "").lower()))
 
 
 # ---------------------------------------------------------------- CS funnel --

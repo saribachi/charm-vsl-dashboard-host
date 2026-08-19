@@ -35,6 +35,23 @@ h1 span{color:var(--purple)}
 .dot.live{background:#22a06b}.dot.needs{background:var(--amber)}
 /* section */
 .section-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin:0 2px 12px}
+/* Two funnels, one page. Everything below the comparison strip is scoped to ONE of
+   them and says so — before this, the whole page was implicitly GTM and CS was a
+   drawer, which read as "GTM plus a footnote" rather than two businesses. */
+.fcmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0 30px}
+@media(max-width:760px){.fcmp{grid-template-columns:1fr}}
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px 14px;border-top:3px solid var(--purple)}
+.fcard.cs{border-top-color:var(--magenta)}
+.fcard .fh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:2px}
+.fcard .fn{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.fcard .fd{font-size:11px;color:var(--ink3)}
+.fcard .fr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.fcard .fv{font-size:19px;font-weight:700;line-height:1.2}
+.fcard .fl{font-size:10.5px;color:var(--ink3);margin-top:1px;letter-spacing:.02em}
+.fcard .fnote{font-size:11.5px;color:var(--ink3);margin-top:11px;border-top:1px solid var(--line);padding-top:9px}
+.ftag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      padding:2px 7px;border-radius:20px;background:var(--soft);color:var(--purple)}
+.ftag.cs{background:#fdeaf2;color:var(--magenta)}
 /* funnel */
 .funnel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 10px 6px}
 .stage{display:grid;grid-template-columns:186px 1fr;gap:14px;align-items:center;padding:11px 12px;border-radius:12px}
@@ -128,13 +145,17 @@ a.plain{color:var(--purple);text-decoration:none}
 <div class="wrap">
   <header>
     <h1>Charm <span>VSL</span> — Ad to Cash</h1>
-    <div class="sub">One funnel, top to bottom: every ad dollar followed down to a booked call and cash.</div>
+    <div class="sub">Two funnels, each followed from ad dollar to booked call and cash.</div>
     <div class="ctx" id="ctx"></div>
   </header>
 
+  <div class="section-h">Both funnels at a glance</div>
+  <div class="fcmp" id="fcompare"></div>
+
+  <div class="section-h"><span class="ftag">GTM</span> &nbsp;Lead generation &middot; gtm.hirecharm.com</div>
   <div class="kpis" id="kpis"></div>
 
-  <div class="section-h">The funnel — where people drop off</div>
+  <div class="section-h">The GTM funnel — where people drop off</div>
   <div class="funnel" id="funnel"></div>
   <div class="legend">
     <span><i class="sw" style="background:linear-gradient(90deg,var(--purple),var(--purple-d))"></i> live stage (bar = share of link clicks)</span>
@@ -143,7 +164,10 @@ a.plain{color:var(--purple);text-decoration:none}
   </div>
   <div class="banner" id="phase-note"></div>
 
-  <div class="section-h" style="margin-top:26px">Drill down</div>
+  <div class="section-h" style="margin-top:30px"><span class="ftag cs">CS FLEX</span> &nbsp;Customer success &middot; cs.hirecharm.com</div>
+  <div id="csflex"></div>
+
+  <div class="section-h" style="margin-top:30px">Drill down <span style="font-weight:400;text-transform:none;letter-spacing:0">— GTM unless labelled otherwise</span></div>
   <div id="details"></div>
 
   <footer id="footer"></footer>
@@ -166,6 +190,42 @@ document.title = `Charm VSL — Ad to Cash (${DATA.generated_at||''})`;
 $('kpis').innerHTML = DATA.kpis.map(k =>
   `<div class="kpi ${k.status}"><div class="dot ${k.status}"></div>
    <div class="v">${k.value||'—'}</div><div class="l">${k.label}</div><div class="s">${k.sub||''}</div></div>`).join('');
+
+// Both funnels at a glance. GTM's detail lives below it, CS Flex's below that —
+// the strip exists so neither funnel reads as a footnote to the other.
+(function(){
+  const host = $('fcompare'); if(!host) return;
+  const CS = D.cs||{}, F = {};
+  DATA.funnel.forEach(s => { F[s.label] = s.value; });
+  const csAd = CS.ad||{};
+  const money = n => (n===null||n===undefined) ? '—' : '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+
+  const card = (cls, tag, name, domain, cells, note) =>
+    `<div class="fcard ${cls}">
+       <div class="fh"><div class="fn"><span class="ftag ${cls}">${tag}</span> &nbsp;${name}</div><div class="fd">${domain}</div></div>
+       <div class="fr">${cells.map(c=>`<div><div class="fv">${c[0]}</div><div class="fl">${c[1]}</div></div>`).join('')}</div>
+       <div class="fnote">${note}</div>
+     </div>`;
+
+  const gtmSpend = (DATA.kpis.find(k=>k.label==='Ad spend')||{}).value || '—';
+  const gtmCPB   = (DATA.kpis.find(k=>k.label==='Cost / booked call')||{}).value || '—';
+
+  host.innerHTML =
+    card('', 'GTM', 'Lead generation', 'gtm.hirecharm.com', [
+      [gtmSpend, 'ad spend'], [F['Form fills']||'0', 'form fills'],
+      [F['Booked calls']||'0', 'booked'], [gtmCPB, 'cost / booked'],
+    ], `${F['Qualified']||0} qualified &middot; ${F['Committed (verbal yes)']||0} committed &middot; ${F['Cash collected']||'$0'} collected`) +
+    (CS.error
+      ? card('cs','CS FLEX','Customer success','cs.hirecharm.com',
+             [['—','ad spend'],['—','form fills'],['—','booked'],['—','cost / booked']],
+             'Funnel data unavailable: '+CS.error)
+      : card('cs', 'CS FLEX', 'Customer success', 'cs.hirecharm.com', [
+          [money(csAd.spend), 'ad spend'], [CS.form_fills||0, 'form fills'],
+          [CS.booked||0, 'booked'], [money(CS.cost_per_booking), 'cost / booked'],
+        ], (CS.form_fills||CS.booked)
+             ? `No post-call verdicts yet &mdash; judge on cost per booking, not cost per qualified`
+             : `Launched 18 Aug &middot; ${CS.form_fills_all||0} submission(s) so far, all internal or test`));
+})();
 
 // FUNNEL
 (function(){
@@ -235,11 +295,6 @@ html += `<details open><summary>Form qualification <span style="color:var(--ink3
 // Lead quality + qualifier impact
 const LQ = D.lead_quality||{};
 html += `<details open><summary>Lead quality <span style="color:var(--ink3);font-weight:400;font-size:12px">(who's coming in)</span> <span class="cnt">${LQ.total?`${LQ.company_pct}% company · ${LQ.free_pct}% free-mail`:'awaiting submissions'}</span></summary><div class="det-body" id="quality"></div></details>`;
-
-// CS Flex funnel — the second funnel, kept separate from GTM's numbers on purpose
-const CS = D.cs||{};
-const csLive = !CS.error && ((CS.form_fills||0)+(CS.booked||0)+(CS.ad&&CS.ad.spend||0))>0;
-html += `<details${csLive?' open':''}><summary>CS Flex funnel <span style="color:var(--ink3);font-weight:400;font-size:12px">— cs.hirecharm.com</span> <span class="cnt">${CS.error?'unavailable':(csLive?`${CS.form_fills} fill(s) · ${CS.booked} booked`:'launched — awaiting real traffic')}</span></summary><div class="det-body" id="csflex"></div></details>`;
 
 // Video engagement
 html += `<details><summary>Video engagement <span class="cnt">avg ${D.avg_watched}% watched · ${D.video?mmss(D.video.duration):''}</span></summary><div class="det-body"><div class="chart" id="engage"></div></div></details>`;
@@ -520,7 +575,7 @@ renderOutcomes();
 
 // CS Flex funnel — its own funnel, not merged into GTM's numbers
 (function(){
-  const C = D.cs||{}, host = $('csflex');
+  const C = D.cs||{}, host = $('csflex');  // now a top-level section, not a drawer
   if(!host) return;
   if(C.error){ host.innerHTML = `<div class="empty">CS funnel unavailable: ${C.error}</div>`; return; }
   const ad = C.ad||{}, v = C.video||{};

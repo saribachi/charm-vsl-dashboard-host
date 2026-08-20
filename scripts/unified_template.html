@@ -76,6 +76,16 @@ h1 span{color:var(--purple)}
 .st-conv .drop{color:var(--magenta)}
 .st-cost{font-size:11px;color:var(--ink3);margin-top:1px}
 .st-note{font-size:11px;color:var(--ink3);margin-top:1px}
+.fgroup{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:14px 12px 4px}
+.stage+.fgroup{border-top:1px solid var(--grid);margin-top:6px}
+.st-basis{display:block;font-size:10px;color:var(--ink3);margin-top:2px;font-weight:400}
+.engrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.encard{background:var(--grid);border-radius:10px;padding:11px 12px}
+.encard .env{font-size:20px;font-weight:700}
+.encard .enl{font-size:11px;color:var(--ink2);margin-top:2px}
+.encard .enb{font-size:10px;color:var(--ink3);margin-top:3px}
+.anom{background:#fff4e5;border:1px solid #f0c48a;color:#7a4a00;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px}
+@media(prefers-color-scheme:dark){.anom{background:#3a2a10;border-color:#7a5a20;color:#f0c48a}}
 .needs-tag{background:var(--amber-bg);border:1px solid var(--amber-l);color:var(--amber-ink);font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;display:inline-block}
 .needs-track{flex:1;height:34px;border:1.5px dashed var(--amber-l);border-radius:8px;background:repeating-linear-gradient(45deg,#fdf9ef,#fdf9ef 8px,#fbf3df 8px,#fbf3df 16px);display:flex;align-items:center;padding-left:12px;color:var(--amber-ink);font-size:12px;font-weight:600}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--ink3);margin:12px 4px 0}
@@ -217,14 +227,25 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
        <div class="tr">${cells.map(c=>`<div><div class="tv">${c[0]}</div><div class="tl">${c[1]}</div></div>`).join('')}</div>
      </button>`;
 
+  // Both cards lead with what the funnel BOUGHT (impressions, clicks) before what it
+  // produced, so the two funnels compare from the top of the funnel down rather than
+  // from spend. Same six cells in the same order on both — that is what makes the
+  // side-by-side readable at a glance.
+  const num = n => (n===null||n===undefined) ? '—' : Number(n).toLocaleString();
+  const ctrOf = a => (a && a.impressions) ? (Math.round(1000*(a.clicks||0)/a.impressions)/10)+'% CTR' : 'link clicks';
+  const gctx = DATA.context||{};
   host.innerHTML =
     tab('gtm','', 'GTM','Lead generation','gtm.hirecharm.com',
-        [[kpi('Ad spend'),'ad spend'],[F['Form fills']||'0','form fills'],
-         [F['Booked calls']||'0','booked'],[kpi('Cost / booked call'),'cost / booked']]) +
+        [[num(gctx.impressions),'impressions'],[F['Link clicks']||'0',gctx.ctr?gctx.ctr+' CTR':'link clicks'],
+         [kpi('Ad spend'),'ad spend'],
+         [F['Form fills']||'0','form fills'],[F['Booked calls']||'0','booked'],
+         [kpi('Cost / booked call'),'cost / booked']]) +
     tab('cs','cs','CS FLEX','Customer success','cs.hirecharm.com',
-        CS.error ? [['—','ad spend'],['—','form fills'],['—','booked'],['—','cost / booked']]
-                 : [[money(csAd.spend),'ad spend'],[CS.form_fills||0,'form fills'],
-                    [CS.booked||0,'booked'],[money(CS.cost_per_booking),'cost / booked']]);
+        CS.error ? [['—','impressions'],['—','link clicks'],['—','ad spend'],['—','form fills'],['—','booked'],['—','cost / booked']]
+                 : [[num(csAd.impressions),'impressions'],[num(csAd.clicks),ctrOf(csAd)],
+                    [money(csAd.spend),'ad spend'],
+                    [CS.form_fills||0,'form fills'],[CS.booked||0,'booked'],
+                    [money(CS.cost_per_booking),'cost / booked']]);
 
   const panes = {gtm: $('pane-gtm'), cs: $('pane-cs')};
   function show(which){
@@ -247,7 +268,7 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
 (function(){
   // biggest drop within the acquisition funnel (ignore 0-volume + post-booking
   // stages like held/qualified, whose "drop" is just calls scheduled in the future)
-  const postBook = ['Calls held','Qualified','Deals closed','Cash collected'];
+  const postBook = ['Calls held','Qualified','Committed (verbal yes)','Deals closed','Cash collected'];
   let biggestDrop = {i:-1, d:0};
   DATA.funnel.forEach((s,i)=>{
     const prev = DATA.funnel[i-1];
@@ -255,6 +276,10 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
       const c=parseFloat(s.conv); const d = 100 - c;
       if(c<=100 && d > biggestDrop.d){ biggestDrop = {i, d}; } }
   });
+  // Bars scale within their group. 'traffic' (impressions, clicks) is linear against
+  // impressions; 'conversion' (clicks onward) is linear against clicks. One linear
+  // scale across both would render every post-click row as an invisible sliver.
+  const groupLabel = {traffic:'Traffic bought', conversion:'What the traffic did'};
   $('funnel').innerHTML = DATA.funnel.map((s,i)=>{
     const srcChip = `<span class="chip">${s.source}</span>`;
     let body;
@@ -269,17 +294,26 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
       let conv = '';
       if(s.conv){
         const c = parseFloat(s.conv);
-        if(c > 100) conv = `<div class="st-conv" style="color:var(--ink3);font-weight:500">more than prior step<div class="st-cost">paths overlap — not strictly linear</div></div>`;
-        else if(isDrop) conv = `<div class="st-conv"><span class="drop">▼ ${s.conv} — biggest drop</span></div>`;
-        else conv = `<div class="st-conv">${s.conv} <span style="color:var(--ink3);font-weight:400">from prev</span></div>`;
+        const of = s.conv_of ? `<span style="color:var(--ink3);font-weight:400"> of ${s.conv_of}</span>` : '';
+        // A rate over 100% on this spine means a denominator bug, not overlapping
+        // paths. It is called out rather than smoothed over — the old page printed
+        // "more than prior step" for a 129% that was comparing two different
+        // populations, and that wording is what let it survive.
+        if(c > 100) conv = `<div class="st-conv" style="color:var(--magenta)">⚠ ${s.conv}${of}<div class="st-cost">over 100% — denominator mismatch, do not read this rate</div></div>`;
+        else if(isDrop) conv = `<div class="st-conv"><span class="drop">▼ ${s.conv}${of} — biggest drop</span></div>`;
+        else conv = `<div class="st-conv">${s.conv}${of}</div>`;
       }
       body = `<div class="st-body">
         <div class="st-track">${inside?'':numHtml}<div class="st-fill" style="width:${w}%">${inside?numHtml:''}</div></div>
         <div class="st-right">${conv}${s.cost?`<div class="st-cost">${s.cost}</div>`:''}${s.note?`<div class="st-note">${s.note}</div>`:''}</div>
       </div>`;
     }
-    return `<div class="stage ${s.status}"><div class="st-l"><span class="st-name">${s.label}</span><span class="st-src">${srcChip}</span></div>${body}</div>`;
-  }).join('');
+    const prevG = i>0 ? DATA.funnel[i-1].group : null;
+    const head = s.group && s.group!==prevG
+      ? `<div class="fgroup">${groupLabel[s.group]||s.group}</div>` : '';
+    const basis = s.basis ? `<span class="st-basis">${s.basis}</span>` : '';
+    return head + `<div class="stage ${s.status}"><div class="st-l"><span class="st-name">${s.label}</span><span class="st-src">${srcChip}${basis}</span></div>${body}</div>`;
+  }).join('') + `<div class="st-note" style="margin-top:12px;padding:0 12px">Every row above counts <b>ad-driven activity inside the ad export's date window</b>, so each percentage is a real conversion from the row named beside it. Page and video numbers are <b>not</b> on this spine — they count all traffic, paid or not, over the video's lifetime. They are in <b>Page &amp; video engagement</b> below.</div>`;
 })();
 
 $('phase-note').innerHTML = `<b>Qualifier questions added ${DATA.qualifier_form_date||'Jul 27'}.</b> Submissions and bookings before then predate the gate, so form-fill volume and booking rates aren't directly comparable across that line — the new questions will likely lower form-fill volume and change who books. <b>Two qualification axes, kept separate:</b> the <b>form gate</b> (automatic, who reaches the calendar) and <b>post-call</b> (Chris's fit judgment after the call) — a lead can pass one and fail the other.`;
@@ -290,6 +324,45 @@ const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0'
 let html = '';
 
 // Call outcomes — focused "what happened on this call?" queue
+// ---- Page & video engagement (BOTH funnels render through this one function) ----
+// Deliberately not a funnel stage. These count everyone who loaded the page, paid or
+// not, and Wistia exposes no per-day unique-visitor count — so loads/plays can be
+// windowed to the ad dates but unique visitors cannot. Each card states its own basis
+// rather than leaving you to assume they share one.
+function engHTML(e, who){
+  if(!e || !Object.keys(e).length) return '<div class="st-note">No engagement data.</div>';
+  const w = e.window||{}, win = w.start ? `${w.start} → ${w.end}` : 'ad window';
+  const n = v => (v===null||v===undefined) ? '—' : Number(v).toLocaleString();
+  const card = (v,l,b) => `<div class="encard"><div class="env">${v}</div><div class="enl">${l}</div><div class="enb">${b}</div></div>`;
+  let h = '';
+  if(e.anomalies && e.anomalies.length){
+    const a = e.anomalies;
+    h += `<div class="anom"><b>⚠ ${a.length} day(s) of traffic the ads did not buy.</b> `
+      + a.map(x=>`<b>${x.date}</b>: ${n(x.loads)} page loads against ${n(x.clicks)} ad click(s)`).join(' · ')
+      + `. That is ${n(e.anomaly_loads)} loads — <b>${Math.round(100*e.anomaly_loads/(e.loads_window||1))}% of ${who}'s windowed page loads</b> — from direct, organic or bot traffic. `
+      + `Nothing is deleted; the loads are real, but they are not ad performance and no conversion rate should be read against them.</div>`;
+  }
+  h += '<div class="engrid">'
+    + card(n(e.loads_window), 'Page loads', `${win} · all traffic, incl. reloads`)
+    + card(n(e.plays_window), 'Video plays', `${win} · all traffic`)
+    + card(n(e.visitors_lifetime), 'Unique visitors', 'LIFETIME — Wistia has no per-day unique count')
+    + card(e.play_rate!=null ? e.play_rate+'%' : '—', 'Play rate', e.play_rate_basis||'plays per unique visitor')
+    + card(e.avg_percent_watched!=null ? e.avg_percent_watched+'%' : '—', 'Avg watched', 'share of the video actually watched')
+    + '</div>';
+  if(e.loads_lifetime && e.loads_lifetime !== e.loads_window){
+    h += `<div class="st-note">Lifetime page loads are ${n(e.loads_lifetime)}; ${n(e.loads_lifetime-e.loads_window)} of those fall outside the ad window and are excluded above.</div>`;
+  }
+  return h;
+}
+
+(function(){
+  const e = DATA.engagement||{};
+  const cnt = e.loads_window!=null
+    ? `${Number(e.loads_window).toLocaleString()} loads · ${e.play_rate!=null?e.play_rate+'% play rate':'—'}`
+    : 'awaiting Wistia';
+  html += `<details open><summary>Page &amp; video engagement <span style="color:var(--ink3);font-weight:400;font-size:12px">— all traffic, NOT a funnel stage</span> <span class="cnt">${cnt}</span></summary><div class="det-body" id="engpanel"></div></details>`;
+})();
+
 html += `<details open><summary>Call outcomes <span style="color:var(--ink3);font-weight:400;font-size:12px">— log what happened</span> <span class="cnt" id="oc-cnt"></span></summary><div class="det-body" id="outcomes"></div></details>`;
 
 // Where the QUALIFIED leads come from — the ad-level answer to "what's working"
@@ -321,6 +394,8 @@ html += `<details><summary>Ad angles <span class="cnt">${(D.angles||[]).length} 
 // Coverage
 html += `<details><summary>Data source coverage <span class="cnt">what's live vs pending</span></summary><div class="det-body" id="coverage"></div></details>`;
 $('details').innerHTML = html;
+// Fill the engagement panel now that its container exists in the DOM.
+(function(){ const el=$('engpanel'); if(el) el.innerHTML = engHTML(DATA.engagement||{}, 'GTM'); })();
 
 // daily ad spend bar chart — the number to watch as Meta unthrottles
 (function(){
@@ -598,20 +673,30 @@ renderOutcomes();
   const money = n => n==null?'—':'$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
   const pct = n => n==null?'—':n+'%';
 
-  let h = `<div class="mini" style="grid-template-columns:repeat(4,1fr)">`+
+  const imp = ad.impressions||0, clk = ad.clicks||0;
+  const ctr = imp ? Math.round(1000*clk/imp)/10 : null;
+  let h = `<div class="mini" style="grid-template-columns:repeat(5,1fr)">`+
     `<div class="b"><div class="bv">${money(ad.spend)}</div><div class="bl">Ad spend${ad.ad_sets&&ad.ad_sets.length?'':' · no CS ad sets in export yet'}</div></div>`+
-    `<div class="b"><div class="bv">${(ad.clicks||0).toLocaleString()}</div><div class="bl">Link clicks</div></div>`+
+    `<div class="b"><div class="bv">${imp.toLocaleString()}</div><div class="bl">Impressions</div></div>`+
+    `<div class="b"><div class="bv">${clk.toLocaleString()}</div><div class="bl">Link clicks${ctr!=null?' · '+ctr+'% CTR':''}</div></div>`+
     `<div class="b"><div class="bv">${C.form_fills||0}</div><div class="bl">Form fills (real)</div></div>`+
     `<div class="b"><div class="bv">${C.booked||0}</div><div class="bl">Booked calls</div></div></div>`;
 
-  h += '<table style="margin-top:12px"><tr><th>Stage</th><th>Value</th><th>Rate</th></tr>'+
-    `<tr><td>Landing page loads</td><td>${(v.loads||0).toLocaleString()}</td><td>${v.visitors||0} visitors</td></tr>`+
-    `<tr><td>Video plays</td><td>${v.plays||0}</td><td>${pct(v.play_rate)} of loads</td></tr>`+
-    `<tr><td>Form fills</td><td>${C.form_fills||0}</td><td>${C.fill_rate!=null?pct(C.fill_rate)+' of clicks':'—'}</td></tr>`+
-    `<tr><td>Booked calls</td><td>${C.booked||0}</td><td>${C.booking_rate!=null?pct(C.booking_rate)+' of fills':'—'}</td></tr>`+
+  // Same shape as GTM's spine: paid only, one time base, every rate names its
+  // denominator. Page and video numbers are NOT stages here either — they moved to
+  // the engagement block below, which is rendered by the same engHTML() as GTM's.
+  h += '<div class="fgroup" style="padding-left:0">Traffic bought → what it did</div>'+
+    '<table><tr><th>Stage</th><th>Value</th><th>Rate</th></tr>'+
+    `<tr><td>Impressions</td><td>${imp.toLocaleString()}</td><td class="st-src">paid · CS ad sets only</td></tr>`+
+    `<tr><td>Link clicks</td><td>${clk.toLocaleString()}</td><td>${ctr!=null?ctr+'% of impressions (CTR)':'—'}</td></tr>`+
+    `<tr><td>Form fills</td><td>${C.form_fills||0}</td><td>${C.fill_rate!=null?pct(C.fill_rate)+' of link clicks':'—'}</td></tr>`+
+    `<tr><td>Booked calls</td><td>${C.booked||0}</td><td>${C.booking_rate!=null?pct(C.booking_rate)+' of form fills':'—'}</td></tr>`+
     `<tr><td>Cost per fill</td><td>${money(C.cost_per_fill)}</td><td></td></tr>`+
     `<tr><td>Cost per booking</td><td>${money(C.cost_per_booking)}</td><td></td></tr>`+
     '</table>';
+
+  h += '<div class="fgroup" style="padding-left:0">Page &amp; video engagement <span style="text-transform:none;letter-spacing:0;font-weight:400">— all traffic, NOT a funnel stage</span></div>'
+     + engHTML(C.engagement||{}, 'CS');
 
   const byAd = C.by_ad||{};
   if(Object.keys(byAd).length){
@@ -634,7 +719,8 @@ renderOutcomes();
   if(!C.form_fills && !C.booked){
     h += `<div class="empty" style="margin-top:12px">Launched 18 Aug. ${C.form_fills_all||0} submission(s) so far, all internal or test — those are excluded here and never sent to Meta as conversions. Real numbers appear as ad traffic arrives.</div>`;
   }
-  h += '<div class="st-note" style="margin-top:12px"><b>CS has no post-call verdicts or qualification gate yet</b>, so there is no held / qualified stage — unlike GTM, cost per <i>qualified</i> is not available for this funnel. Judge on cost per booking until those exist. Ad spend is matched to ad sets named <code>CS Flex…</code>; rename them and this reads zero.</div>';
+  h += '<div class="st-note" style="margin-top:12px"><b>CS has no post-call verdicts or qualification gate yet</b>, so there is no held / qualified stage — unlike GTM, cost per <i>qualified</i> is not available for this funnel. Judge on cost per booking until those exist. Ad spend is matched to ad sets named <code>CS Flex…</code>; rename them and this reads zero. '
+     + '<b>Directly comparable to GTM:</b> both funnels compute impressions, clicks, fills, bookings and play rate through the same code with the same denominators — play rate is plays per unique visitor on both, where CS previously used plays per page load and read half its true value.</div>';
   host.innerHTML = h;
 })();
 
@@ -722,8 +808,13 @@ renderOutcomes();
   const A=D.angles||[];
   if(!A.length){ $('angles').innerHTML='<div class="empty">No ad data.</div>'; return; }
   const g=D.ghl_reconciled||{};
-  let note = g.available ? `<div class="st-note" style="margin-bottom:10px">Cost per form fill (GHL actual): <b>${g.cost_per_form_fill.status==='ok'?('$'+g.cost_per_form_fill.value):g.cost_per_form_fill.text}</b> — spend ÷ real GHL form fills, since Meta's Lead event isn't firing.</div>`:'';
-  $('angles').innerHTML=note+`<table><tr><th>Angle</th><th>Spend</th><th>Impr.</th><th>Clicks</th><th>Form fills</th><th>CPC</th></tr>`+
+  // Two form-fill numbers exist and they are NOT the same measurement. The table's
+  // "Form fills" column is Meta's own count, which under-reports badly (the Lead event
+  // only started firing server-side on Aug 17, and before that a CTA button click was
+  // miscounted as a Lead). GHL is the source of truth. Both are labelled so neither
+  // gets mistaken for the other.
+  let note = g.available ? `<div class="st-note" style="margin-bottom:10px"><b>Two different form-fill counts below — do not mix them.</b> <b>GHL (source of truth):</b> ${g.real_form_fills} real fills, <b>${g.cost_per_form_fill.status==='ok'?('$'+g.cost_per_form_fill.value):g.cost_per_form_fill.text}</b> per fill. The <b>Form fills</b> column in the table is <b>Meta's own count</b>, which under-reports — its Lead event was misfiring until 17 Aug — so any cost-per-fill derived from that column reads far too high. GTM ad sets only; CS Flex is excluded.</div>`:'';
+  $('angles').innerHTML=note+`<table><tr><th>Angle</th><th>Spend</th><th>Impr.</th><th>Clicks</th><th>Form fills <span style="font-weight:400;color:var(--ink3)">(Meta)</span></th><th>CPC</th></tr>`+
     A.map(a=>{const m=Object.fromEntries((a.metrics||[]).map(x=>[x.key,x]));const cpc=m.cost_per_click;return `<tr><td><b>${a.label}</b><div class="st-src">${(a.ad_sets||[]).filter(Boolean).join(', ')}</div></td><td>$${(a.spend||0).toLocaleString(undefined,{maximumFractionDigits:0})}</td><td>${(a.impressions||0).toLocaleString()}</td><td>${(a.link_clicks||0).toLocaleString()}</td><td>${a.form_fills||0}</td><td>${cpc&&cpc.status==='ok'?'$'+cpc.value.toFixed(2):'—'}</td></tr>`;}).join('')+'</table>';
 })();
 

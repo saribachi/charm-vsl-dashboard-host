@@ -382,20 +382,42 @@ def main():
                   else "no VSL closes yet")),
     ]
 
-    # ── the funnel: click -> cash (bars scaled to link clicks) ──
-    def stage(label, value, source, status, prev=None, cost=None, note=None, money_val=False):
+    # ── the funnel: impressions -> cash ──
+    #
+    # ONE POPULATION, ONE TIME BASE. Every row below counts ad-driven activity inside
+    # the ad export's date window, so dividing a row by the row above it is always a
+    # real conversion rate.
+    #
+    # What used to be here instead: Wistia's landing-page and video rows sat on this
+    # spine. They count ALL page traffic (paid + direct + organic + repeat) over the
+    # video's LIFETIME, so "visitors / link clicks" printed 129% — more people landing
+    # than the ads ever sent. Below them, "form fills / watched >=50%" printed 660%,
+    # because watching half of a 14-minute video was never a gate on filling the form
+    # (average watch is 11%). Both rows now live in the engagement panel, off the spine,
+    # with no conversion arrow into it. See `engagement` in the payload.
+    #
+    # `conv_of` names the denominator on every row. A percentage whose denominator you
+    # cannot see is how 129% survived on this page for weeks.
+    #
+    # Bars scale WITHIN a group, not across the whole funnel: linear against impressions
+    # would make every post-click row a 0.1% sliver and the whole funnel unreadable,
+    # while a non-linear scale would misrepresent the drop. Two honest linear scales.
+    def stage(label, value, source, status, prev=None, prev_label=None, group="conversion",
+              cost=None, note=None, money_val=False, basis=None):
         conv = None
         if value is not None and prev not in (None, 0) and not money_val:
             conv = pct(div(value, prev))
+        base = impressions if group == "traffic" else clicks
         bar = 0.0
-        if value is not None and clicks and not money_val:
-            bar = max(0.0, min(1.0, value / clicks))
+        if value is not None and base and not money_val:
+            bar = max(0.0, min(1.0, value / base))
         disp = (money(value) if money_val else f"{value:,.0f}") if isinstance(value, (int, float)) else None
         return {"label": label, "value": disp, "raw": value, "bar": bar, "conv": conv,
+                "conv_of": prev_label, "group": group, "basis": basis,
                 "source": source, "status": status, "cost": cost, "note": note}
 
-    landing_note = (f"{rb2b.get('count', 0)} identified by RB2B" if rb2b.get("connected")
-                    else "RB2B feed pending")
+    rb2b_note = (f"{rb2b.get('count', 0)} identified by RB2B" if rb2b.get("connected")
+                 else "RB2B feed pending")
     ba = vsl.get("bookings_attribution", {})
     if ba.get("total_real"):
         att = ba.get("ad_attributed", 0)
@@ -424,30 +446,34 @@ def main():
     else:
         committed_note = None
 
+    ad_basis = f"paid · {window}" if window else "paid"
     funnel = [
-        stage("Link clicks", clicks, "Meta", "live", cost=f"{money(cpc)}/click" if cpc else None,
-              note=f"{pct(ctr) or '—'} of {impressions:,} impressions"),
-        stage("Landing page visitors", visitors, "Wistia", "live", prev=clicks, note=landing_note),
-        stage("Video plays", plays, "Wistia", "live", prev=visitors, note="pressed play"),
-        stage("Watched ≥50%", watched, "Wistia", "live", prev=plays),
-        stage("Form fills", real_forms, "GHL", "live", prev=watched,
-              cost=(f"{money(cpff)}/lead" if cpff else None), note="real leads, tests excluded"),
-        stage("Booked calls", real_booked, "GHL", "live", prev=real_forms,
+        stage("Impressions", impressions, "Meta", "live", group="traffic", basis=ad_basis,
+              note=f"{reach:,} people reached" if reach else None),
+        stage("Link clicks", clicks, "Meta", "live", group="traffic", basis=ad_basis,
+              prev=impressions, prev_label="impressions (CTR)",
+              cost=f"{money(cpc)}/click" if cpc else None),
+        stage("Form fills", real_forms, "GHL", "live", prev=clicks, prev_label="link clicks",
+              basis="real leads · tests excluded",
+              cost=(f"{money(cpff)}/lead" if cpff else None),
+              note="the page and video sit between these two rows — see Page & video engagement"),
+        stage("Booked calls", real_booked, "GHL", "live", prev=real_forms, prev_label="form fills",
               cost=(f"{money(cpbooked)}/call" if cpbooked else None), note=booked_note),
         stage("Calls held", held, "Day AI + Chris", "live" if (held or 0) else "needs",
-              prev=real_booked, note=" · ".join(
+              prev=real_booked, prev_label="booked calls", note=" · ".join(
                   ([f"{pc.get('no_show')} no-show"] if pc.get("no_show") else [])
                   + ([f"{pc.get('pending')} awaiting post-call verdict"] if pc.get("pending") else [])) or None),
         stage("Qualified", (vsl.get("meetings_qualified") if pc.get("held") else None),
-              "Chris (post-call)", "live" if pc.get("held") else "needs", prev=held,
+              "Chris (post-call)", "live" if pc.get("held") else "needs", prev=held, prev_label="calls held",
               note=(f"{pc.get('unqualified',0)} not a fit" if pc.get("unqualified") else None)),
         stage("Committed (verbal yes)", vsl.get("deals_committed"), "Day AI",
               "live" if vsl.get("deals_committed") else "needs",
-              prev=vsl.get("meetings_qualified"),
+              prev=vsl.get("meetings_qualified"), prev_label="qualified",
               note=(committed_note or "no VSL lead committed yet")),
         stage("Deals closed", vsl.get("deals_closed"), "Day AI",
               "live" if vsl.get("deals_closed") is not None else "needs",
               prev=(vsl.get("deals_committed") or vsl.get("meetings_qualified")),
+              prev_label=("committed" if vsl.get("deals_committed") else "qualified"),
               note=("signed + paid; none yet" if vsl.get("deals_closed") == 0 else None)),
         stage("Cash collected", vsl.get("cash_collected"), "Day AI",
               "live" if vsl.get("cash_collected") is not None else "needs", money_val=True),
@@ -456,6 +482,10 @@ def main():
     data = {
         "generated_at": vsl.get("generated_at"),
         "qualifier_form_date": vsl.get("qualifier_form_date"),
+        # Page + video engagement, deliberately OUTSIDE the funnel: it counts all page
+        # traffic, not just ad traffic, so it has no honest conversion arrow into the
+        # spine. Same builder as CS's — see engagement_block() in build_dashboard.py.
+        "engagement": vsl.get("engagement") or {},
         "context": {"impressions": impressions, "reach": reach, "spend": money(spend),
                     "cpm": money(div(spend, impressions) * 1000) if impressions else None,
                     "ctr": pct(ctr)},

@@ -165,6 +165,7 @@ def is_test(email, name=""):
 # was only just repaired, so a refactor to parameterise both funnels is not worth the
 # regression risk today.
 CS_MEDIA_ID = "lk17fifkvg"                  # CS VSL video on cs.hirecharm.com
+CS_STATS_SINCE = "2026-08-01"               # far enough back to see pre-launch test traffic
 CS_FORM_ID = "jQbgnP7paIZUM6BiqvOy"         # CS Services form VSL Only
 CS_CALENDAR_ID = "UiG1GyVkQwBqa4tbHkEN"     # Charm - CS VSL ONLY
 
@@ -183,13 +184,105 @@ CS_QUAL_FIELDS = {
 CS_ADSET_PREFIX = "cs flex"
 
 
+def ad_daily_rows():
+    """Every row of the shared Meta export. One file, two funnels — always split it."""
+    try:
+        return json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
+    except Exception:
+        return []
+
+
+def is_cs_row(r):
+    return (r.get("ad_set_name") or "").lower().startswith(CS_ADSET_PREFIX)
+
+
+def ad_clicks_by_day(funnel):
+    """Ad link clicks per calendar day for ONE funnel. Used to sanity-check page
+    loads: a day with far more page loads than ad clicks is not ad traffic."""
+    want_cs = (funnel == "cs")
+    by = {}
+    for r in ad_daily_rows():
+        if is_cs_row(r) != want_cs:
+            continue
+        d = r.get("date")
+        if d:
+            by[d] = by.get(d, 0) + int(r.get("link_clicks") or 0)
+    return by
+
+
+def ad_window(funnel):
+    """First/last date the export actually covers for ONE funnel. Derived, never
+    hardcoded — Wistia is windowed to this so the two sources share a time base."""
+    days = sorted(ad_clicks_by_day(funnel))
+    return (days[0], days[-1]) if days else (None, None)
+
+
+# A day is flagged when page loads dwarf that day's ad clicks. Ads cannot produce
+# loads they did not buy, so the excess is direct/organic/bot traffic. Aug 19 2026
+# recorded 696 loads against 7 GTM ad clicks — 18% of the video's lifetime loads in
+# a single day. Flagged rather than deleted: the number is real, its SOURCE is not ads.
+ANOMALY_MIN_LOADS = 60      # ignore quiet days, where any ratio is noise
+ANOMALY_RATIO = 8           # loads per ad click before a day looks non-ad
+
+
+def engagement_block(media_stats, by_date, funnel):
+    """Page + video engagement for ONE funnel, in a shape IDENTICAL for GTM and CS.
+
+    Every field carries its own basis, because the two are not the same:
+      - loads / plays are WINDOWED to the ad export's date range (from by_date)
+      - unique visitors is LIFETIME — Wistia's API exposes no per-day unique count,
+        so it cannot honestly be windowed. Labelled rather than silently mixed.
+
+    This function exists because GTM and CS previously computed play rate on
+    different denominators (visitors vs page loads), which made CS read 4.4% against
+    GTM's 7.3% when like-for-like they are 7% and 6%. One function, one definition,
+    so the two funnels cannot drift apart again.
+    """
+    stats = media_stats or {}
+    start, end = ad_window(funnel)
+    rows = [r for r in (by_date or [])
+            if not start or start <= (r.get("date") or "")[:10] <= end]
+
+    loads_w = int(sum(r.get("load_count") or 0 for r in rows))
+    plays_w = int(sum(r.get("play_count") or 0 for r in rows))
+    visitors_life = int(stats.get("visitors") or 0)
+    plays_life = int(stats.get("plays") or 0)
+    loads_life = int(stats.get("pageLoads") or 0)
+
+    # Play rate on ONE basis for both funnels: plays per unique visitor, lifetime.
+    # Wistia's own percentOfVisitorsClickingPlay rounds to whole percents, so it is
+    # recomputed here to keep a decimal place.
+    play_rate = round(100 * plays_life / visitors_life, 1) if visitors_life else None
+
+    clicks_by_day = ad_clicks_by_day(funnel)
+    anomalies = []
+    for r in rows:
+        d = (r.get("date") or "")[:10]
+        loads = int(r.get("load_count") or 0)
+        clicks = clicks_by_day.get(d, 0)
+        if loads >= ANOMALY_MIN_LOADS and loads > max(1, clicks) * ANOMALY_RATIO:
+            anomalies.append({"date": d, "loads": loads, "clicks": clicks,
+                              "plays": int(r.get("play_count") or 0)})
+    anomalies.sort(key=lambda a: -a["loads"])
+
+    return {
+        "window": {"start": start, "end": end},
+        "loads_window": loads_w,
+        "plays_window": plays_w,
+        "loads_lifetime": loads_life,
+        "visitors_lifetime": visitors_life,
+        "plays_lifetime": plays_life,
+        "play_rate": play_rate,                       # plays / unique visitors, lifetime
+        "play_rate_basis": "plays per unique visitor (lifetime)",
+        "avg_percent_watched": stats.get("averagePercentWatched"),
+        "anomalies": anomalies,
+        "anomaly_loads": sum(a["loads"] for a in anomalies),
+    }
+
+
 def cs_ad_spend():
     """Meta spend + clicks for CS ad sets only, from the shared daily export."""
-    try:
-        rows = json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
-    except Exception:
-        return {"spend": 0.0, "clicks": 0, "impressions": 0, "ad_sets": []}
-    hit = [r for r in rows if (r.get("ad_set_name") or "").lower().startswith(CS_ADSET_PREFIX)]
+    hit = [r for r in ad_daily_rows() if is_cs_row(r)]
     return {
         "spend": round(sum(r.get("spend") or 0 for r in hit), 2),
         "clicks": int(sum(r.get("link_clicks") or 0 for r in hit)),
@@ -207,6 +300,14 @@ def cs_funnel(now):
         stats = (wistia(f"medias/{CS_MEDIA_ID}/stats.json") or {}).get("stats", {}) or {}
     except Exception:
         stats = {}
+    # by_date is what makes a WINDOWED load/play count possible. Without it CS would
+    # report lifetime traffic against a windowed ad spend — CS's video logged 49 loads
+    # on Aug 17, the day BEFORE the funnel launched, purely from pre-launch testing.
+    try:
+        cs_by_date = wistia(f"stats/medias/{CS_MEDIA_ID}/by_date.json"
+                            f"?start_date={CS_STATS_SINCE}&end_date={now.strftime('%Y-%m-%d')}") or []
+    except Exception:
+        cs_by_date = []
 
     # --- form fills ---
     subs, page = [], 1
@@ -277,13 +378,17 @@ def cs_funnel(now):
     plays = stats.get("plays") or 0
     fills, books = len(real_subs), len(detail)
     div = lambda a, b: round(a / b, 2) if b else None
+    eng = engagement_block(stats, cs_by_date, "cs")
     return {
         "ad": ad,
-        "video": {"loads": stats.get("pageLoads") or 0,
-                  "visitors": stats.get("visitors") or 0,
-                  "plays": plays,
-                  "play_rate": round(100 * plays / stats["pageLoads"], 1)
-                               if stats.get("pageLoads") else None},
+        "engagement": eng,
+        # `video` kept for the existing CS panel. play_rate now matches GTM's basis
+        # (plays per unique VISITOR); it was plays per page LOAD, which made CS look
+        # half as engaging as GTM when the two are in fact the same.
+        "video": {"loads": eng["loads_window"],
+                  "visitors": eng["visitors_lifetime"],
+                  "plays": eng["plays_window"],
+                  "play_rate": eng["play_rate"]},
         "form_fills": fills,
         "form_fills_all": len(subs),          # incl. tests, so the gap is visible
         "booked": books,
@@ -771,6 +876,8 @@ def main():
         "qualifier_form_date": QUALIFIER_FORM_DATE,
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],
                    "plays": s["plays"], "watched_50": watched_50},
+        # Same builder as CS, so the two funnels are comparable by construction.
+        "engagement": engagement_block(s, by_date, "gtm"),
     }
 
     # The CS funnel is computed independently and attached alongside. A failure here

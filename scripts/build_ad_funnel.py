@@ -21,18 +21,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# ── FILL IN: map each real ad_set_name to one of the four angles ───────────────
-angle_map = {
-    "<ad_set_name_1>": "burned_before",
-    "<ad_set_name_2>": "sell_targeting",
-    "<ad_set_name_3>": "broken_infra",
-    "<ad_set_name_4>": "referrals_luck",
-    # sample names (remove once real names are mapped above):
-    "Burned Before - Video A": "burned_before",
-    "Sell the Targeting - Static B": "sell_targeting",
-    "Broken Infra - Video C": "broken_infra",
-    "Referrals & Luck - Static D": "referrals_luck",
-}
+# ── angle mapping: real ad_set_name -> one of the four creative angles ─────────
+# EMPTY ON PURPOSE, and empty is the honest state. The placeholder scaffold that used
+# to live here ("<ad_set_name_1>": "burned_before", plus four invented sample names)
+# never matched a real ad set, so every set fell through to "unmapped" while the panel
+# looked configured. An ad set's NAME describes its ad body, not its role in the funnel
+# — "What If we..." Ad Body says nothing about which angle it tests — so this cannot be
+# filled in by inference. Chris assigns each set an angle; add it here when he does.
+angle_map = {}
 
 ANGLE_LABELS = {
     "burned_before": "Burned before",
@@ -84,11 +80,23 @@ def safe_div(n, d):
     return n / d, True
 
 
+# Must match CS_ADSET_PREFIX in build_dashboard.py and build_unified.py. The Meta
+# export holds BOTH funnels; this page is the GTM ad funnel, so CS rows are dropped
+# here exactly as they are there. Until 2026-08-20 they were not, and this page's
+# spend, CPM, CTR and cost-per-form-fill all quietly absorbed CS's budget.
+CS_ADSET_PREFIX = "cs flex"
+
+
+def _is_cs(r):
+    return (r.get("ad_set_name") or "").lower().startswith(CS_ADSET_PREFIX)
+
+
 def load_rows():
     real = ROOT / "data/meta/ad_daily.json"
     if real.exists():
         raw = json.loads(real.read_text())
-        return (raw.get("rows", raw) if isinstance(raw, (dict, list)) else []), False
+        rows = (raw.get("rows", raw) if isinstance(raw, (dict, list)) else [])
+        return [r for r in rows if not _is_cs(r)], False
     sample = ROOT / "data/meta/ad_daily.sample.json"
     if sample.exists():
         return json.loads(sample.read_text()).get("rows", []), True

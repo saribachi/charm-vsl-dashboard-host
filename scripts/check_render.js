@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 
 const file = process.argv[2] || path.join(__dirname, '..', 'dashboard', 'index.html');
-const REQUIRED = ['kpis', 'funnel', 'ftabs', 'csflex', 'details'];
+const REQUIRED = ['kpis', 'funnel', 'ftabs', 'csflex', 'details', 'engpanel'];
 
 const html = fs.readFileSync(file, 'utf8');
 const m = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/) || html.match(/<script>([\s\S]*)<\/script>/);

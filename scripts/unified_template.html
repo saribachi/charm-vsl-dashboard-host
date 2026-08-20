@@ -84,6 +84,10 @@ h1 span{color:var(--purple)}
 .encard .env{font-size:20px;font-weight:700}
 .encard .enl{font-size:11px;color:var(--ink2);margin-top:2px}
 .encard .enb{font-size:10px;color:var(--ink3);margin-top:3px}
+.fresh{border-radius:10px;padding:10px 12px;font-size:12px;margin:0 0 12px;line-height:1.5}
+.fresh.ok{background:var(--grid);color:var(--ink2)}
+.fresh.warn{background:#fff4e5;border:1px solid #f0c48a;color:#7a4a00}
+@media(prefers-color-scheme:dark){.fresh.warn{background:#3a2a10;border-color:#7a5a20;color:#f0c48a}}
 .anom{background:#fff4e5;border:1px solid #f0c48a;color:#7a4a00;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px}
 @media(prefers-color-scheme:dark){.anom{background:#3a2a10;border-color:#7a5a20;color:#f0c48a}}
 .needs-tag{background:var(--amber-bg);border:1px solid var(--amber-l);color:var(--amber-ink);font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;display:inline-block}
@@ -170,6 +174,7 @@ a.plain{color:var(--purple);text-decoration:none}
   <div class="kpis" id="kpis"></div>
 
   <div class="section-h">The GTM funnel — where people drop off</div>
+  <div id="freshness"></div>
   <div class="funnel" id="funnel"></div>
   <div class="legend">
     <span><i class="sw" style="background:linear-gradient(90deg,var(--purple),var(--purple-d))"></i> live stage (bar = share of link clicks)</span>
@@ -262,6 +267,37 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
   let start = 'gtm';
   try{ const saved = localStorage.getItem('vslFunnel'); if(saved==='cs'||saved==='gtm') start = saved; }catch(e){}
   show(start);
+})();
+
+// DATA FRESHNESS — the two clocks on this page, and what happens when they diverge.
+// Meta arrives by manual CSV upload and stops where that export stopped; GHL and Day AI
+// are pulled live every rebuild. Cost-per-anything divides one by the other, so a
+// lagging export makes every cost metric read LOW. Meta also RESTATES recent days, so a
+// same-day export is not merely incomplete — it can invert the read (Aug 20 2026 revised
+// Aug 19 from ~7 GTM clicks to 502, taking post-rebuild click→fill from 6.4% to 1.6%).
+(function(){
+  const f = DATA.freshness||{}; const host = $('freshness'); if(!host) return;
+  if(!f.ad_end){ host.innerHTML = '<div class="fresh warn"><b>No ad data.</b> Upload a Meta export at <code>/upload</code>.</div>'; return; }
+  const lag = f.lag_days;
+  let cls = 'ok', msg;
+  if(f.stale){
+    cls = 'warn';
+    msg = `<b>⚠ Ad data is ${lag} days behind the rest of this page.</b> Meta stops at <b>${f.ad_end}</b>; `
+      + `form fills, bookings and call outcomes are live as of ${f.generated_at}. `
+      + `<b>Every cost metric on this page is therefore too LOW</b> — stale spend divided by live counts. `
+      + `Upload the newest export at <code>/upload</code> before acting on cost per lead, per booking or per qualified.`;
+  } else if(f.partial_today){
+    cls = 'ok';
+    msg = `<b>Ad data includes today (${f.ad_end}), which Meta has not finished counting.</b> `
+      + `Today's clicks and spend will be restated upward over the next day or two — `
+      + `Meta revised 19 Aug from ~7 GTM clicks to 502 after the fact. `
+      + `<b>Do not judge today's CPC, CTR or click→fill until the next export lands.</b> `
+      + `Everything else on this page is live as of ${f.generated_at}.`;
+  } else {
+    msg = `<b>Ad data runs ${f.ad_window}</b> (Meta, uploaded CSV) · everything else live as of ${f.generated_at}. `
+      + `Meta's most recent day or two is always restated upward, so treat the tail of any trend as provisional.`;
+  }
+  host.innerHTML = `<div class="fresh ${cls}">${msg}</div>`;
 })();
 
 // FUNNEL
@@ -694,6 +730,15 @@ renderOutcomes();
     `<tr><td>Cost per fill</td><td>${money(C.cost_per_fill)}</td><td></td></tr>`+
     `<tr><td>Cost per booking</td><td>${money(C.cost_per_booking)}</td><td></td></tr>`+
     '</table>';
+
+  (function(){
+    const f = DATA.freshness||{};
+    if(f.ad_end) h += `<div class="fresh ${f.stale?'warn':'ok'}" style="margin-top:12px">`
+      + (f.stale
+         ? `<b>⚠ CS ad data is ${f.lag_days} days behind.</b> Spend and clicks stop at <b>${f.ad_end}</b> while form fills and bookings are live — so cost per fill and cost per booking read too LOW.`
+         : `<b>Ad data runs ${f.ad_window}</b> (uploaded CSV, same export as GTM) · fills and bookings live as of ${f.generated_at}. Meta restates its most recent day or two upward, so the tail is provisional.`)
+      + `</div>`;
+  })();
 
   h += '<div class="fgroup" style="padding-left:0">Page &amp; video engagement <span style="text-transform:none;letter-spacing:0;font-weight:400">— all traffic, NOT a funnel stage</span></div>'
      + engHTML(C.engagement||{}, 'CS');

@@ -6,6 +6,7 @@ one continuous funnel with the headline KPIs on top. Run after both builds.
 """
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -446,7 +447,42 @@ def main():
     else:
         committed_note = None
 
+    # ── data freshness ────────────────────────────────────────────────────────
+    # The spine draws on two clocks: Meta arrives by manual CSV upload and stops
+    # wherever that export stopped, while GHL and Day AI are pulled live on every
+    # rebuild. Cost-per-anything divides one by the other, so a lagging export makes
+    # every cost metric read LOW — stale spend over live leads.
+    #
+    # Worse, Meta RESTATES recent days. The export loaded on Aug 20 2026 revised Aug 19
+    # from ~7 GTM link clicks to 502; the post-rebuild click→form-fill rate read 6.4%
+    # (healthy) on the partial data and 1.6% (junk) once the real numbers landed. A
+    # partial export does not merely lag, it actively misleads — so the page has to say
+    # how old the ad data is rather than leaving it to be inferred.
+    ad_days = daily_spend()
+    ad_end = ad_days[-1]["date"] if ad_days else None
+    gen_day = (vsl.get("generated_at") or "")[:12]
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    lag = None
+    if ad_end:
+        try:
+            lag = (datetime.strptime(today, "%Y-%m-%d")
+                   - datetime.strptime(ad_end, "%Y-%m-%d")).days
+        except Exception:
+            lag = None
+    freshness = {
+        "ad_end": ad_end,
+        "ad_window": window,
+        "today": today,
+        "lag_days": lag,
+        # 0 = today's spend is in; 1 = yesterday's, which is normal because Meta's
+        # same-day numbers are always incomplete. 2+ means the export is behind.
+        "stale": (lag is not None and lag >= 2),
+        "partial_today": (lag == 0),
+        "generated_at": vsl.get("generated_at"),
+    }
+
     ad_basis = f"paid · {window}" if window else "paid"
+    live_basis = f"live at {freshness['generated_at']}" if freshness.get("generated_at") else "live"
     funnel = [
         stage("Impressions", impressions, "Meta", "live", group="traffic", basis=ad_basis,
               note=f"{reach:,} people reached" if reach else None),
@@ -454,17 +490,19 @@ def main():
               prev=impressions, prev_label="impressions (CTR)",
               cost=f"{money(cpc)}/click" if cpc else None),
         stage("Form fills", real_forms, "GHL", "live", prev=clicks, prev_label="link clicks",
-              basis="real leads · tests excluded",
+              basis=f"{live_basis} · tests excluded",
               cost=(f"{money(cpff)}/lead" if cpff else None),
               note="the page and video sit between these two rows — see Page & video engagement"),
         stage("Booked calls", real_booked, "GHL", "live", prev=real_forms, prev_label="form fills",
-              cost=(f"{money(cpbooked)}/call" if cpbooked else None), note=booked_note),
+              basis=live_basis, cost=(f"{money(cpbooked)}/call" if cpbooked else None), note=booked_note),
         stage("Calls held", held, "Day AI + Chris", "live" if (held or 0) else "needs",
+              basis=live_basis,
               prev=real_booked, prev_label="booked calls", note=" · ".join(
                   ([f"{pc.get('no_show')} no-show"] if pc.get("no_show") else [])
                   + ([f"{pc.get('pending')} awaiting post-call verdict"] if pc.get("pending") else [])) or None),
         stage("Qualified", (vsl.get("meetings_qualified") if pc.get("held") else None),
-              "Chris (post-call)", "live" if pc.get("held") else "needs", prev=held, prev_label="calls held",
+              "Chris (post-call)", "live" if pc.get("held") else "needs",
+              basis="live", prev=held, prev_label="calls held",
               note=(f"{pc.get('unqualified',0)} not a fit" if pc.get("unqualified") else None)),
         stage("Committed (verbal yes)", vsl.get("deals_committed"), "Day AI",
               "live" if vsl.get("deals_committed") else "needs",
@@ -486,6 +524,7 @@ def main():
         # traffic, not just ad traffic, so it has no honest conversion arrow into the
         # spine. Same builder as CS's — see engagement_block() in build_dashboard.py.
         "engagement": vsl.get("engagement") or {},
+        "freshness": freshness,
         "context": {"impressions": impressions, "reach": reach, "spend": money(spend),
                     "cpm": money(div(spend, impressions) * 1000) if impressions else None,
                     "ctr": pct(ctr)},

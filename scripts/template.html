@@ -87,6 +87,20 @@ tr:last-child td{border-bottom:none}
 .st.available{background:#eef3fb;color:#2b5aa8;border:1px solid #c9d9f0}
 .st.needs{background:#fdeceb;color:#c0362c;border:1px solid #f3c9c5}
 footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
+
+/* Era tabs. The two eras ran different videos at different lengths on different data
+   sources, so they are switched between, never plotted together. */
+.eras{display:flex;gap:6px;margin:0 0 14px}
+.era-tab{font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  background:transparent;color:var(--ink2);border:1px solid var(--line);
+  border-radius:999px;padding:7px 15px}
+.era-tab:hover{color:var(--ink)}
+.era-tab[aria-selected="true"]{background:var(--purple-soft);color:var(--purple);
+  border-color:var(--purple)}
+.era-tab:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+.era-note{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;
+  padding:11px 14px;font-size:13px;line-height:1.5;margin:0 0 14px}
+.era-note b{font-weight:600}
 </style>
 </head>
 <body>
@@ -100,6 +114,11 @@ footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
   </div>
 </header>
 
+<div class="eras" role="tablist" aria-label="Reporting era">
+  <button class="era-tab" role="tab" id="tab-live" aria-selected="true">Current — short VSL</button>
+  <button class="era-tab" role="tab" id="tab-historic" aria-selected="false">Historic — long VSL</button>
+</div>
+<div class="era-note" id="era-note" hidden></div>
 <div class="banner"><b>Low-sample period.</b> The funnel is in test/early-launch phase — most form submissions are internal tests and traffic volume is small. Percentages below are directional, not statistically stable. <span id="banner-extra"></span></div>
 
 <div class="tiles" id="tiles"></div>
@@ -160,7 +179,7 @@ footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
 </div>
 
 <footer>
-  <b>Sources:</b> Wistia stats API (live) · GoHighLevel API (live) · Day AI (MCP snapshot) · Meta Ads (pending — Ads MCP not yet enabled on the account) · <span id="src-rb2b">RB2B (receiver not connected)</span><br>
+  <b>Sources:</b> Wistia stats API (live) · iClosed API (live) · GoHighLevel (frozen — historic tab only) · Day AI (MCP snapshot) · Meta Ads (pending — Ads MCP not yet enabled on the account) · <span id="src-rb2b">RB2B (receiver not connected)</span><br>
   <b>Refresh:</b> <code>python3 scripts/build_dashboard.py</code> from the project root, then reopen this file.
 </footer>
 </div>
@@ -169,30 +188,35 @@ footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
 
 <script>
 const DATA = /*__DATA__*/null;
+
+// Both eras carry an identical payload shape, so one render serves both; switching a tab
+// re-renders from the other root rather than maintaining a second page.
+function render(D){
+
 const C = {purple:'#8733ed', magenta:'#d6367f', amber:'#c47f00', ink3:'#8d86a0', grid:'#f1eef8'};
 const $ = id => document.getElementById(id);
 const tt = $('tt');
 const fmt = n => n === null ? '—' : n.toLocaleString();
 const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
 
-document.title = `Charm VSL Funnel — GTM (${DATA.generated_at})`;
-$('b-video').textContent = `Video: ${DATA.video.name} · ${mmss(DATA.video.duration)}`;
-$('b-gen').textContent = `Data as of ${DATA.generated_at}`;
-$('dayai-ts').textContent = DATA.dayai_pulled_at.slice(0,10);
-if (DATA.rb2b.connected) $('src-rb2b').textContent = 'RB2B (live via receiver)';
+document.title = `Charm VSL Funnel — GTM (${D.generated_at})`;
+$('b-video').textContent = `Video: ${D.video.name} · ${mmss(D.video.duration)}`;
+$('b-gen').textContent = `Data as of ${D.generated_at}`;
+$('dayai-ts').textContent = D.dayai_pulled_at.slice(0,10);
+if (D.rb2b.connected) $('src-rb2b').textContent = 'RB2B (live via receiver)';
 
 // ---- tiles ----
-const f = Object.fromEntries(DATA.funnel.map(x => [x.stage, x.value]));
-const realSubs = DATA.submissions.filter(s => !s.test).length;
+const f = Object.fromEntries(D.funnel.map(x => [x.stage, x.value]));
+const realSubs = D.submissions.filter(s => !s.test).length;
 const playRate = f['Unique visitors'] ? (100 * f['Video plays'] / f['Unique visitors']) : 0;
 const tiles = [
   {v: fmt(f['VSL page loads']), l: 'VSL page loads', d: 'Wistia embed loads'},
   {v: fmt(f['Unique visitors']), l: 'Unique visitors', d: 'Wistia unique viewers'},
   {v: playRate.toFixed(0) + '%', l: 'Play rate', d: `${f['Video plays']} plays / ${f['Unique visitors']} visitors`},
-  {v: DATA.avg_percent_watched + '%', l: 'Avg % watched', d: 'per play, incl. rewatch'},
-  {v: fmt(realSubs), l: 'Real leads', d: `${DATA.submissions.length} total incl. tests`},
-  {v: fmt(DATA.real_meetings), l: 'Real meetings booked', d: `${f['Meetings booked']} total incl. tests`},
-  {v: DATA.rb2b.connected ? fmt(DATA.rb2b.count) : '—', l: 'Identified visitors', d: DATA.rb2b.connected ? `${DATA.rb2b.no_form} never submitted` : 'RB2B feed not connected'},
+  {v: D.avg_percent_watched + '%', l: 'Avg % watched', d: 'per play, incl. rewatch'},
+  {v: fmt(realSubs), l: 'Real leads', d: `${D.submissions.length} total incl. tests`},
+  {v: fmt(D.real_meetings), l: 'Real meetings booked', d: `${f['Meetings booked']} total incl. tests`},
+  {v: D.rb2b.connected ? fmt(D.rb2b.count) : '—', l: 'Identified visitors', d: D.rb2b.connected ? `${D.rb2b.no_form} never submitted` : 'RB2B feed not connected'},
 ];
 $('tiles').innerHTML = tiles.map(t =>
   `<div class="tile"><div class="v">${t.v}</div><div class="l">${t.l}</div><div class="d">${t.d}</div></div>`).join('');
@@ -201,7 +225,7 @@ $('tiles').innerHTML = tiles.map(t =>
 (function(){
   const order = ['play_rate','watch_through','application_rate','booking_rate','show_rate'];
   $('rates').innerHTML = '<div class="rate-strip">' + order.map(k => {
-    const r = DATA.rates[k];
+    const r = D.rates[k];
     const v = r.status === 'ok'
       ? `<div class="v">${r.value}%</div>`
       : `<div class="v insuf">${r.text}</div>`;
@@ -209,7 +233,7 @@ $('tiles').innerHTML = tiles.map(t =>
   }).join('') + '</div>';
 
   const LABEL = {live:'LIVE', proxy:'PROXY', available:'AVAILABLE', needs:'NEEDS'};
-  $('coverage').innerHTML = '<table class="cov">' + DATA.coverage.map(c =>
+  $('coverage').innerHTML = '<table class="cov">' + D.coverage.map(c =>
     `<tr>
       <td class="stage">${c.stage}</td>
       <td><span class="st ${c.status}">${LABEL[c.status]}</span></td>
@@ -221,7 +245,7 @@ $('tiles').innerHTML = tiles.map(t =>
 // ---- funnel ----
 const base = f['VSL page loads'] || 1;
 let prev = null;
-$('funnel').innerHTML = DATA.funnel.map(st => {
+$('funnel').innerHTML = D.funnel.map(st => {
   const pending = st.value === null;
   const pct = pending ? 0 : Math.max(100 * st.value / base, 0);
   let conv = '';
@@ -250,7 +274,7 @@ function hideTT(){ tt.style.opacity = 0; }
 
 // ---- daily trend (3-series line) ----
 (function(){
-  const rows = DATA.daily;
+  const rows = D.daily;
   const W = 480, H = 220, P = {t:12, r:12, b:28, l:34};
   const series = [
     {key:'loads', name:'Page loads', color:C.purple},
@@ -297,10 +321,10 @@ function hideTT(){ tt.style.opacity = 0; }
 
 // ---- engagement curve (area) ----
 (function(){
-  const curve = DATA.engagement_curve;
+  const curve = D.engagement_curve;
   if (!curve.length){ $('engage').innerHTML = '<div class="empty">No engagement data yet.</div>'; return; }
   const W = 480, H = 220, P = {t:12, r:12, b:28, l:38};
-  const dur = DATA.video.duration;
+  const dur = D.video.duration;
   const x = i => P.l + i * (W-P.l-P.r) / (curve.length-1);
   const y = v => H - P.b - v * (H-P.t-P.b) / 100;
   let g = '';
@@ -329,7 +353,7 @@ function hideTT(){ tt.style.opacity = 0; }
 
 // ---- insights ----
 (function(){
-  const curve = DATA.engagement_curve, dur = DATA.video.duration, out = [];
+  const curve = D.engagement_curve, dur = D.video.duration, out = [];
   if (curve.length){
     // biggest drop over a 5% window
     const win = Math.max(1, Math.round(curve.length * 0.05));
@@ -350,8 +374,8 @@ function hideTT(){ tt.style.opacity = 0; }
   const noBook = realSubs - f['Meetings booked'];
   if (noBook > 0)
     out.push({warn:0, text:`<b>${noBook} real lead(s) submitted the form but never booked.</b> These are the warmest re-engagement targets — they exist in GHL with contact info and a known interest.`});
-  if (DATA.rb2b.connected)
-    out.push({warn:0, text:`<b>${DATA.rb2b.no_form} identified visitor(s) were on the VSL page but never submitted the form.</b> RB2B named them (person + company) — this is a re-engagement list you couldn't see before. See the RB2B table below.`});
+  if (D.rb2b.connected)
+    out.push({warn:0, text:`<b>${D.rb2b.no_form} identified visitor(s) were on the VSL page but never submitted the form.</b> RB2B named them (person + company) — this is a re-engagement list you couldn't see before. See the RB2B table below.`});
   else
     out.push({warn:0, text:`<b>Watched-but-never-submitted viewers are invisible right now.</b> The RB2B receiver + Wistia visitor-level events will identify them for outreach even without a form fill.`});
   out.push({warn:0, text:`<b>Ad-stage metrics pending:</b> Meta's Ads MCP is not yet enabled on the ad account, so cost per lead / cost per booked call can't be computed yet.`});
@@ -361,19 +385,19 @@ function hideTT(){ tt.style.opacity = 0; }
 
 
 // ---- tables ----
-$('subs-table').innerHTML = DATA.submissions.length ? `<table><tr><th>Date</th><th>Name</th><th>Email</th><th></th></tr>` +
-  DATA.submissions.map(s => `<tr><td>${(s.ts||'').slice(0,16).replace('T',' ')}</td><td>${s.name||''}</td><td>${s.email||''}</td>
+$('subs-table').innerHTML = D.submissions.length ? `<table><tr><th>Date</th><th>Name</th><th>Email</th><th></th></tr>` +
+  D.submissions.map(s => `<tr><td>${(s.ts||'').slice(0,16).replace('T',' ')}</td><td>${s.name||''}</td><td>${s.email||''}</td>
   <td><span class="tag ${s.test?'test':'real'}">${s.test?'test':'lead'}</span></td></tr>`).join('') + '</table>'
   : '<div class="empty">No submissions yet.</div>';
 
-$('appt-table').innerHTML = DATA.appointments.length ? `<table><tr><th>Start</th><th>Title</th><th>Status</th><th></th></tr>` +
-  DATA.appointments.map(a => `<tr><td>${(a.start||'').slice(0,16).replace('T',' ')}</td><td>${a.title||''}</td><td>${a.status||''}</td>
+$('appt-table').innerHTML = D.appointments.length ? `<table><tr><th>Start</th><th>Title</th><th>Status</th><th></th></tr>` +
+  D.appointments.map(a => `<tr><td>${(a.start||'').slice(0,16).replace('T',' ')}</td><td>${a.title||''}</td><td>${a.status||''}</td>
   <td><span class="tag ${a.test?'test':'real'}">${a.test?'test':'lead'}</span></td></tr>`).join('') + '</table>'
   : '<div class="empty">No meetings booked yet.</div>';
 
 // ---- RB2B identified visitors ----
 (function(){
-  const rb = DATA.rb2b;
+  const rb = D.rb2b;
   const hint = $('rb2b-hint'), tbl = $('rb2b-table');
   if (!rb.connected){
     hint.textContent = 'RB2B feed not connected yet — set RB2B_ENDPOINT and point the Clay HTTP API column at the receiver.';
@@ -392,9 +416,61 @@ $('appt-table').innerHTML = DATA.appointments.length ? `<table><tr><th>Start</th
     }).join('') + '</table>';
 })();
 
-$('dayai-table').innerHTML = DATA.dayai_contacts.length ? `<table><tr><th>Name</th><th>Email</th><th>Form</th><th>Submitted</th></tr>` +
-  DATA.dayai_contacts.map(c => `<tr><td>${c.name}</td><td>${c.email}</td><td>${c.form}</td><td>${(c.form_submitted||'').slice(0,10)}</td></tr>`).join('') + '</table>'
+$('dayai-table').innerHTML = D.dayai_contacts.length ? `<table><tr><th>Name</th><th>Email</th><th>Form</th><th>Submitted</th></tr>` +
+  D.dayai_contacts.map(c => `<tr><td>${c.name}</td><td>${c.email}</td><td>${c.form}</td><td>${(c.form_submitted||'').slice(0,10)}</td></tr>`).join('') + '</table>'
   : '<div class="empty">No Day AI contacts from the form yet.</div>';
+
+}
+
+const ERAS = {
+  live: {
+    data: DATA,
+    note: null,
+  },
+  historic: {
+    data: DATA.historic,
+    // The snapshot's generated_at is when it was FROZEN, which reads as "data as of
+    // today" on a tab whose whole point is that it stopped moving. Stamp the era instead.
+    stamp: 'Closed era · GTM ended 26 Aug 2026 · CS ended 27 Aug 2026',
+    title: 'Charm VSL Funnel — GTM (historic)',
+    // Said plainly on the tab itself. The reason these are separate is not obvious from
+    // the numbers, and the numbers look like a creative win if you assume they are not.
+    note: 'Closed era, frozen and no longer updating. These are the <b>long</b> VSLs — ' +
+          'GTM 14m38s and CS 13m58s, against 1m51s and 1m33s today — on the GoHighLevel ' +
+          'form and calendar. Engagement is <b>not comparable</b> to the current tab: ' +
+          'every watch metric is a ratio against duration, so a shorter video finishes ' +
+          'more often on the edit alone.',
+  },
+};
+
+function setEra(key){
+  const era = ERAS[key];
+  if (!era || !era.data) return;
+  for (const k of Object.keys(ERAS)){
+    const btn = document.getElementById('tab-' + k);
+    if (btn) btn.setAttribute('aria-selected', String(k === key));
+  }
+  const note = document.getElementById('era-note');
+  if (era.note){ note.innerHTML = era.note; note.hidden = false; }
+  else { note.hidden = true; }
+  render(era.data);
+  if (era.stamp) document.getElementById('b-gen').textContent = era.stamp;
+  if (era.title) document.title = era.title;
+}
+
+document.getElementById('tab-live').onclick = () => setEra('live');
+const histBtn = document.getElementById('tab-historic');
+if (DATA.historic){
+  histBtn.onclick = () => setEra('historic');
+} else {
+  // No frozen snapshot on disk. Disabled and labelled, rather than a tab that does nothing.
+  histBtn.disabled = true;
+  histBtn.style.opacity = 0.45;
+  histBtn.style.cursor = 'not-allowed';
+  histBtn.title = 'No frozen snapshot — run scripts/freeze_historic.py';
+}
+
+setEra('live');
 </script>
 </body>
 </html>

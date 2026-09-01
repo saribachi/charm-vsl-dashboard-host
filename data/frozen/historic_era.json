@@ -1,0 +1,7841 @@
+{
+ "generated_at": "Aug 27, 2026 20:09 UTC",
+ "dayai_pulled_at": "2026-07-21T16:30:00Z",
+ "video": {
+  "name": "VSL 005",
+  "id": "swyi1909di",
+  "duration": 878.552
+ },
+ "rates": {
+  "play_rate": {
+   "status": "ok",
+   "value": 7.4,
+   "label": "Play rate",
+   "of": "visitor \u2192 play"
+  },
+  "watch_through": {
+   "status": "ok",
+   "value": 5.1,
+   "label": "Watch-through \u226550%",
+   "of": "play \u2192 watched half"
+  },
+  "application_rate": {
+   "status": "ok",
+   "value": 1.8,
+   "label": "Application rate",
+   "of": "visitor \u2192 form fill"
+  },
+  "booking_rate": {
+   "status": "ok",
+   "value": 74.1,
+   "label": "Booking rate",
+   "of": "form fill \u2192 booked call"
+  },
+  "show_rate": {
+   "status": "ok",
+   "value": 52.5,
+   "label": "Show rate",
+   "of": "booked \u2192 call held"
+  }
+ },
+ "coverage": [
+  {
+   "stage": "Landing page visits",
+   "source": "RB2B",
+   "status": "live",
+   "detail": "RB2B identifies the people and companies landing on the VSL page \u2014 your landing-page-views source. Live."
+  },
+  {
+   "stage": "VSL video engagement",
+   "source": "Wistia",
+   "status": "live",
+   "detail": "Plays, play rate, avg % watched, and the drop-off curve \u2014 all live."
+  },
+  {
+   "stage": "Form fill",
+   "source": "GHL forms",
+   "status": "live",
+   "detail": "GTM Services form (VSL only), live via API."
+  },
+  {
+   "stage": "Booking",
+   "source": "GHL calendar",
+   "status": "live",
+   "detail": "GTM VSL calendar appointments, live via API."
+  },
+  {
+   "stage": "Show / call held",
+   "source": "Day AI (meeting recordings)",
+   "status": "live",
+   "detail": "Connected \u2014 a Day AI meeting recording with the lead as attendee = the call was held. Show-rate computes automatically once real leads book."
+  },
+  {
+   "stage": "Qualified (post-call)",
+   "source": "Chris (manual verdict)",
+   "status": "live",
+   "detail": "Chris's fit judgment after each held call \u2014 separate from the automatic form gate."
+  },
+  {
+   "stage": "Committed (verbal yes)",
+   "source": "Day AI (Committed stage)",
+   "status": "live",
+   "detail": "0 VSL-attributed deal(s) committed \u00b7 $0 year-one contracted, $0 first invoice. Committed = the prospect said yes and the contract is out for signature. Deliberately NOT counted as cash or in ROAS \u2014 those stay wired to Closed Won, which requires a signed MSA and first payment. Values come from confirmed contract terms (COMMITTED_TERMS), not Day AI's Amount field, which holds the un-corrected ceiling."
+  },
+  {
+   "stage": "Deals closed \u00b7 Cash \u00b7 ROAS",
+   "source": "Day AI (Closed Won + Amount)",
+   "status": "live",
+   "detail": "Wired to Day AI Closed Won opps, matched to real VSL leads (external contact, internal reps excluded). 1 closed / $76,900 collected \u2014 a deal only lands here once the MSA is signed AND first payment clears."
+  }
+ ],
+ "funnel": [
+  {
+   "stage": "Ad clicks",
+   "value": null,
+   "note": "Meta Ads pending \u2014 Ads MCP not yet enabled on the ad account"
+  },
+  {
+   "stage": "VSL page loads",
+   "value": 4122,
+   "note": "Wistia embed loads (incl. reloads)"
+  },
+  {
+   "stage": "Unique visitors",
+   "value": 2923,
+   "note": "Wistia unique viewers of the page"
+  },
+  {
+   "stage": "Video plays",
+   "value": 215,
+   "note": "6% of visitors pressed play"
+  },
+  {
+   "stage": "Watched \u226550%",
+   "value": 11,
+   "note": "From the engagement curve"
+  },
+  {
+   "stage": "Form submissions",
+   "value": 66,
+   "note": "54 real \u00b7 12 internal tests"
+  },
+  {
+   "stage": "Meetings booked",
+   "value": 47,
+   "note": "40 real \u00b7 7 internal tests"
+  },
+  {
+   "stage": "Day AI contacts",
+   "value": 4,
+   "note": "GTM form contacts synced via bridge"
+  }
+ ],
+ "avg_percent_watched": 11,
+ "engagement_curve": [
+  94.9,
+  77.7,
+  74.0,
+  69.3,
+  68.4,
+  64.7,
+  63.7,
+  59.5,
+  59.5,
+  58.1,
+  55.8,
+  54.0,
+  53.0,
+  53.0,
+  53.0,
+  52.1,
+  51.2,
+  49.3,
+  47.0,
+  47.0,
+  47.0,
+  46.0,
+  45.6,
+  46.0,
+  45.6,
+  43.3,
+  42.8,
+  42.3,
+  42.3,
+  42.3,
+  42.8,
+  41.9,
+  40.5,
+  40.5,
+  40.0,
+  39.1,
+  39.1,
+  37.7,
+  38.1,
+  37.7,
+  36.3,
+  35.3,
+  36.3,
+  36.3,
+  37.7,
+  35.8,
+  35.8,
+  36.7,
+  35.8,
+  35.3,
+  35.3,
+  35.3,
+  34.9,
+  35.3,
+  34.4,
+  34.0,
+  34.0,
+  34.9,
+  33.5,
+  32.6,
+  31.6,
+  32.1,
+  32.1,
+  32.1,
+  32.1,
+  32.1,
+  32.6,
+  32.6,
+  32.1,
+  32.1,
+  30.2,
+  30.2,
+  30.2,
+  30.2,
+  30.2,
+  30.2,
+  30.2,
+  31.6,
+  30.7,
+  29.3,
+  28.8,
+  28.8,
+  28.4,
+  28.8,
+  29.8,
+  29.3,
+  28.4,
+  28.4,
+  27.9,
+  28.8,
+  27.9,
+  27.9,
+  27.9,
+  27.9,
+  27.9,
+  28.4,
+  27.4,
+  27.4,
+  27.0,
+  26.5,
+  26.0,
+  26.0,
+  26.0,
+  26.0,
+  26.0,
+  26.5,
+  25.6,
+  25.6,
+  23.3,
+  22.3,
+  23.7,
+  22.3,
+  21.4,
+  21.9,
+  21.4,
+  20.9,
+  20.0,
+  20.9,
+  20.5,
+  20.5,
+  20.5,
+  20.5,
+  20.9,
+  20.0,
+  20.0,
+  19.5,
+  19.1,
+  19.1,
+  19.1,
+  20.0,
+  18.6,
+  18.6,
+  18.6,
+  18.1,
+  18.6,
+  19.1,
+  19.1,
+  18.1,
+  17.7,
+  18.1,
+  18.6,
+  17.7,
+  17.7,
+  17.7,
+  18.1,
+  17.7,
+  17.2,
+  17.2,
+  17.7,
+  18.1,
+  17.2,
+  17.7,
+  17.7,
+  17.2,
+  17.2,
+  17.2,
+  17.7,
+  17.2,
+  17.2,
+  17.7,
+  17.2,
+  17.2,
+  17.2,
+  15.8,
+  15.8,
+  15.3,
+  15.8,
+  15.3,
+  14.9,
+  14.4,
+  14.4,
+  14.4,
+  14.0,
+  14.0,
+  14.4,
+  14.0,
+  14.0,
+  14.0,
+  14.0,
+  14.0,
+  14.0,
+  13.5,
+  13.5,
+  12.6,
+  13.0,
+  13.0,
+  12.1,
+  12.1,
+  12.1,
+  12.6,
+  12.1,
+  12.1,
+  12.1,
+  12.1,
+  12.1,
+  12.1,
+  12.1,
+  12.1,
+  12.1,
+  12.1,
+  11.2,
+  11.2,
+  11.2,
+  11.2,
+  11.6,
+  11.2,
+  11.2,
+  11.2,
+  10.7,
+  10.7,
+  10.7,
+  10.7,
+  10.2,
+  10.7,
+  10.7,
+  9.8,
+  9.8,
+  9.8,
+  9.3,
+  10.2,
+  9.3,
+  9.3,
+  9.3,
+  9.3,
+  9.3,
+  9.3,
+  9.3,
+  9.3,
+  9.3,
+  9.8,
+  9.8,
+  9.8,
+  9.8,
+  9.3,
+  9.8,
+  9.3,
+  9.3,
+  9.3,
+  9.8,
+  9.3,
+  9.3,
+  9.3,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  9.8,
+  10.2,
+  8.8,
+  9.3,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.8,
+  8.4,
+  8.8,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.4,
+  7.9,
+  7.9,
+  8.4,
+  7.9,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  8.4,
+  7.9,
+  8.4,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  9.3,
+  8.8,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.4,
+  7.9,
+  7.9,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.9,
+  7.9,
+  7.4,
+  7.4,
+  7.9,
+  7.4,
+  7.9,
+  7.9,
+  10.2,
+  10.2,
+  9.3,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.4,
+  7.9,
+  7.9,
+  8.8,
+  8.8,
+  8.8,
+  8.4,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  7.9,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.9,
+  7.9,
+  7.9,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.8,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  8.4,
+  7.9,
+  7.9,
+  7.9,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.4,
+  7.0,
+  7.0,
+  7.0,
+  7.0,
+  7.4,
+  7.4,
+  7.4,
+  7.0,
+  7.0,
+  7.0,
+  7.0,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.5,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.1,
+  5.6,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.6,
+  5.6,
+  5.6,
+  5.1,
+  5.1,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.2,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.6,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  6.0,
+  5.6,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  6.5,
+  6.5,
+  5.6,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.6,
+  6.0,
+  5.6,
+  5.6,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  6.0,
+  5.6,
+  7.0,
+  7.0,
+  5.6,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  7.0,
+  6.0,
+  6.0,
+  6.0,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.0,
+  5.6,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  7.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  7.0,
+  6.5,
+  6.5,
+  6.0,
+  7.4,
+  7.0,
+  6.0,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.5,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.5,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  6.0,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.6,
+  5.6,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  6.0,
+  6.0,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.6,
+  5.6,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.6,
+  5.6,
+  5.6,
+  6.0,
+  6.0,
+  5.6,
+  6.0,
+  5.6,
+  5.6,
+  6.5,
+  7.0,
+  6.5,
+  6.0,
+  6.0,
+  6.5,
+  7.0,
+  6.5,
+  6.5,
+  7.4,
+  7.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  6.0,
+  6.5,
+  6.5,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  6.0,
+  6.0,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  6.0,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.1,
+  5.1,
+  5.6,
+  5.6,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.2,
+  4.2,
+  4.2,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.6,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  5.6,
+  5.1,
+  5.1,
+  6.5,
+  6.5,
+  6.0,
+  6.0,
+  5.6,
+  5.6,
+  5.6,
+  6.0,
+  6.0,
+  5.6,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.6,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.1,
+  4.7,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.6,
+  6.0,
+  5.6,
+  4.7,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.7,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  4.2,
+  5.6,
+  5.6,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.1,
+  5.1,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  4.7,
+  5.6
+ ],
+ "daily": [
+  {
+   "date": "2026-06-20",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-21",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-22",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-23",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-24",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-25",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-26",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-27",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-28",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-29",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-06-30",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-01",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-02",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-03",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-04",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-05",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-06",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-07",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-08",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-09",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-10",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-11",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-12",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-13",
+   "loads": 15,
+   "plays": 4,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-14",
+   "loads": 2,
+   "plays": 1,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-15",
+   "loads": 2,
+   "plays": 2,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-16",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-17",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-18",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-19",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-20",
+   "loads": 98,
+   "plays": 1,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-21",
+   "loads": 179,
+   "plays": 8,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-22",
+   "loads": 45,
+   "plays": 6,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-23",
+   "loads": 174,
+   "plays": 16,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-24",
+   "loads": 283,
+   "plays": 18,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-25",
+   "loads": 58,
+   "plays": 8,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-26",
+   "loads": 82,
+   "plays": 8,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-27",
+   "loads": 108,
+   "plays": 13,
+   "subs": 0
+  },
+  {
+   "date": "2026-07-28",
+   "loads": 52,
+   "plays": 3,
+   "subs": 5
+  },
+  {
+   "date": "2026-07-29",
+   "loads": 213,
+   "plays": 8,
+   "subs": 1
+  },
+  {
+   "date": "2026-07-30",
+   "loads": 137,
+   "plays": 9,
+   "subs": 2
+  },
+  {
+   "date": "2026-07-31",
+   "loads": 331,
+   "plays": 2,
+   "subs": 0
+  },
+  {
+   "date": "2026-08-01",
+   "loads": 78,
+   "plays": 8,
+   "subs": 1
+  },
+  {
+   "date": "2026-08-02",
+   "loads": 64,
+   "plays": 10,
+   "subs": 2
+  },
+  {
+   "date": "2026-08-03",
+   "loads": 38,
+   "plays": 2,
+   "subs": 3
+  },
+  {
+   "date": "2026-08-04",
+   "loads": 27,
+   "plays": 2,
+   "subs": 3
+  },
+  {
+   "date": "2026-08-05",
+   "loads": 18,
+   "plays": 3,
+   "subs": 2
+  },
+  {
+   "date": "2026-08-06",
+   "loads": 37,
+   "plays": 2,
+   "subs": 1
+  },
+  {
+   "date": "2026-08-07",
+   "loads": 47,
+   "plays": 1,
+   "subs": 4
+  },
+  {
+   "date": "2026-08-08",
+   "loads": 34,
+   "plays": 2,
+   "subs": 0
+  },
+  {
+   "date": "2026-08-09",
+   "loads": 38,
+   "plays": 2,
+   "subs": 2
+  },
+  {
+   "date": "2026-08-10",
+   "loads": 56,
+   "plays": 6,
+   "subs": 3
+  },
+  {
+   "date": "2026-08-11",
+   "loads": 24,
+   "plays": 1,
+   "subs": 1
+  },
+  {
+   "date": "2026-08-12",
+   "loads": 27,
+   "plays": 2,
+   "subs": 1
+  },
+  {
+   "date": "2026-08-13",
+   "loads": 235,
+   "plays": 1,
+   "subs": 1
+  },
+  {
+   "date": "2026-08-14",
+   "loads": 240,
+   "plays": 10,
+   "subs": 0
+  },
+  {
+   "date": "2026-08-15",
+   "loads": 41,
+   "plays": 7,
+   "subs": 0
+  },
+  {
+   "date": "2026-08-16",
+   "loads": 42,
+   "plays": 1,
+   "subs": 3
+  },
+  {
+   "date": "2026-08-17",
+   "loads": 138,
+   "plays": 4,
+   "subs": 2
+  },
+  {
+   "date": "2026-08-18",
+   "loads": 85,
+   "plays": 4,
+   "subs": 8
+  },
+  {
+   "date": "2026-08-19",
+   "loads": 696,
+   "plays": 19,
+   "subs": 4
+  },
+  {
+   "date": "2026-08-20",
+   "loads": 90,
+   "plays": 3,
+   "subs": 3
+  },
+  {
+   "date": "2026-08-21",
+   "loads": 68,
+   "plays": 3,
+   "subs": 5
+  },
+  {
+   "date": "2026-08-22",
+   "loads": 41,
+   "plays": 2,
+   "subs": 2
+  },
+  {
+   "date": "2026-08-23",
+   "loads": 41,
+   "plays": 4,
+   "subs": 1
+  },
+  {
+   "date": "2026-08-24",
+   "loads": 57,
+   "plays": 2,
+   "subs": 2
+  },
+  {
+   "date": "2026-08-25",
+   "loads": 56,
+   "plays": 6,
+   "subs": 4
+  },
+  {
+   "date": "2026-08-26",
+   "loads": 25,
+   "plays": 1,
+   "subs": 0
+  },
+  {
+   "date": "2026-08-27",
+   "loads": 0,
+   "plays": 0,
+   "subs": 0
+  }
+ ],
+ "submissions": [
+  {
+   "date": "2026-08-25",
+   "ts": "2026-08-25T14:37:22.183Z",
+   "email": "dparrillo@cardinaltalent.ai",
+   "name": "Daniel Parrillo",
+   "website": "CardinalTalent.ai",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-25",
+   "ts": "2026-08-25T13:40:08.519Z",
+   "email": "info@alexandreferrari.com",
+   "name": "Alexandre Ferrari",
+   "website": "www.alexandreferrari.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-25",
+   "ts": "2026-08-25T12:09:59.616Z",
+   "email": "richard@topsalesproducer.net",
+   "name": "Richard Gaubert",
+   "website": "Nationalfacilitygroup.net",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-24",
+   "ts": "2026-08-24T18:03:06.351Z",
+   "email": "ikenna@finvar.com",
+   "name": "Ken Ene",
+   "website": "www.capnote.io",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-23",
+   "ts": "2026-08-23T22:39:00.070Z",
+   "email": "sstorick@storickgroup.com",
+   "name": "Scott Storick ",
+   "website": "Mytermlifeguy.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-22",
+   "ts": "2026-08-22T23:31:58.535Z",
+   "email": "admin@pollybot.ai",
+   "name": "Omar Sayed",
+   "website": "Pollybot.ai",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-22",
+   "ts": "2026-08-22T20:50:40.545Z",
+   "email": "nfriedman@templarshield.com",
+   "name": "Nicholas  Friedman ",
+   "website": "Templarshield.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-21",
+   "ts": "2026-08-21T20:01:47.671Z",
+   "email": "shannon@getivai.com",
+   "name": "Shannon Diem",
+   "website": "Getivai.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-21",
+   "ts": "2026-08-21T18:09:51.170Z",
+   "email": "chris@bluewatermarketing.com",
+   "name": "Christopher Marrano",
+   "website": "bluewatermarketing.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-21",
+   "ts": "2026-08-21T13:04:22.477Z",
+   "email": "chrisbaus111@gmail.com",
+   "name": "Chris Baus",
+   "website": "Awarenesstoobtain.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-21",
+   "ts": "2026-08-21T07:40:12.871Z",
+   "email": "jolina@buzzybooth.com",
+   "name": "Jo Li",
+   "website": "BuzzyBooth.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-21",
+   "ts": "2026-08-21T02:35:07.859Z",
+   "email": "dwight@americancareersearch.com",
+   "name": "Dwight  Fortenberry ",
+   "website": "Americancareersearch.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-20",
+   "ts": "2026-08-20T21:07:33.510Z",
+   "email": "vinitha@perceivenow.ai",
+   "name": "Vinitha Upaassana",
+   "website": "Perceivenow.ai",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-20",
+   "ts": "2026-08-20T16:04:52.427Z",
+   "email": "peter@gemstonedata.com",
+   "name": "Peter George",
+   "website": "GemstoneData.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-20",
+   "ts": "2026-08-20T06:02:49.605Z",
+   "email": "admin@pollybot.ai",
+   "name": "Omar Sayed",
+   "website": "Pollybot.ai",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-19",
+   "ts": "2026-08-19T20:42:13.864Z",
+   "email": "john@gmail.com",
+   "name": "John maxwell",
+   "website": "google.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-19",
+   "ts": "2026-08-19T07:05:58.565Z",
+   "email": "steve@yourplatinumgroup.com",
+   "name": "Stephen Cooper",
+   "website": "Yourplatinumgroup.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-19",
+   "ts": "2026-08-19T06:33:47.627Z",
+   "email": "brian@aioapp.com",
+   "name": "Brian Bennett",
+   "website": "aioapp.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-19",
+   "ts": "2026-08-19T01:16:45.570Z",
+   "email": "arjun@enginius.ai",
+   "name": "Arjun Ahlawat",
+   "website": "Enginius.ai",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-18",
+   "ts": "2026-08-18T14:48:52.231Z",
+   "email": "alexjohn1992@gmail.com",
+   "name": "Alex Johnson",
+   "website": "Google.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-18",
+   "ts": "2026-08-18T11:40:20.093Z",
+   "email": "richard@nationalfacilitygroup.com",
+   "name": "Richard Gaubert",
+   "website": "nationalfacilitygroup.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-18",
+   "ts": "2026-08-18T02:38:40.231Z",
+   "email": "jon@brytecall.com",
+   "name": "Jonathan Sharvit",
+   "website": "BryteCall.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-17",
+   "ts": "2026-08-17T16:34:33.560Z",
+   "email": "yousif@metamorphgroup.co",
+   "name": "Yousif Kurdi",
+   "website": "Metamorphgroup.co",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-16",
+   "ts": "2026-08-16T20:53:04.819Z",
+   "email": "danieljared16@gmail.com",
+   "name": "Jermaine Caligagan ",
+   "website": "Www.mypandavet.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-16",
+   "ts": "2026-08-16T11:19:40.844Z",
+   "email": "rschwan@allypayroll.com",
+   "name": "Robert Schwan",
+   "website": "Www.allypayroll.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-16",
+   "ts": "2026-08-16T01:24:16.273Z",
+   "email": "garinfroehlich37@gmail.com",
+   "name": "Garin Froehlich",
+   "website": "GMScalez.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-13",
+   "ts": "2026-08-13T06:42:30.555Z",
+   "email": "singhinsuranceservicesllc@gmail.com",
+   "name": "RANDEEP SINGH",
+   "website": "singhinsuranceservicesllc@gmail.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-12",
+   "ts": "2026-08-12T04:51:32.191Z",
+   "email": "william@studiocenter.com",
+   "name": "William Prettyman ",
+   "website": "www.studiocenter.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-10",
+   "ts": "2026-08-10T22:01:12.040Z",
+   "email": "cara@mediaopsmachine.com",
+   "name": "Cara Schwartz",
+   "website": "Mediaopsmachine.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-10",
+   "ts": "2026-08-10T20:22:27.695Z",
+   "email": "will@pomegranium.com",
+   "name": "Will R",
+   "website": "pomegranium.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-10",
+   "ts": "2026-08-10T18:00:56.832Z",
+   "email": "namrith.ilneni@sakeshllc.com",
+   "name": "Namrith Namrith ",
+   "website": "Sakeshllc.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-09",
+   "ts": "2026-08-09T15:40:09.580Z",
+   "email": "g@multipleclub.com",
+   "name": "G Leavitt ",
+   "website": "Qjoentityvault.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-09",
+   "ts": "2026-08-09T14:33:06.217Z",
+   "email": "jfields@morningstarbenefits.com",
+   "name": "Joseph Fields ",
+   "website": "Morningstarbenefits.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-07",
+   "ts": "2026-08-07T21:36:27.770Z",
+   "email": "wade@stipend.health",
+   "name": "Wade Odom",
+   "website": "Stipend.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-07",
+   "ts": "2026-08-07T20:41:47.483Z",
+   "email": "alohafrench.co@gmail.com",
+   "name": "Ty French",
+   "website": "Sghbusinesssolutions.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-07",
+   "ts": "2026-08-07T17:19:40.218Z",
+   "email": "jolina@buzzybooth.com",
+   "name": "Jolina Li",
+   "website": "BuzzyBooth.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-07",
+   "ts": "2026-08-07T04:09:06.489Z",
+   "email": "william@studiocdnter.com",
+   "name": "William Prettyman ",
+   "website": "www.studiocenter.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-06",
+   "ts": "2026-08-06T06:16:17.315Z",
+   "email": "shelley@mysmartplans.com",
+   "name": "Shelley Armato",
+   "website": "Www.mysmartplans.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-05",
+   "ts": "2026-08-05T15:01:01.633Z",
+   "email": "hey@mekupelet.com",
+   "name": "Mark  Casey",
+   "website": "mekupelet.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-05",
+   "ts": "2026-08-05T15:00:31.541Z",
+   "email": "hey@mekupelet.com",
+   "name": "Mark  Casey",
+   "website": "mekupelet.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-08-04",
+   "ts": "2026-08-04T15:59:22.268Z",
+   "email": "jolina@buzzybooth.com",
+   "name": "Jo Li",
+   "website": "BuzzyBooth.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-04",
+   "ts": "2026-08-04T15:59:01.905Z",
+   "email": "jolina@buzzybooth.com",
+   "name": "Jo Li",
+   "website": "BuzzyBooth.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-04",
+   "ts": "2026-08-04T13:49:50.031Z",
+   "email": "john@sociablesociety.com",
+   "name": "John Benjamin ",
+   "website": "Sociablesocietytalent.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-03",
+   "ts": "2026-08-03T17:31:58.444Z",
+   "email": "nykelle@altgrowth.com",
+   "name": "Nykelle Schlofman",
+   "website": "Dash.fi ",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-03",
+   "ts": "2026-08-03T11:11:08.479Z",
+   "email": "joshua@9four1.com",
+   "name": "Joshua Unger",
+   "website": "Stylistaward.com",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-08-03",
+   "ts": "2026-08-03T07:11:00.624Z",
+   "email": "chaywood@execsagency.com",
+   "name": "CH Haywood",
+   "website": "www.execsagency.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-02",
+   "ts": "2026-08-02T16:04:12.023Z",
+   "email": "reginald@cornhuskercapital.com",
+   "name": "Reg  McGaugh ",
+   "website": "Cornhuskercapital.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-02",
+   "ts": "2026-08-02T16:03:49.509Z",
+   "email": "reginald@cornhuskercapital.com",
+   "name": "Reg  McGaugh ",
+   "website": "Cornhuskercapital.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-08-01",
+   "ts": "2026-08-01T00:31:29.593Z",
+   "email": "stevecooper728@gmail.com",
+   "name": "Stephen Cooper",
+   "website": "wwwyourplatinumgroup.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-07-30",
+   "ts": "2026-07-30T00:53:14.454Z",
+   "email": "michael.nikolaou@fhhins.com",
+   "name": "Michael  Nikolaou ",
+   "website": "fhhins.com",
+   "qual": "qualified",
+   "test": false
+  },
+  {
+   "date": "2026-07-29",
+   "ts": "2026-07-29T01:42:35.104Z",
+   "email": "brandon@igrowscale.com",
+   "name": "Brandon Johnson",
+   "website": "brandon.com",
+   "qual": "dq_revenue_acv",
+   "test": false
+  },
+  {
+   "date": "2026-07-28",
+   "ts": "2026-07-28T04:33:51.736Z",
+   "email": "recruitingzone@gmail.com",
+   "name": "Bee Sau",
+   "website": "Www.eff.ai",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-07-28",
+   "ts": "2026-07-28T00:25:50.138Z",
+   "email": "info@veteranscarecharity.org",
+   "name": "Bob Martin Bob Martin",
+   "website": "www.veteranscarecharity.org",
+   "qual": "dq_acv_low",
+   "test": false
+  },
+  {
+   "date": "2026-07-28",
+   "ts": "2026-07-28T00:02:27.269Z",
+   "email": "bnix06930@gmail.com",
+   "name": "Brandon Nix",
+   "website": "https://blusstation.mysamcart.com/checkout/the-cold-to-cash-cure",
+   "qual": "dq_acv_low",
+   "test": false
+  }
+ ],
+ "real_meetings": 40,
+ "appointments": [
+  {
+   "start": "2026-07-24T08:00:00-07:00",
+   "title": "Todd Dugas & Charm",
+   "status": "confirmed",
+   "email": "todd.dugas@safetyawardstore.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-27T09:30:00-07:00",
+   "title": "Yvette DeCost\u00e0 & Charm",
+   "status": "confirmed",
+   "email": "yvette3984@gmail.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-27T14:00:00-07:00",
+   "title": "Mark S. Pincus & Charm",
+   "status": "confirmed",
+   "email": "mark@2514capitaladvisors.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-27T15:00:00-07:00",
+   "title": "Terry Coutsolioutsos & Charm",
+   "status": "confirmed",
+   "email": "terry@revrxai.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T09:00:00-07:00",
+   "title": "Glen Fields & Charm",
+   "status": "confirmed",
+   "email": "glen@bigdealagency.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T09:30:00-07:00",
+   "title": "Brianna Larson & Charm",
+   "status": "confirmed",
+   "email": "sparkles@sparklestonecreations.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T11:30:00-07:00",
+   "title": "Azra Rehan & Charm",
+   "status": "confirmed",
+   "email": "azrarehan2015@gmail.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T13:00:00-07:00",
+   "title": "Aiden Phan & Charm",
+   "status": "confirmed",
+   "email": "aidenp9920@gmail.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T13:30:00-07:00",
+   "title": "Jamilah Jawad & Charm",
+   "status": "confirmed",
+   "email": "hello@milahsworldwide.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T14:00:00-07:00",
+   "title": "Daniel Cornejo & Charm",
+   "status": "confirmed",
+   "email": "daniel@shopblacktop.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T16:00:00-07:00",
+   "title": "Kealy Fraley & Charm",
+   "status": "confirmed",
+   "email": "shayfjfiservices@gmail.con",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-28T16:30:00-07:00",
+   "title": "Tonya Daves & Charm",
+   "status": "confirmed",
+   "email": "tonyadaves86@gmail.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-29T08:30:00-07:00",
+   "title": "Ellio Nurieli & Charm",
+   "status": "confirmed",
+   "email": "ellio@macmoor.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-29T09:30:00-07:00",
+   "title": "James Spencer & Charm",
+   "status": "confirmed",
+   "email": "james@secfolio.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-29T13:00:00-07:00",
+   "title": "Syd Rizvi & Charm",
+   "status": "confirmed",
+   "email": "sydrizvi786@gmail.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-29T16:00:00-07:00",
+   "title": "Chris Baus & Charm",
+   "status": "confirmed",
+   "email": "chrisbaus111@gmail.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-30T09:00:00-07:00",
+   "title": "Chad Smith & Charm",
+   "status": "confirmed",
+   "email": "chadwsmithmd@gmail.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-07-30T14:30:00-07:00",
+   "title": "Michael  Nikolaou  & Charm",
+   "status": "confirmed",
+   "email": "michael.nikolaou@fhhins.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-07-31T12:30:00-07:00",
+   "title": "Garret Kraham & Charm",
+   "status": "confirmed",
+   "email": "krahamgarret1@gmail.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-03T14:00:00-07:00",
+   "title": "Reg  McGaugh  & Charm",
+   "status": "confirmed",
+   "email": "reginald@cornhuskercapital.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-03T14:30:00-07:00",
+   "title": "Reg  McGaugh  & Charm",
+   "status": "confirmed",
+   "email": "reginald@cornhuskercapital.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-03T16:00:00-07:00",
+   "title": "Stephen Cooper & Charm",
+   "status": "confirmed",
+   "email": "stevecooper728@gmail.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-04T14:30:00-07:00",
+   "title": "Nykelle Schlofman & Charm",
+   "status": "confirmed",
+   "email": "nykelle@altgrowth.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-05T12:30:00-07:00",
+   "title": "Mark  Casey & Charm",
+   "status": "confirmed",
+   "email": "hey@mekupelet.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-05T16:30:00-07:00",
+   "title": "CH Haywood & Charm",
+   "status": "confirmed",
+   "email": "chaywood@execsagency.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-10T16:00:00-07:00",
+   "title": "William Prettyman  & Charm",
+   "status": "confirmed",
+   "email": "william@studiocenter.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-11T14:30:00-07:00",
+   "title": "G Leavitt  & Charm",
+   "status": "confirmed",
+   "email": "g@multipleclub.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-12T12:00:00-07:00",
+   "title": "Will R & Charm",
+   "status": "confirmed",
+   "email": "will@pomegranium.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-12T15:30:00-07:00",
+   "title": "Namrith Namrith  & Charm",
+   "status": "confirmed",
+   "email": "namrith.ilneni@sakeshllc.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-13T09:30:00-07:00",
+   "title": "Shelley Armato & Charm",
+   "status": "confirmed",
+   "email": "shelley@mysmartplans.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-13T13:30:00-07:00",
+   "title": "Cara Schwartz & Charm",
+   "status": "confirmed",
+   "email": "cara@mediaopsmachine.com",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-17T16:15:00-07:00",
+   "title": "William Prettyman  & Charm",
+   "status": "confirmed",
+   "email": "william@studiocenter.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-19T13:00:00-07:00",
+   "title": "Yousif Kurdi & Charm",
+   "status": "confirmed",
+   "email": "yousif@metamorphgroup.co",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-20T09:30:00-07:00",
+   "title": "Arjun Ahlawat & Charm",
+   "status": "confirmed",
+   "email": "arjun@enginius.ai",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-20T14:00:00-07:00",
+   "title": "Richard Gaubert & Charm",
+   "status": "confirmed",
+   "email": "richard@topsalesproducer.net",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-20T15:30:00-07:00",
+   "title": "Stephen Cooper & Charm",
+   "status": "confirmed",
+   "email": "steve@yourplatinumgroup.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-21T13:30:00-07:00",
+   "title": "Christopher Marrano & Charm",
+   "status": "confirmed",
+   "email": "chris@bluewatermarketing.com",
+   "held": false,
+   "test": false
+  },
+  {
+   "start": "2026-08-26T14:00:00-07:00",
+   "title": "Richard Gaubert & Charm",
+   "status": "confirmed",
+   "email": "richard@topsalesproducer.net",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-08-27T09:00:00-07:00",
+   "title": "Daniel Parrillo & Charm",
+   "status": "confirmed",
+   "email": "dparrillo@cardinaltalent.ai",
+   "held": true,
+   "test": false
+  },
+  {
+   "start": "2026-09-23T11:30:00-07:00",
+   "title": "Alex Johnson & Charm",
+   "status": "confirmed",
+   "email": "alexmbjohnson78@gail.com",
+   "held": false,
+   "test": false
+  }
+ ],
+ "dayai_contacts": [
+  {
+   "email": "sarah@hirecharm.com",
+   "name": "Sarah Test",
+   "form": "GTM Services",
+   "form_submitted": "2026-06-11T18:58:49Z",
+   "created": "2026-05-29T00:01:48Z"
+  },
+  {
+   "email": "john.doe@gmail.com",
+   "name": "John Doe",
+   "form": "GTM Services",
+   "form_submitted": "2026-07-20T22:24:00Z",
+   "created": "2026-07-20T22:24:03Z"
+  },
+  {
+   "email": "bachmeiersj@gmail.com",
+   "name": "Sarah Bachmeier",
+   "form": "GTM Services",
+   "form_submitted": "2026-06-11T19:47:12Z",
+   "created": "2026-05-09T00:07:26Z"
+  },
+  {
+   "email": "sarah+1@hirecharm.com",
+   "name": "Sarah Bachmeier",
+   "form": "GTM Services",
+   "form_submitted": "2026-06-11T18:58:49Z",
+   "created": "2026-07-13T21:23:44Z"
+  },
+  {
+   "email": "sarahpodemski@gmail.com",
+   "name": "sarah test 2",
+   "form": "CS Services",
+   "form_submitted": "2026-06-30T17:41:39Z",
+   "created": "2026-06-30T17:41:42Z"
+  }
+ ],
+ "rb2b": {
+  "connected": true,
+  "count": 311,
+  "no_form": 309,
+  "visitors": [
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-27T15:40:49.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-27T15:40:49.000Z",
+    "last_seen": "2026-08-27T15:40:49.000Z",
+    "name": "John J. McLaughlin",
+    "linkedin_url": "https://www.linkedin.com/in/johnjmclaughlin",
+    "email": "jjmclone@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-26T02:05:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-26T02:05:29.000Z",
+    "last_seen": "2026-08-26T02:05:29.000Z",
+    "name": "Marcia Hickerson",
+    "linkedin_url": "https://www.linkedin.com/in/marcia-hickerson-39708252",
+    "email": "marciahickerson@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-26T01:09:08.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-26T01:09:08.000Z",
+    "last_seen": "2026-08-26T01:09:08.000Z",
+    "name": "Aaron Sutherland",
+    "linkedin_url": "https://www.linkedin.com/in/aaronjetsetter",
+    "email": "aaron@jetsetter.vision",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-25T10:52:21.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-25T10:52:21.000Z",
+    "last_seen": "2026-08-25T10:52:21.000Z",
+    "name": "Jami Feldman",
+    "linkedin_url": "https://www.linkedin.com/in/jamifeldman",
+    "email": "jamifeldman@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-25T03:28:54.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-25T03:28:54.000Z",
+    "last_seen": "2026-08-25T03:28:54.000Z",
+    "name": "Hannah Mortensen",
+    "linkedin_url": "https://www.linkedin.com/in/hamortensen",
+    "email": "mortensen.hannah@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-25T03:27:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-25T03:27:46.000Z",
+    "last_seen": "2026-08-25T03:27:46.000Z",
+    "name": "Larisa D.",
+    "linkedin_url": "https://www.linkedin.com/in/larisaduqueherrera",
+    "email": "larisaherrera@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-25T01:09:21.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-25T01:09:21.000Z",
+    "last_seen": "2026-08-25T01:09:21.000Z",
+    "name": "Brandon Beck",
+    "linkedin_url": "https://www.linkedin.com/in/brandonbeck",
+    "email": "brandon@eidecom.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-24T23:44:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-24T23:44:07.000Z",
+    "last_seen": "2026-08-24T23:44:07.000Z",
+    "name": "Andrea Donlon, MBA",
+    "linkedin_url": "https://www.linkedin.com/in/andreadonlon",
+    "email": "andrea.donlon@haymarketmedia.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-24T03:57:50.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-24T03:57:50.000Z",
+    "last_seen": "2026-08-24T03:57:50.000Z",
+    "name": "Dara Montgomery",
+    "linkedin_url": "https://www.linkedin.com/in/dara-montgomery-010b37173",
+    "email": "dara1h@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-24T03:03:09.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-24T03:03:09.000Z",
+    "last_seen": "2026-08-24T03:03:09.000Z",
+    "name": "Susan Allan LION Open Networker",
+    "linkedin_url": "https://www.linkedin.com/in/susan-allan-lion-open-networker-2128474b",
+    "email": "susan@susanallan.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-24T02:31:36.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-24T02:31:36.000Z",
+    "last_seen": "2026-08-24T02:31:36.000Z",
+    "name": "Cindy Groves",
+    "linkedin_url": "https://www.linkedin.com/in/cindy-groves-7645b034",
+    "email": "cindykgroves@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-23T22:42:59.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-23T22:42:59.000Z",
+    "last_seen": "2026-08-23T22:42:59.000Z",
+    "name": "Nick Nitkowski",
+    "linkedin_url": "https://www.linkedin.com/in/nicknitkowski",
+    "email": "nick@calldmg.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-23T22:40:12.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-23T22:40:12.000Z",
+    "last_seen": "2026-08-23T22:40:12.000Z",
+    "name": "Whitney Storick",
+    "linkedin_url": "https://www.linkedin.com/in/whitney-storick-52a415400",
+    "email": "wstorick@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-23T21:28:20.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-23T21:28:20.000Z",
+    "last_seen": "2026-08-23T21:28:20.000Z",
+    "name": "Enos landry",
+    "linkedin_url": "https://www.linkedin.com/in/enos-landry-79326810b",
+    "email": "enosj@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-23T12:43:53.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-23T12:43:53.000Z",
+    "last_seen": "2026-08-23T12:43:53.000Z",
+    "name": "Ania Rodriguez",
+    "linkedin_url": "https://www.linkedin.com/in/aniah",
+    "email": "ania@keylimeinteractive.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-22T23:31:19.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-22T23:31:19.000Z",
+    "last_seen": "2026-08-22T23:31:19.000Z",
+    "name": "Ruby Sayed",
+    "linkedin_url": "https://www.linkedin.com/in/ruby-sayed-b0729a171",
+    "email": "ruby@etilize.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-22T22:26:13.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-22T22:26:13.000Z",
+    "last_seen": "2026-08-22T22:26:13.000Z",
+    "name": "Joey Vecchione",
+    "linkedin_url": "https://www.linkedin.com/in/joeyvecchione",
+    "email": "joey@goldleveltalent.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-22T21:51:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-22T21:51:57.000Z",
+    "last_seen": "2026-08-22T21:51:57.000Z",
+    "name": "Michael Yager, P.E.",
+    "linkedin_url": "https://www.linkedin.com/in/myager",
+    "email": "michael@fossandco.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-22T01:39:19.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-22T01:39:19.000Z",
+    "last_seen": "2026-08-22T01:39:19.000Z",
+    "name": "Kiki Kalender",
+    "linkedin_url": "https://www.linkedin.com/in/kiki-kalender-1a503870",
+    "email": "kikikalender@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-21T18:11:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-21T18:11:42.000Z",
+    "last_seen": "2026-08-21T18:11:42.000Z",
+    "name": "Chris Marrano",
+    "linkedin_url": "https://www.linkedin.com/in/christophermarrano",
+    "email": "chris@bluewatermarketing.com",
+    "submitted": true
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-21T02:31:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-21T02:31:46.000Z",
+    "last_seen": "2026-08-21T02:31:46.000Z",
+    "name": "Dennis Grafflin",
+    "linkedin_url": "https://www.linkedin.com/in/dennis-grafflin-615832297",
+    "email": "dgraffli@bates.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-21T01:09:04.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-21T01:09:04.000Z",
+    "last_seen": "2026-08-21T01:09:04.000Z",
+    "name": "Augustin Meloty-Kapella",
+    "linkedin_url": "https://www.linkedin.com/in/augustin-meloty-kapella-8594b2",
+    "email": "mariekapella@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T20:36:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T20:36:22.000Z",
+    "last_seen": "2026-08-20T20:36:22.000Z",
+    "name": "Matt Frank",
+    "linkedin_url": "https://www.linkedin.com/in/matthewbfrank",
+    "email": "frankmat@umich.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T16:15:00.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T16:15:00.000Z",
+    "last_seen": "2026-08-20T16:15:00.000Z",
+    "name": "emily cullum",
+    "linkedin_url": "https://www.linkedin.com/in/emily-cullum-65245721b",
+    "email": "ecullum87@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T05:19:48.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T05:19:48.000Z",
+    "last_seen": "2026-08-20T05:19:48.000Z",
+    "name": "Machelle Davis, BSN, RN, CNOR",
+    "linkedin_url": "https://www.linkedin.com/in/machelle-davis-bsn-rn-cnor-b2b731167",
+    "email": "macr28@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T04:31:01.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T04:31:01.000Z",
+    "last_seen": "2026-08-20T04:31:01.000Z",
+    "name": "Laurie McDermott",
+    "linkedin_url": "https://www.linkedin.com/in/laurie-mcdermott-b6617642",
+    "email": "gavingohuntin@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T04:26:50.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T04:26:50.000Z",
+    "last_seen": "2026-08-20T04:26:50.000Z",
+    "name": "Pamela Muno",
+    "linkedin_url": "https://www.linkedin.com/in/pamela-muno-342884a1",
+    "email": "whoopup@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T04:24:09.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T04:24:09.000Z",
+    "last_seen": "2026-08-20T04:24:09.000Z",
+    "name": "Marty Martin",
+    "linkedin_url": "https://www.linkedin.com/in/marty-martin-aa2694a4",
+    "email": "tresaac20@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T04:21:11.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T04:21:11.000Z",
+    "last_seen": "2026-08-20T04:21:11.000Z",
+    "name": "Brad Davis",
+    "linkedin_url": "https://www.linkedin.com/in/brad-davis-52289290",
+    "email": "brad.davis@greenpointag.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T04:14:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T04:14:42.000Z",
+    "last_seen": "2026-08-20T04:14:42.000Z",
+    "name": "Vicki Palmreuter",
+    "linkedin_url": "https://www.linkedin.com/in/vickipalmreuter",
+    "email": "vpalmreuter@sdfmc.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:59:30.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:59:30.000Z",
+    "last_seen": "2026-08-20T03:59:30.000Z",
+    "name": "Linda Colquhoun",
+    "linkedin_url": "https://www.linkedin.com/in/linda-colquhoun-64b9909",
+    "email": "lbc2118@tc.columbia.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:56:35.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:56:35.000Z",
+    "last_seen": "2026-08-20T03:56:35.000Z",
+    "name": "Catie Sickles",
+    "linkedin_url": "https://www.linkedin.com/in/catie-sickles-a3bb4954",
+    "email": "allysong1104@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:45:56.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:45:56.000Z",
+    "last_seen": "2026-08-20T03:45:56.000Z",
+    "name": "David Marchaland",
+    "linkedin_url": "https://www.linkedin.com/in/davidmarchaland",
+    "email": "dmarchaland@apple.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:43:17.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:43:17.000Z",
+    "last_seen": "2026-08-20T03:43:17.000Z",
+    "name": "Aaron Morse",
+    "linkedin_url": "https://www.linkedin.com/in/aaron-morse-47b59aa",
+    "email": "aaron.morse@windriver.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:35:16.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:35:16.000Z",
+    "last_seen": "2026-08-20T03:35:16.000Z",
+    "name": "travis brink",
+    "linkedin_url": "https://www.linkedin.com/in/travis-brink-60b127a",
+    "email": "tbrink@national.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:34:26.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:34:26.000Z",
+    "last_seen": "2026-08-20T03:34:26.000Z",
+    "name": "Charles Boxie",
+    "linkedin_url": "https://www.linkedin.com/in/charles-boxie-2b97291a5",
+    "email": "emilymarasmith@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:28:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:28:07.000Z",
+    "last_seen": "2026-08-20T03:28:07.000Z",
+    "name": "Douglas Timby",
+    "linkedin_url": "https://www.linkedin.com/in/douglas-timby-a3b1646",
+    "email": "stimby1@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T03:22:52.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T03:22:52.000Z",
+    "last_seen": "2026-08-20T03:22:52.000Z",
+    "name": "Mistie Castro",
+    "linkedin_url": "https://www.linkedin.com/in/mistie-castro-769839112",
+    "email": "mistie.castro@myccmortgage.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/customer-service",
+      "at": "2026-08-20T02:00:48.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T02:00:48.000Z",
+    "last_seen": "2026-08-20T02:00:48.000Z",
+    "name": "Carolyn A Butts",
+    "linkedin_url": "https://www.linkedin.com/in/carolynabutts",
+    "email": "africanvoicesmag@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-20T00:31:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-20T00:31:32.000Z",
+    "last_seen": "2026-08-20T00:31:32.000Z",
+    "name": "Ellen Chen",
+    "linkedin_url": "https://www.linkedin.com/in/ellen-chen-0296833b",
+    "email": "ellenchen94@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T23:36:12.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T23:36:12.000Z",
+    "last_seen": "2026-08-19T23:36:12.000Z",
+    "name": "Juliet Demetria",
+    "linkedin_url": "https://www.linkedin.com/in/juliet-demetria-86112935",
+    "email": "marlet123@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T23:31:01.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T23:31:01.000Z",
+    "last_seen": "2026-08-19T23:31:01.000Z",
+    "name": "Larry Fox",
+    "linkedin_url": "https://www.linkedin.com/in/larry-fox-3324b250",
+    "email": "lwfoxsr1@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:58:15.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:58:15.000Z",
+    "last_seen": "2026-08-19T22:58:15.000Z",
+    "name": "Jeramie Arnold",
+    "linkedin_url": "https://www.linkedin.com/in/jeramie-arnold-4a975353",
+    "email": "jeramiearnold@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:58:11.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:58:11.000Z",
+    "last_seen": "2026-08-19T22:58:11.000Z",
+    "name": "Danny Garcia",
+    "linkedin_url": "https://www.linkedin.com/in/thedannygarcia",
+    "email": "glog29@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:53:27.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:53:27.000Z",
+    "last_seen": "2026-08-19T22:53:27.000Z",
+    "name": "Mark Matthews",
+    "linkedin_url": "https://www.linkedin.com/in/markmatthewsstaffingexecutive",
+    "email": "mmatthews@mytalentlaunch.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:47:24.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:47:24.000Z",
+    "last_seen": "2026-08-19T22:47:24.000Z",
+    "name": "Etta Norton",
+    "linkedin_url": "https://www.linkedin.com/in/etta-norton-aa40484",
+    "email": "enorton@quinnwilson.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:47:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:47:22.000Z",
+    "last_seen": "2026-08-19T22:47:22.000Z",
+    "name": "Garima Tyagi",
+    "linkedin_url": "https://www.linkedin.com/in/garima-tyagi-4213176",
+    "email": "garima.tyagi@rabobank.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:47:11.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:47:11.000Z",
+    "last_seen": "2026-08-19T22:47:11.000Z",
+    "name": "Juan Carlos Aybar",
+    "linkedin_url": "https://www.linkedin.com/in/juan-carlos-aybar-2aa3b085",
+    "email": "juan.aybar@pepsico.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:46:09.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:46:09.000Z",
+    "last_seen": "2026-08-19T22:46:09.000Z",
+    "name": "Mark Cavett",
+    "linkedin_url": "https://www.linkedin.com/in/mark-cavett-63ba609a",
+    "email": "pcavett@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:45:31.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:45:31.000Z",
+    "last_seen": "2026-08-19T22:45:31.000Z",
+    "name": "Jana Panfilio",
+    "linkedin_url": "https://www.linkedin.com/in/jana-panfilio",
+    "email": "jana@6453alumni.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:44:26.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:44:26.000Z",
+    "last_seen": "2026-08-19T22:44:26.000Z",
+    "name": "Melissa Fasy",
+    "linkedin_url": "https://www.linkedin.com/in/melissa-fasy-10621b2",
+    "email": "melissa.fasy@solera.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:44:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:44:07.000Z",
+    "last_seen": "2026-08-19T22:44:07.000Z",
+    "name": "Mandy Eaton, MSc",
+    "linkedin_url": "https://www.linkedin.com/in/mandyeaton84",
+    "email": "mandy_eaton@vanguard.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:44:05.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:44:05.000Z",
+    "last_seen": "2026-08-19T22:44:05.000Z",
+    "name": "Pam Nobles, PSM, PLS",
+    "linkedin_url": "https://www.linkedin.com/in/pam-nobles-psm-pls-86363b11",
+    "email": "pam@dddsinc.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:42:55.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:42:55.000Z",
+    "last_seen": "2026-08-19T22:42:55.000Z",
+    "name": "Tori Krause",
+    "linkedin_url": "https://www.linkedin.com/in/tori-krause-0432317b",
+    "email": "cohenour483@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:42:23.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:42:23.000Z",
+    "last_seen": "2026-08-19T22:42:23.000Z",
+    "name": "R C",
+    "linkedin_url": "https://www.linkedin.com/in/r-c-16537277",
+    "email": "mcarter@parkwayschools.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:41:51.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:41:51.000Z",
+    "last_seen": "2026-08-19T22:41:51.000Z",
+    "name": "Anton D'Auria",
+    "linkedin_url": "https://www.linkedin.com/in/adauria",
+    "email": "adauria@apple.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:40:34.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:40:34.000Z",
+    "last_seen": "2026-08-19T22:40:34.000Z",
+    "name": "Nancy Davis",
+    "linkedin_url": "https://www.linkedin.com/in/nancy-davis-23931014",
+    "email": "ncddavis54@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:40:14.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:40:14.000Z",
+    "last_seen": "2026-08-19T22:40:14.000Z",
+    "name": "Stephanie Seno",
+    "linkedin_url": "https://www.linkedin.com/in/stephanie-seno-0518b130",
+    "email": "stephanie.seno@cbre.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:40:13.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:40:13.000Z",
+    "last_seen": "2026-08-19T22:40:13.000Z",
+    "name": "Traci Krist",
+    "linkedin_url": "https://www.linkedin.com/in/traci-krist-79b5b85a",
+    "email": "kristfamily@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:39:17.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:39:17.000Z",
+    "last_seen": "2026-08-19T22:39:17.000Z",
+    "name": "John Latkovic",
+    "linkedin_url": "https://www.linkedin.com/in/john-latkovic-9281942b",
+    "email": "shuichi_shindoustrawberry@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:35:59.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:35:59.000Z",
+    "last_seen": "2026-08-19T22:35:59.000Z",
+    "name": "Bruce Such",
+    "linkedin_url": "https://www.linkedin.com/in/brucesuch",
+    "email": "brucesuch@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:35:45.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:35:45.000Z",
+    "last_seen": "2026-08-19T22:35:45.000Z",
+    "name": "Joshua Reed",
+    "linkedin_url": "https://www.linkedin.com/in/joshua-reed-626a99107",
+    "email": "joshua.reed@expresspros.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:35:24.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:35:24.000Z",
+    "last_seen": "2026-08-19T22:35:24.000Z",
+    "name": "Emily Nicholson",
+    "linkedin_url": "https://www.linkedin.com/in/emily-nicholson-1b25131",
+    "email": "markscheyer@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:34:54.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:34:54.000Z",
+    "last_seen": "2026-08-19T22:34:54.000Z",
+    "name": "Charlie Rodriguez",
+    "linkedin_url": "https://www.linkedin.com/in/charlie-rodriguez-a8b30ba9",
+    "email": "charlie.rodriguez@t-mobile.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:24:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:24:32.000Z",
+    "last_seen": "2026-08-19T22:24:32.000Z",
+    "name": "Jackie Gonzales",
+    "linkedin_url": "https://www.linkedin.com/in/jackie-gonzales-b6b685135",
+    "email": "gonzarro2216@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T22:18:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T22:18:22.000Z",
+    "last_seen": "2026-08-19T22:18:22.000Z",
+    "name": "Oliver Pacheco",
+    "linkedin_url": "https://www.linkedin.com/in/oliverpacheco",
+    "email": "mbragucci@comcast.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/sales",
+      "at": "2026-08-19T20:59:06.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T20:59:06.000Z",
+    "last_seen": "2026-08-19T20:59:06.000Z",
+    "name": "Laura Cardona",
+    "linkedin_url": "https://www.linkedin.com/in/laura-cardona-75201",
+    "email": "laura@dymic.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-19T19:21:37.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T19:21:37.000Z",
+    "last_seen": "2026-08-19T19:21:37.000Z",
+    "name": "Alex Burch",
+    "linkedin_url": "https://www.linkedin.com/in/alexander-burch",
+    "email": "aburch@activecampaign.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-19T18:07:05.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T18:07:05.000Z",
+    "last_seen": "2026-08-19T18:07:05.000Z",
+    "name": "William Yen",
+    "linkedin_url": "https://www.linkedin.com/in/williamjpyen",
+    "email": "wyen@ramp.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T05:14:25.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T05:14:25.000Z",
+    "last_seen": "2026-08-19T05:14:25.000Z",
+    "name": "Lada Gubina",
+    "linkedin_url": "https://www.linkedin.com/in/lada-gubina-79b9a2134",
+    "email": "lada.gubina@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-19T05:11:23.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T05:11:23.000Z",
+    "last_seen": "2026-08-19T05:11:23.000Z",
+    "name": "Andrea Terry",
+    "linkedin_url": "https://www.linkedin.com/in/andrea-terry-maine-mls",
+    "email": "megan.anderson@rsu4.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-19T02:43:05.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-19T02:43:05.000Z",
+    "last_seen": "2026-08-19T02:43:05.000Z",
+    "name": "Daniella Taylor",
+    "linkedin_url": "https://www.linkedin.com/in/daniella-taylor23",
+    "email": "dntaylor2004@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-18T20:39:31.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-18T20:39:31.000Z",
+    "last_seen": "2026-08-18T20:39:31.000Z",
+    "name": "Anu Gupta",
+    "linkedin_url": "https://www.linkedin.com/in/anu-gupta-16b111127",
+    "email": "guptaa@tessco.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-18T20:11:49.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-18T20:11:49.000Z",
+    "last_seen": "2026-08-18T20:11:49.000Z",
+    "name": "Kimberly Dalrymple",
+    "linkedin_url": "https://www.linkedin.com/in/kimberlydalrymple",
+    "email": "dalrympl@musc.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-18T19:51:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-18T19:51:32.000Z",
+    "last_seen": "2026-08-18T19:51:32.000Z",
+    "name": "seda nazarian",
+    "linkedin_url": "https://www.linkedin.com/in/seda-nazarian-80701578",
+    "email": "martinmalekian@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-18T01:55:09.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-18T01:55:09.000Z",
+    "last_seen": "2026-08-18T01:55:09.000Z",
+    "name": "Bill Cavins",
+    "linkedin_url": "https://www.linkedin.com/in/bill-cavins-343ab714",
+    "email": "bcav99@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-18T01:02:27.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-18T01:02:27.000Z",
+    "last_seen": "2026-08-18T01:02:27.000Z",
+    "name": "Elijah Davis",
+    "linkedin_url": "https://www.linkedin.com/in/elijah-davis-a9263136",
+    "email": "vip7praise@bellsouth.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-17T23:37:39.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-17T23:37:39.000Z",
+    "last_seen": "2026-08-17T23:37:39.000Z",
+    "name": "Marion Shinn, CDMP, PA Notary Public",
+    "linkedin_url": "https://www.linkedin.com/in/marionshinn",
+    "email": "kandmshinn@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-17T23:06:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-17T23:06:57.000Z",
+    "last_seen": "2026-08-17T23:06:57.000Z",
+    "name": "Michelle Sunsin, CIC, CLCS, MLIS, CRIS, CISR",
+    "linkedin_url": "https://www.linkedin.com/in/msunsin",
+    "email": "msunsin@forthinsurance.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-17T22:40:31.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-17T22:40:31.000Z",
+    "last_seen": "2026-08-17T22:40:31.000Z",
+    "name": "Jess Kirkman",
+    "linkedin_url": "https://www.linkedin.com/in/jesskirkman",
+    "email": "jess.kirkman@mattel.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-17T22:19:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-17T22:19:29.000Z",
+    "last_seen": "2026-08-17T22:19:29.000Z",
+    "name": "Jack Ruland",
+    "linkedin_url": "https://www.linkedin.com/in/jack-ruland-a6677636",
+    "email": "reneruland@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-17T22:18:35.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-17T22:18:35.000Z",
+    "last_seen": "2026-08-17T22:18:35.000Z",
+    "name": "Lisa Massey",
+    "linkedin_url": "https://www.linkedin.com/in/lisa-massey-0191b372",
+    "email": "lmassey@trustmark.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-17T16:42:16.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-17T16:42:16.000Z",
+    "last_seen": "2026-08-17T16:42:16.000Z",
+    "name": "Kelly-ann Radetic",
+    "linkedin_url": "https://www.linkedin.com/in/kelly-ann-radetic-51225818",
+    "email": "kradetic@wolffproperties.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-16T17:05:13.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T17:05:13.000Z",
+    "last_seen": "2026-08-16T17:05:13.000Z",
+    "name": "Anne Sheridan",
+    "linkedin_url": "https://www.linkedin.com/in/anne-sheridan-8622bb42",
+    "email": "mycashman@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-16T16:04:12.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T16:04:12.000Z",
+    "last_seen": "2026-08-16T16:04:12.000Z",
+    "name": "Antonia Cataldo Rodriguez",
+    "linkedin_url": "https://www.linkedin.com/in/antonia-cataldo-rodriguez-05640278",
+    "email": "josie20082014@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-16T16:04:05.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T16:04:05.000Z",
+    "last_seen": "2026-08-16T16:04:05.000Z",
+    "name": "Naomy Tineo",
+    "linkedin_url": "https://www.linkedin.com/in/naomy-tineo-312768178",
+    "email": "ntineo@childrensaidnyc.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-16T15:10:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T15:10:29.000Z",
+    "last_seen": "2026-08-16T15:10:29.000Z",
+    "name": "David Clark",
+    "linkedin_url": "https://www.linkedin.com/in/david-clark-a40099aa",
+    "email": "hawk2go1@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-16T13:57:10.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T13:57:10.000Z",
+    "last_seen": "2026-08-16T13:57:10.000Z",
+    "name": "Janice Clay",
+    "linkedin_url": "https://www.linkedin.com/in/janice-clay-6182a674",
+    "email": "jclay@nicklesbakery.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-16T09:23:49.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T09:23:49.000Z",
+    "last_seen": "2026-08-16T09:23:49.000Z",
+    "name": "David Munoz",
+    "linkedin_url": "https://www.linkedin.com/in/david-munoz-77119257",
+    "email": "david.munoz@newellco.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-16T08:46:10.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T08:46:10.000Z",
+    "last_seen": "2026-08-16T08:46:10.000Z",
+    "name": "Michael Bieker",
+    "linkedin_url": "https://www.linkedin.com/in/michael-bieker-84b21817",
+    "email": "tmcintosh5@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-16T06:55:00.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-16T06:55:00.000Z",
+    "last_seen": "2026-08-16T06:55:00.000Z",
+    "name": "Joyce Jessee",
+    "linkedin_url": "https://www.linkedin.com/in/joyce-jessee-104a2372",
+    "email": "magg2005@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-15T22:28:20.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-15T22:28:20.000Z",
+    "last_seen": "2026-08-15T22:28:20.000Z",
+    "name": "Justin Reilly",
+    "linkedin_url": "https://www.linkedin.com/in/justin-reilly-97367a51",
+    "email": "justinjreilly@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-15T21:39:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-15T21:39:46.000Z",
+    "last_seen": "2026-08-15T21:39:46.000Z",
+    "name": "Rosemary Haselroth",
+    "linkedin_url": "https://www.linkedin.com/in/rosemary-haselroth-bb432241",
+    "email": "rose.haselroth@crowncork.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-15T21:15:19.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-15T21:15:19.000Z",
+    "last_seen": "2026-08-15T21:15:19.000Z",
+    "name": "Andrea Ritchie",
+    "linkedin_url": "https://www.linkedin.com/in/andrea-ritchie-a0225320a",
+    "email": "andrea.ritchie.hphj@statefarm.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-15T21:02:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-15T21:02:29.000Z",
+    "last_seen": "2026-08-15T21:02:29.000Z",
+    "name": "Mary Ann Chandler",
+    "linkedin_url": "https://www.linkedin.com/in/mary-ann-chandler-52a74653",
+    "email": "mary.chandler@capitalone.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T19:16:30.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T19:16:30.000Z",
+    "last_seen": "2026-08-14T19:16:30.000Z",
+    "name": "George Stergion",
+    "linkedin_url": "https://www.linkedin.com/in/george-stergion-b49bb879",
+    "email": "ndnjfan@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T18:55:18.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T18:55:18.000Z",
+    "last_seen": "2026-08-14T18:55:18.000Z",
+    "name": "Tiffany Worthy",
+    "linkedin_url": "https://www.linkedin.com/in/tiffany-worthy-86765231",
+    "email": "tiffany.worthy@openlms.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T18:27:23.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T18:27:23.000Z",
+    "last_seen": "2026-08-14T18:27:23.000Z",
+    "name": "Daniel Hintz",
+    "linkedin_url": "https://www.linkedin.com/in/daniel-hintz-92506128",
+    "email": "reddawgfuji@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T18:01:23.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T18:01:23.000Z",
+    "last_seen": "2026-08-14T18:01:23.000Z",
+    "name": "Mira Cucuz",
+    "linkedin_url": "https://www.linkedin.com/in/mira-cucuz-8728116",
+    "email": "m.cucuz@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:52:26.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:52:26.000Z",
+    "last_seen": "2026-08-14T17:52:26.000Z",
+    "name": "Ryan Foote",
+    "linkedin_url": "https://www.linkedin.com/in/ryan-foote-77a2b623",
+    "email": "ryanfootedds@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:48:58.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:48:58.000Z",
+    "last_seen": "2026-08-14T17:48:58.000Z",
+    "name": "Daniel Belyusar",
+    "linkedin_url": "https://www.linkedin.com/in/daniel-belyusar-39348b3",
+    "email": "dbelyusar@apple.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:46:56.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:46:56.000Z",
+    "last_seen": "2026-08-14T17:46:56.000Z",
+    "name": "Jose Alan Perez",
+    "linkedin_url": "https://www.linkedin.com/in/jose-alan-perez",
+    "email": "jose.perez@wmlylesco.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:39:25.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:39:25.000Z",
+    "last_seen": "2026-08-14T17:39:25.000Z",
+    "name": "Vivian Glueck",
+    "linkedin_url": "https://www.linkedin.com/in/vivian-glueck-72688284",
+    "email": "jpat730@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:30:43.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:30:43.000Z",
+    "last_seen": "2026-08-14T17:30:43.000Z",
+    "name": "Gus Kearney",
+    "linkedin_url": "https://www.linkedin.com/in/gus-kearney-4b714720",
+    "email": "biggkelt@sbcglobal.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:28:51.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:28:51.000Z",
+    "last_seen": "2026-08-14T17:28:51.000Z",
+    "name": "Carlee Campuzano",
+    "linkedin_url": "https://www.linkedin.com/in/carlee-campuzano",
+    "email": "carlee.campuzano@pocket.watch",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:27:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:27:42.000Z",
+    "last_seen": "2026-08-14T17:27:42.000Z",
+    "name": "Llysa Holland",
+    "linkedin_url": "https://www.linkedin.com/in/llysa-holland-b43b6815",
+    "email": "llysa@theatersimple.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:21:47.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:21:47.000Z",
+    "last_seen": "2026-08-14T17:21:47.000Z",
+    "name": "Vera Onishchuk",
+    "linkedin_url": "https://www.linkedin.com/in/vera-onishchuk-21a557162",
+    "email": "v.onishchuk@xsolla.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:18:04.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:18:04.000Z",
+    "last_seen": "2026-08-14T17:18:04.000Z",
+    "name": "Michael Wyatt",
+    "linkedin_url": "https://www.linkedin.com/in/michaelwyattoh",
+    "email": "michaelwyattoh@me.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:17:19.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:17:19.000Z",
+    "last_seen": "2026-08-14T17:17:19.000Z",
+    "name": "Sara Cardenas",
+    "linkedin_url": "https://www.linkedin.com/in/sara-cardenas-b55879271",
+    "email": "sapaca1@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T17:17:15.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:17:15.000Z",
+    "last_seen": "2026-08-14T17:17:15.000Z",
+    "name": "Steven A. Perez",
+    "linkedin_url": "https://www.linkedin.com/in/steven-a-perez",
+    "email": "steven.perez@firsthorizon.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/sales",
+      "at": "2026-08-14T17:10:24.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T17:10:24.000Z",
+    "last_seen": "2026-08-14T17:10:24.000Z",
+    "name": "Nikhil D.",
+    "linkedin_url": "https://www.linkedin.com/in/nikhil-d-4090369",
+    "email": "dwivedidisha@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T16:10:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T16:10:28.000Z",
+    "last_seen": "2026-08-14T16:10:28.000Z",
+    "name": "Daniel Bialik",
+    "linkedin_url": "https://www.linkedin.com/in/daniel-bialik-099a5b11",
+    "email": "dbialik@flboe.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T15:02:04.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T15:02:04.000Z",
+    "last_seen": "2026-08-14T15:02:04.000Z",
+    "name": "Amy Hubbard",
+    "linkedin_url": "https://www.linkedin.com/in/amy-hubbard-59b42b125",
+    "email": "amy.hubbard@pw.utc.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T08:30:53.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T08:30:53.000Z",
+    "last_seen": "2026-08-14T08:30:53.000Z",
+    "name": "Sherry Czwakiel",
+    "linkedin_url": "https://www.linkedin.com/in/sherry-czwakiel-9667bb4",
+    "email": "sczwakiel@fbchomeloans.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T03:20:09.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T03:20:09.000Z",
+    "last_seen": "2026-08-14T03:20:09.000Z",
+    "name": "Kris Boettcher",
+    "linkedin_url": "https://www.linkedin.com/in/kris-boettcher-25a075300",
+    "email": "kristopherboettcher78@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T03:05:51.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T03:05:51.000Z",
+    "last_seen": "2026-08-14T03:05:51.000Z",
+    "name": "Brian Nordmann",
+    "linkedin_url": "https://www.linkedin.com/in/brian-nordmann-25557a3",
+    "email": "nordmannbg@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T03:03:45.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T03:03:45.000Z",
+    "last_seen": "2026-08-14T03:03:45.000Z",
+    "name": "Brian Robel",
+    "linkedin_url": "https://www.linkedin.com/in/brian-robel-80b61a3",
+    "email": "valerie32089@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:55:58.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:55:58.000Z",
+    "last_seen": "2026-08-14T02:55:58.000Z",
+    "name": "patricia verastegui",
+    "linkedin_url": "https://www.linkedin.com/in/patricia-verastegui-033b1534",
+    "email": "i.verastegui@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:54:34.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:54:34.000Z",
+    "last_seen": "2026-08-14T02:54:34.000Z",
+    "name": "Diana Ebers",
+    "linkedin_url": "https://www.linkedin.com/in/diana-ebers-808376103",
+    "email": "dianaebers30@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:53:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:53:22.000Z",
+    "last_seen": "2026-08-14T02:53:22.000Z",
+    "name": "Rosemary Oden",
+    "linkedin_url": "https://www.linkedin.com/in/rosemary-oden-058b2895",
+    "email": "rosemary.oden@huntington.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:51:21.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:51:21.000Z",
+    "last_seen": "2026-08-14T02:51:21.000Z",
+    "name": "Yanira Bland, SPHR",
+    "linkedin_url": "https://www.linkedin.com/in/innovativehrbpyb",
+    "email": "yanirabland@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:48:53.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:48:53.000Z",
+    "last_seen": "2026-08-14T02:48:53.000Z",
+    "name": "Roy Pearson VFW",
+    "linkedin_url": "https://www.linkedin.com/in/roy-pearson-vfw-b1b1656b",
+    "email": "rlpearson47@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:47:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:47:28.000Z",
+    "last_seen": "2026-08-14T02:47:28.000Z",
+    "name": "Vicky Lawence",
+    "linkedin_url": "https://www.linkedin.com/in/vicky-lawence-60960650",
+    "email": "vlawrence66@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:46:48.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:46:48.000Z",
+    "last_seen": "2026-08-14T02:46:48.000Z",
+    "name": "Diane Hisey",
+    "linkedin_url": "https://www.linkedin.com/in/diane-hisey-00a5096a",
+    "email": "dianehisey80@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-14T02:37:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-14T02:37:42.000Z",
+    "last_seen": "2026-08-14T02:37:42.000Z",
+    "name": "Angela C.",
+    "linkedin_url": "https://www.linkedin.com/in/angela-c-321ba748",
+    "email": "camelbeek@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-13T22:26:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-13T22:26:22.000Z",
+    "last_seen": "2026-08-13T22:26:22.000Z",
+    "name": "Gary Marek",
+    "linkedin_url": "https://www.linkedin.com/in/gary-marek-b131299",
+    "email": "jessmares05@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-13T19:12:24.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-13T19:12:24.000Z",
+    "last_seen": "2026-08-13T19:12:24.000Z",
+    "name": "Rachel Burr",
+    "linkedin_url": "https://www.linkedin.com/in/rachel-burr-5a010175",
+    "email": "wingitpro07@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-13T18:02:11.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-13T18:02:11.000Z",
+    "last_seen": "2026-08-13T18:02:11.000Z",
+    "name": "Brian Signorelli",
+    "linkedin_url": "https://www.linkedin.com/in/brian-signorelli",
+    "email": "brian@tome.app",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-13T02:34:17.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-13T02:34:17.000Z",
+    "last_seen": "2026-08-13T02:34:17.000Z",
+    "name": "Michael Kay",
+    "linkedin_url": "https://www.linkedin.com/in/michaelphillipskay",
+    "email": "michael.kay@cushwake.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-13T01:49:18.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-13T01:49:18.000Z",
+    "last_seen": "2026-08-13T01:49:18.000Z",
+    "name": "Ryan Livingston",
+    "linkedin_url": "https://www.linkedin.com/in/ryan-livingston-7508126",
+    "email": "ryan.livingston@stericycle.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-12T23:57:08.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-12T23:57:08.000Z",
+    "last_seen": "2026-08-12T23:57:08.000Z",
+    "name": "Jennifer Rossman",
+    "linkedin_url": "https://www.linkedin.com/in/jennifer-rossman84562",
+    "email": "jen09renee@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-12T21:21:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-12T21:21:32.000Z",
+    "last_seen": "2026-08-12T21:21:32.000Z",
+    "name": "Jeannine Hamilton",
+    "linkedin_url": "https://www.linkedin.com/in/jeannine-hamilton-7a86598",
+    "email": "jeannine.hamilton@uscis.dhs.gov",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-12T03:52:27.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-12T03:52:27.000Z",
+    "last_seen": "2026-08-12T03:52:27.000Z",
+    "name": "Jodi Snell",
+    "linkedin_url": "https://www.linkedin.com/in/jodi-snell-1b460498",
+    "email": "jsnell@petrovybe.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-12T02:03:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-12T02:03:46.000Z",
+    "last_seen": "2026-08-12T02:03:46.000Z",
+    "name": "Peggy Abrams",
+    "linkedin_url": "https://www.linkedin.com/in/peggy-abrams-3033a930",
+    "email": "lee22@comcast.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-12T02:03:27.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-12T02:03:27.000Z",
+    "last_seen": "2026-08-12T02:03:27.000Z",
+    "name": "shelly Kasson",
+    "linkedin_url": "https://www.linkedin.com/in/shelly-kasson-59a00234",
+    "email": "shellykasson@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-11T23:56:31.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-11T23:56:31.000Z",
+    "last_seen": "2026-08-11T23:56:31.000Z",
+    "name": "Cara Scharf >president",
+    "linkedin_url": "https://www.linkedin.com/in/cascharf",
+    "email": "carabeths@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-11T21:10:40.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-11T21:10:40.000Z",
+    "last_seen": "2026-08-11T21:10:40.000Z",
+    "name": "andrea flammia",
+    "linkedin_url": "https://www.linkedin.com/in/andrea-flammia-a4a58941",
+    "email": "andrea02140@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/customer-service",
+      "at": "2026-08-11T19:42:33.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-11T19:42:33.000Z",
+    "last_seen": "2026-08-11T19:42:33.000Z",
+    "name": "Anna Heiman",
+    "linkedin_url": "https://www.linkedin.com/in/annaheiman",
+    "email": "a_heiman@apple.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-11T15:48:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-11T15:48:42.000Z",
+    "last_seen": "2026-08-11T15:48:42.000Z",
+    "name": "Dan Graham",
+    "linkedin_url": "https://www.linkedin.com/in/dan-graham-70870544",
+    "email": "dgrahamhd@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-11T12:06:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-11T12:06:28.000Z",
+    "last_seen": "2026-08-11T12:06:28.000Z",
+    "name": "Bil Zarch",
+    "linkedin_url": "https://www.linkedin.com/in/bilzarch",
+    "email": "bil@baystatebusinessbrokers.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-11T03:27:33.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-11T03:27:33.000Z",
+    "last_seen": "2026-08-11T03:27:33.000Z",
+    "name": "Cesar Rodriguez",
+    "linkedin_url": "https://www.linkedin.com/in/cesar-rodriguez-a9b20389",
+    "email": "cesar32rod@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-10T23:58:37.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-10T23:58:37.000Z",
+    "last_seen": "2026-08-10T23:58:37.000Z",
+    "name": "Kim Walker",
+    "linkedin_url": "https://www.linkedin.com/in/kim-walker-31b6b2164",
+    "email": "kim@baltimorehungerproject.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-10T23:01:38.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-10T23:01:38.000Z",
+    "last_seen": "2026-08-10T23:01:38.000Z",
+    "name": "Lori Kendrick Giles",
+    "linkedin_url": "https://www.linkedin.com/in/lori-kendrick-giles-a7294a54",
+    "email": "lk22giles@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/old-home-2",
+      "at": "2026-08-10T15:52:50.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-10T15:52:50.000Z",
+    "last_seen": "2026-08-10T15:52:50.000Z",
+    "name": "Dominick Armato",
+    "linkedin_url": "https://www.linkedin.com/in/dominickarmato",
+    "email": "dominick.armato@mysmartplans.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-10T09:32:34.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-10T09:32:34.000Z",
+    "last_seen": "2026-08-10T09:32:34.000Z",
+    "name": "Priyanka Subramanyam",
+    "linkedin_url": "https://www.linkedin.com/in/priyanka-subramanyam-63271629",
+    "email": "piyatheanimator04@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-10T08:02:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-10T08:02:42.000Z",
+    "last_seen": "2026-08-10T08:02:42.000Z",
+    "name": "Connor Cua",
+    "linkedin_url": "https://www.linkedin.com/in/connor-cua-306504151",
+    "email": "connorcua7@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-10T01:43:04.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-10T01:43:04.000Z",
+    "last_seen": "2026-08-10T01:43:04.000Z",
+    "name": "Kyleigh Woods",
+    "linkedin_url": "https://www.linkedin.com/in/kyleigh-woods",
+    "email": "kyleighperdew@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-09T04:29:30.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-09T04:29:30.000Z",
+    "last_seen": "2026-08-09T04:29:30.000Z",
+    "name": "Gabriel Trujillo",
+    "linkedin_url": "https://www.linkedin.com/in/trujillogabriel",
+    "email": "gtrujillo@augustineagency.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-08T01:37:12.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-08T01:37:12.000Z",
+    "last_seen": "2026-08-08T01:37:12.000Z",
+    "name": "Mark Beaver",
+    "linkedin_url": "https://www.linkedin.com/in/mark-beaver-5178542b",
+    "email": "mbeaver@sunbeltmidwest.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-07T23:40:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-07T23:40:22.000Z",
+    "last_seen": "2026-08-07T23:40:22.000Z",
+    "name": "Rebecca Larimore",
+    "linkedin_url": "https://www.linkedin.com/in/rebecca-larimore-241b1312",
+    "email": "larimorern2@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-07T20:58:41.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-07T20:58:41.000Z",
+    "last_seen": "2026-08-07T20:58:41.000Z",
+    "name": "Rachael Dolan",
+    "linkedin_url": "https://www.linkedin.com/in/rachael-dolan-b54715170",
+    "email": "rmdolan5@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-07T17:19:02.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-07T17:19:02.000Z",
+    "last_seen": "2026-08-07T17:19:02.000Z",
+    "name": "Andrew J.",
+    "linkedin_url": "https://www.linkedin.com/in/andrewjiang",
+    "email": "andrewhjiang@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-07T03:59:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-07T03:59:57.000Z",
+    "last_seen": "2026-08-07T03:59:57.000Z",
+    "name": "John Radcliff",
+    "linkedin_url": "https://www.linkedin.com/in/john-radcliff-ab877417",
+    "email": "jdradcliff@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/old-home-2",
+      "at": "2026-08-05T22:04:49.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-05T22:04:49.000Z",
+    "last_seen": "2026-08-05T22:04:49.000Z",
+    "name": "Amber Chardavoyne",
+    "linkedin_url": "https://www.linkedin.com/in/amber-chardavoyne-b908aa11b",
+    "email": "amberchardavoyne@inchecksolutions.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-05T06:14:05.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-05T06:14:05.000Z",
+    "last_seen": "2026-08-05T06:14:05.000Z",
+    "name": "Carolyn Luce",
+    "linkedin_url": "https://www.linkedin.com/in/carolyn-luce-a8b3288",
+    "email": "marciacan@me.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-05T04:07:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-05T04:07:22.000Z",
+    "last_seen": "2026-08-05T04:07:22.000Z",
+    "name": "Thomas Regan",
+    "linkedin_url": "https://www.linkedin.com/in/thomas-regan-aa3a4a9b",
+    "email": "reganm54@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-04T22:15:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-04T22:15:07.000Z",
+    "last_seen": "2026-08-04T22:15:07.000Z",
+    "name": "John Benjamin II",
+    "linkedin_url": "https://www.linkedin.com/in/john-benjamin-ii-b6865028",
+    "email": "john@sociablesociety.com",
+    "submitted": true
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-04T21:37:10.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-04T21:37:10.000Z",
+    "last_seen": "2026-08-04T21:37:10.000Z",
+    "name": "Bob Tansey",
+    "linkedin_url": "https://www.linkedin.com/in/bob-tansey-445a9b1ab",
+    "email": "roberttansey47@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-04T08:35:45.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-04T08:35:45.000Z",
+    "last_seen": "2026-08-04T08:35:45.000Z",
+    "name": "Mark Heller",
+    "linkedin_url": "https://www.linkedin.com/in/markheller",
+    "email": "lasalesguy@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-04T04:53:47.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-04T04:53:47.000Z",
+    "last_seen": "2026-08-04T04:53:47.000Z",
+    "name": "Julie McGlade",
+    "linkedin_url": "https://www.linkedin.com/in/julie-mcglade-80a0121a",
+    "email": "jaem3420@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-04T01:04:53.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-04T01:04:53.000Z",
+    "last_seen": "2026-08-04T01:04:53.000Z",
+    "name": "Ashley Long",
+    "linkedin_url": "https://www.linkedin.com/in/ashley-long-99900b5b",
+    "email": "along@atecspine.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-08-03T22:20:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-03T22:20:07.000Z",
+    "last_seen": "2026-08-03T22:20:07.000Z",
+    "name": "Christy Herrington",
+    "linkedin_url": "https://www.linkedin.com/in/christyherrington",
+    "email": "christyherrington@github.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/old-home-2",
+      "at": "2026-08-03T16:30:47.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-03T16:30:47.000Z",
+    "last_seen": "2026-08-03T16:30:47.000Z",
+    "name": "Ryan Gregg",
+    "linkedin_url": "https://www.linkedin.com/in/ryangregg1",
+    "email": "ryan@undergroundshirts.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-03T07:56:26.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-03T07:56:26.000Z",
+    "last_seen": "2026-08-03T07:56:26.000Z",
+    "name": "Daisy Carrillo",
+    "linkedin_url": "https://www.linkedin.com/in/daisy-carrillo-279374336",
+    "email": "dlcarrillo85@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T23:04:37.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T23:04:37.000Z",
+    "last_seen": "2026-08-02T23:04:37.000Z",
+    "name": "Lynne Watkins",
+    "linkedin_url": "https://www.linkedin.com/in/lynnewatkins",
+    "email": "lynnwatkins15@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T19:05:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T19:05:42.000Z",
+    "last_seen": "2026-08-02T19:05:42.000Z",
+    "name": "Rosemary Osorio",
+    "linkedin_url": "https://www.linkedin.com/in/rosemary-osorio-31170514",
+    "email": "daisyosorio13@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T13:21:21.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T13:21:21.000Z",
+    "last_seen": "2026-08-02T13:21:21.000Z",
+    "name": "Deb Gavisk",
+    "linkedin_url": "https://www.linkedin.com/in/deb-gavisk-642936159",
+    "email": "dlynn494@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T12:45:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T12:45:28.000Z",
+    "last_seen": "2026-08-02T12:45:28.000Z",
+    "name": "Shelia Winters",
+    "linkedin_url": "https://www.linkedin.com/in/shelia-winters-9aa650207",
+    "email": "sheliawinters69@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T09:12:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T09:12:57.000Z",
+    "last_seen": "2026-08-02T09:12:57.000Z",
+    "name": "Colleen Roop, M.Ed.",
+    "linkedin_url": "https://www.linkedin.com/in/colleenroop",
+    "email": "colleen_roop@earthlink.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T08:56:02.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T08:56:02.000Z",
+    "last_seen": "2026-08-02T08:56:02.000Z",
+    "name": "Yusuf Ansari",
+    "linkedin_url": "https://www.linkedin.com/in/realyusufansari",
+    "email": "yusuf@intuitionintelligence.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T08:37:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T08:37:57.000Z",
+    "last_seen": "2026-08-02T08:37:57.000Z",
+    "name": "Brian Frisch",
+    "linkedin_url": "https://www.linkedin.com/in/brian-frisch-242b645",
+    "email": "brian.frisch@cvstarr.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T08:16:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T08:16:07.000Z",
+    "last_seen": "2026-08-02T08:16:07.000Z",
+    "name": "geeta dave",
+    "linkedin_url": "https://www.linkedin.com/in/geeta-dave-0536812b",
+    "email": "geetaadave@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T07:22:34.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T07:22:34.000Z",
+    "last_seen": "2026-08-02T07:22:34.000Z",
+    "name": "Rick  McCreary",
+    "linkedin_url": "https://www.linkedin.com/in/rick-mccreary-4b37a6238",
+    "email": "rmccreary@knightsign.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T02:35:48.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T02:35:48.000Z",
+    "last_seen": "2026-08-02T02:35:48.000Z",
+    "name": "Kimberly Myers",
+    "linkedin_url": "https://www.linkedin.com/in/kimberly-myers-b82a3837",
+    "email": "kennethmyerssr@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-02T02:23:38.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-02T02:23:38.000Z",
+    "last_seen": "2026-08-02T02:23:38.000Z",
+    "name": "Philip Drago",
+    "linkedin_url": "https://www.linkedin.com/in/philip-drago-4719687",
+    "email": "pdrago@gt.rr.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T20:04:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T20:04:42.000Z",
+    "last_seen": "2026-08-01T20:04:42.000Z",
+    "name": "Molly Mahnke",
+    "linkedin_url": "https://www.linkedin.com/in/molly-mahnke-21b40324",
+    "email": "edandmolly@sbcglobal.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T19:40:11.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T19:40:11.000Z",
+    "last_seen": "2026-08-01T19:40:11.000Z",
+    "name": "Sarah Fitzgerald",
+    "linkedin_url": "https://www.linkedin.com/in/sarah-fitzgerald-467659223",
+    "email": "sarahfitzgerald@danvers.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T19:29:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T19:29:07.000Z",
+    "last_seen": "2026-08-01T19:29:07.000Z",
+    "name": "David Rubenstein",
+    "linkedin_url": "https://www.linkedin.com/in/david-rubenstein-24894024",
+    "email": "drubenstein10@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T18:16:49.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T18:16:49.000Z",
+    "last_seen": "2026-08-01T18:16:49.000Z",
+    "name": "Robert Wedderburn",
+    "linkedin_url": "https://www.linkedin.com/in/robert-wedderburn-0203a113b",
+    "email": "rwedder@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T17:04:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T17:04:57.000Z",
+    "last_seen": "2026-08-01T17:04:57.000Z",
+    "name": "Shaila Shirole",
+    "linkedin_url": "https://www.linkedin.com/in/shaila-shirole-4839b08",
+    "email": "shailashirole@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T16:15:31.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T16:15:31.000Z",
+    "last_seen": "2026-08-01T16:15:31.000Z",
+    "name": "Carol Cyrus",
+    "linkedin_url": "https://www.linkedin.com/in/carol-cyrus-25a0a835",
+    "email": "gypsyrach@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T15:31:49.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T15:31:49.000Z",
+    "last_seen": "2026-08-01T15:31:49.000Z",
+    "name": "Dale Adragna",
+    "linkedin_url": "https://www.linkedin.com/in/dale-adragna-1720289",
+    "email": "dadr601798@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T14:14:00.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T14:14:00.000Z",
+    "last_seen": "2026-08-01T14:14:00.000Z",
+    "name": "Carlon Rogers",
+    "linkedin_url": "https://www.linkedin.com/in/carlon-rogers-57340211",
+    "email": "carlonr@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T12:43:34.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T12:43:34.000Z",
+    "last_seen": "2026-08-01T12:43:34.000Z",
+    "name": "Christopher hargrove",
+    "linkedin_url": "https://www.linkedin.com/in/christopher-hargrove-451b8487",
+    "email": "mikesketch2@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T04:06:40.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T04:06:40.000Z",
+    "last_seen": "2026-08-01T04:06:40.000Z",
+    "name": "Marc Yeager, PT, MPT",
+    "linkedin_url": "https://www.linkedin.com/in/highlandparkpt",
+    "email": "marc@highlandparkpt.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T02:40:03.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T02:40:03.000Z",
+    "last_seen": "2026-08-01T02:40:03.000Z",
+    "name": "Bradley Keel",
+    "linkedin_url": "https://www.linkedin.com/in/bradley-keel-3ab919123",
+    "email": "fullmedaljacket8@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T02:34:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T02:34:28.000Z",
+    "last_seen": "2026-08-01T02:34:28.000Z",
+    "name": "Caleb Elliott",
+    "linkedin_url": "https://www.linkedin.com/in/caleb-elliott-1b9a0073",
+    "email": "calebmicahce@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T02:29:55.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T02:29:55.000Z",
+    "last_seen": "2026-08-01T02:29:55.000Z",
+    "name": "Gary Ginstling",
+    "linkedin_url": "https://www.linkedin.com/in/gary-ginstling-226473",
+    "email": "gg@aya.yale.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T02:06:20.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T02:06:20.000Z",
+    "last_seen": "2026-08-01T02:06:20.000Z",
+    "name": "Alicia Clark",
+    "linkedin_url": "https://www.linkedin.com/in/alicialabarca",
+    "email": "alicia.labarca@sap.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:51:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:51:28.000Z",
+    "last_seen": "2026-08-01T01:51:28.000Z",
+    "name": "John Breillatt",
+    "linkedin_url": "https://www.linkedin.com/in/john-breillatt-713ab71b",
+    "email": "john.breillatt@intel.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:50:33.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:50:33.000Z",
+    "last_seen": "2026-08-01T01:50:33.000Z",
+    "name": "Jay Adams",
+    "linkedin_url": "https://www.linkedin.com/in/jay-adams-08b1965",
+    "email": "jodifasbender@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:50:03.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:50:03.000Z",
+    "last_seen": "2026-08-01T01:50:03.000Z",
+    "name": "Heather Young",
+    "linkedin_url": "https://www.linkedin.com/in/heather-young-877b3330",
+    "email": "cashandchloesmom@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:44:16.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:44:16.000Z",
+    "last_seen": "2026-08-01T01:44:16.000Z",
+    "name": "Julia Hoag",
+    "linkedin_url": "https://www.linkedin.com/in/juliadasherhoag",
+    "email": "julia.hoag@meredith.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:40:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:40:57.000Z",
+    "last_seen": "2026-08-01T01:40:57.000Z",
+    "name": "Nate Gunderson",
+    "linkedin_url": "https://www.linkedin.com/in/ngund",
+    "email": "nate.gunderson@gofilta.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:38:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:38:46.000Z",
+    "last_seen": "2026-08-01T01:38:46.000Z",
+    "name": "Bonnie Kilpatrick",
+    "linkedin_url": "https://www.linkedin.com/in/bonnie-kilpatrick-a6482523",
+    "email": "bykilpatrick@comcast.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:32:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:32:29.000Z",
+    "last_seen": "2026-08-01T01:32:29.000Z",
+    "name": "Ziad Kaddoura",
+    "linkedin_url": "https://www.linkedin.com/in/ziad-kaddoura93",
+    "email": "ziad.kaddoura@jpi.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:23:21.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:23:21.000Z",
+    "last_seen": "2026-08-01T01:23:21.000Z",
+    "name": "Frank Hatchett",
+    "linkedin_url": "https://www.linkedin.com/in/frank-hatchett-72982619",
+    "email": "hatchett40two@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:20:15.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:20:15.000Z",
+    "last_seen": "2026-08-01T01:20:15.000Z",
+    "name": "Andrea (Dieleman) MacKinnon",
+    "linkedin_url": "https://www.linkedin.com/in/andrea-mackinnon",
+    "email": "andrea.mackinnon@hilton.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T01:02:50.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T01:02:50.000Z",
+    "last_seen": "2026-08-01T01:02:50.000Z",
+    "name": "Marilynn Harrison",
+    "linkedin_url": "https://www.linkedin.com/in/marilynn-harrison-13aa4574",
+    "email": "marilynn825@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T00:59:12.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T00:59:12.000Z",
+    "last_seen": "2026-08-01T00:59:12.000Z",
+    "name": "Tamar Yudenfreund",
+    "linkedin_url": "https://www.linkedin.com/in/tamar-yudenfreund",
+    "email": "tyudenfreund@encorecapital.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T00:58:56.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T00:58:56.000Z",
+    "last_seen": "2026-08-01T00:58:56.000Z",
+    "name": "Steve Keeton",
+    "linkedin_url": "https://www.linkedin.com/in/steve-keeton-74a3137a",
+    "email": "stevenleeottis@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T00:24:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T00:24:28.000Z",
+    "last_seen": "2026-08-01T00:24:28.000Z",
+    "name": "Layna Johnson",
+    "linkedin_url": "https://www.linkedin.com/in/layna-johnson-28a32190",
+    "email": "ljohnson@sureway.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-08-01T00:19:03.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-08-01T00:19:03.000Z",
+    "last_seen": "2026-08-01T00:19:03.000Z",
+    "name": "Russell Witkemper",
+    "linkedin_url": "https://www.linkedin.com/in/russell-witkemper-12b181133",
+    "email": "witkemper@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/customer-service",
+      "at": "2026-07-31T01:10:15.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-31T01:10:15.000Z",
+    "last_seen": "2026-07-31T01:10:15.000Z",
+    "name": "Kennedy Roberts",
+    "linkedin_url": "https://www.linkedin.com/in/kennedy-robertss",
+    "email": "kennedy@krupaconsulting.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T19:33:31.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T19:33:31.000Z",
+    "last_seen": "2026-07-30T19:33:31.000Z",
+    "name": "Jerry J Stravia III",
+    "linkedin_url": "https://www.linkedin.com/in/jerrystravia",
+    "email": "jerry_stravia@baxter.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T14:21:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T14:21:29.000Z",
+    "last_seen": "2026-07-30T14:21:29.000Z",
+    "name": "Annie Lim",
+    "linkedin_url": "https://www.linkedin.com/in/annie-lim-11085166",
+    "email": "annie.lim@kaiserpermanente.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T13:14:20.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T13:14:20.000Z",
+    "last_seen": "2026-07-30T13:14:20.000Z",
+    "name": "Vanessa Perez",
+    "linkedin_url": "https://www.linkedin.com/in/vanessa-perez-045a9762",
+    "email": "perezvignite@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T12:57:08.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T12:57:08.000Z",
+    "last_seen": "2026-07-30T12:57:08.000Z",
+    "name": "Sara Clark",
+    "linkedin_url": "https://www.linkedin.com/in/sara-clark-9576366",
+    "email": "sclark10@wcpss.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T12:55:04.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T12:55:04.000Z",
+    "last_seen": "2026-07-30T12:55:04.000Z",
+    "name": "Anel Ramirez",
+    "linkedin_url": "https://www.linkedin.com/in/anel-ramirez-146a45b",
+    "email": "anelram19r@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T10:06:12.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T10:06:12.000Z",
+    "last_seen": "2026-07-30T10:06:12.000Z",
+    "name": "Jamie Harris",
+    "linkedin_url": "https://www.linkedin.com/in/jamieharris2",
+    "email": "jharris0820@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T09:41:58.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T09:41:58.000Z",
+    "last_seen": "2026-07-30T09:41:58.000Z",
+    "name": "Jason Collins",
+    "linkedin_url": "https://www.linkedin.com/in/jason-collins-b6848611",
+    "email": "jcollins@firstquality.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T09:40:55.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T09:40:55.000Z",
+    "last_seen": "2026-07-30T09:40:55.000Z",
+    "name": "Sabrina Lazenby",
+    "linkedin_url": "https://www.linkedin.com/in/sabrina-lazenby-49930a177",
+    "email": "spl00snsl00@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T08:29:01.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T08:29:01.000Z",
+    "last_seen": "2026-07-30T08:29:01.000Z",
+    "name": "John Parker",
+    "linkedin_url": "https://www.linkedin.com/in/stuntmasters",
+    "email": "john@stuntmastersinc.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T07:55:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T07:55:32.000Z",
+    "last_seen": "2026-07-30T07:55:32.000Z",
+    "name": "David Lau",
+    "linkedin_url": "https://www.linkedin.com/in/david-lau-62182131",
+    "email": "dklau2000@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T07:27:59.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T07:27:59.000Z",
+    "last_seen": "2026-07-30T07:27:59.000Z",
+    "name": "David Miller",
+    "linkedin_url": "https://www.linkedin.com/in/millerdavidt",
+    "email": "david.miller@lcamustangs.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T05:13:37.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T05:13:37.000Z",
+    "last_seen": "2026-07-30T05:13:37.000Z",
+    "name": "kris mohn",
+    "linkedin_url": "https://www.linkedin.com/in/kris-mohn-81420932",
+    "email": "kris.mohn@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T04:04:47.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T04:04:47.000Z",
+    "last_seen": "2026-07-30T04:04:47.000Z",
+    "name": "Chris Arnold",
+    "linkedin_url": "https://www.linkedin.com/in/chris-arnold-332b218",
+    "email": "carnold@acfloans.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T03:40:17.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T03:40:17.000Z",
+    "last_seen": "2026-07-30T03:40:17.000Z",
+    "name": "Sharon Nowik",
+    "linkedin_url": "https://www.linkedin.com/in/sharon-nowik-27311432",
+    "email": "sharonlhp@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T03:01:01.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T03:01:01.000Z",
+    "last_seen": "2026-07-30T03:01:01.000Z",
+    "name": "Michael Cronin",
+    "linkedin_url": "https://www.linkedin.com/in/michael-cronin-9bb87836",
+    "email": "mcronin@crownrisk.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T02:55:27.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T02:55:27.000Z",
+    "last_seen": "2026-07-30T02:55:27.000Z",
+    "name": "Marc Mouhadeb",
+    "linkedin_url": "https://www.linkedin.com/in/marc-mouhadeb-435886",
+    "email": "mouhadeb@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T02:31:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T02:31:32.000Z",
+    "last_seen": "2026-07-30T02:31:32.000Z",
+    "name": "Don Gahagan",
+    "linkedin_url": "https://www.linkedin.com/in/don-gahagan-b7399776",
+    "email": "margaretgunzburger@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T02:27:56.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T02:27:56.000Z",
+    "last_seen": "2026-07-30T02:27:56.000Z",
+    "name": "Jeff Wenzlick",
+    "linkedin_url": "https://www.linkedin.com/in/jeff-wenzlick-75b228",
+    "email": "slick@wcnet.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T01:47:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T01:47:22.000Z",
+    "last_seen": "2026-07-30T01:47:22.000Z",
+    "name": "Julie Morgan",
+    "linkedin_url": "https://www.linkedin.com/in/julie-morgan-rnibclc",
+    "email": "jmorgan@riverview.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T00:33:35.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T00:33:35.000Z",
+    "last_seen": "2026-07-30T00:33:35.000Z",
+    "name": "Vitaly Bokser",
+    "linkedin_url": "https://www.linkedin.com/in/vitalybokser",
+    "email": "vbokser@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T00:30:49.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T00:30:49.000Z",
+    "last_seen": "2026-07-30T00:30:49.000Z",
+    "name": "Joe Poluka",
+    "linkedin_url": "https://www.linkedin.com/in/joe-poluka-b9244b7",
+    "email": "havelanche@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T00:20:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T00:20:46.000Z",
+    "last_seen": "2026-07-30T00:20:46.000Z",
+    "name": "Sharonda Butler Stewart",
+    "linkedin_url": "https://www.linkedin.com/in/sharonda-butler-stewart",
+    "email": "sronda2k1@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-30T00:03:39.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-30T00:03:39.000Z",
+    "last_seen": "2026-07-30T00:03:39.000Z",
+    "name": "Edna Linares",
+    "linkedin_url": "https://www.linkedin.com/in/edna-linares-7779bb313",
+    "email": "e.linares@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/customer-service",
+      "at": "2026-07-29T18:55:59.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-29T18:55:59.000Z",
+    "last_seen": "2026-07-29T18:55:59.000Z",
+    "name": "Rosalie Atkinson",
+    "linkedin_url": "https://www.linkedin.com/in/rosalieatkinson",
+    "email": "rosalie@dearmedia.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/sales",
+      "at": "2026-07-29T16:35:06.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-29T16:35:06.000Z",
+    "last_seen": "2026-07-29T16:35:06.000Z",
+    "name": "Grady Weaver",
+    "linkedin_url": "https://www.linkedin.com/in/grady-weaver-a92842353",
+    "email": "weaverwg@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T23:18:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T23:18:42.000Z",
+    "last_seen": "2026-07-28T23:18:42.000Z",
+    "name": "Elisha Duncan",
+    "linkedin_url": "https://www.linkedin.com/in/elisha-duncan-7b733311b",
+    "email": "ishduncan@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T17:18:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T17:18:32.000Z",
+    "last_seen": "2026-07-28T17:18:32.000Z",
+    "name": "Cody White",
+    "linkedin_url": "https://www.linkedin.com/in/codyamwhite",
+    "email": "cody@forgecityworks.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T17:03:02.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T17:03:02.000Z",
+    "last_seen": "2026-07-28T17:03:02.000Z",
+    "name": "Deborah Helfrich",
+    "linkedin_url": "https://www.linkedin.com/in/deborah-helfrichvt",
+    "email": "deborah.helfrich@icfi.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T17:03:01.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T17:03:01.000Z",
+    "last_seen": "2026-07-28T17:03:01.000Z",
+    "name": "Joe Mifsud",
+    "linkedin_url": "https://www.linkedin.com/in/mifsudjoe",
+    "email": "joe@workwhilejobs.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-07-28T16:53:52.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T16:53:52.000Z",
+    "last_seen": "2026-07-28T16:53:52.000Z",
+    "name": "Melissa Hill",
+    "linkedin_url": "https://www.linkedin.com/in/melissa-hill-a858921a",
+    "email": "melissa@ocparalegals.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T16:48:16.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T16:48:16.000Z",
+    "last_seen": "2026-07-28T16:48:16.000Z",
+    "name": "Michael Jaeger",
+    "linkedin_url": "https://www.linkedin.com/in/nj1031exchangesource",
+    "email": "meadowlandsapp@att.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-07-28T10:14:02.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T10:14:02.000Z",
+    "last_seen": "2026-07-28T10:14:02.000Z",
+    "name": "Alfonso E Martinez",
+    "linkedin_url": "https://www.linkedin.com/in/alfonso-e-martinez-0aa903b7",
+    "email": "alfonso.martinez2211@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T09:31:47.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T09:31:47.000Z",
+    "last_seen": "2026-07-28T09:31:47.000Z",
+    "name": "Gustavo Amaya",
+    "linkedin_url": "https://www.linkedin.com/in/gustavo-amaya-b525041a2",
+    "email": "gustavoamaya1@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T06:08:31.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T06:08:31.000Z",
+    "last_seen": "2026-07-28T06:08:31.000Z",
+    "name": "Emanuel Lopez",
+    "linkedin_url": "https://www.linkedin.com/in/emanuel-lopez-76908b19",
+    "email": "elopezxaz@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T03:27:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T03:27:22.000Z",
+    "last_seen": "2026-07-28T03:27:22.000Z",
+    "name": "Shanna Caliva",
+    "linkedin_url": "https://www.linkedin.com/in/shanna-caliva-1739a956",
+    "email": "shannac@arkvegas.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T03:24:51.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T03:24:51.000Z",
+    "last_seen": "2026-07-28T03:24:51.000Z",
+    "name": "Dwayne Falks",
+    "linkedin_url": "https://www.linkedin.com/in/dwayne-falks-ba38026b",
+    "email": "dwaynefalks@icloud.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T02:46:40.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T02:46:40.000Z",
+    "last_seen": "2026-07-28T02:46:40.000Z",
+    "name": "Andy Gugliuzzi",
+    "linkedin_url": "https://www.linkedin.com/in/andy-gugliuzzi-59106b14b",
+    "email": "3zautorestoration@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-07-28T01:27:08.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T01:27:08.000Z",
+    "last_seen": "2026-07-28T01:27:08.000Z",
+    "name": "Diana McLaughlin",
+    "linkedin_url": "https://www.linkedin.com/in/diana-mclaughlin-ab847921",
+    "email": "dmclaughlin@pacificwesternbank.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T01:11:59.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T01:11:59.000Z",
+    "last_seen": "2026-07-28T01:11:59.000Z",
+    "name": "Bob Batcher",
+    "linkedin_url": "https://www.linkedin.com/in/bob-batcher-7aab396",
+    "email": "rbatcher@primeplus.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-28T00:05:35.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-28T00:05:35.000Z",
+    "last_seen": "2026-07-28T00:05:35.000Z",
+    "name": "Sheila Williams",
+    "linkedin_url": "https://www.linkedin.com/in/sheila-williams-686b5369",
+    "email": "lvgdahl@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T22:57:39.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T22:57:39.000Z",
+    "last_seen": "2026-07-27T22:57:39.000Z",
+    "name": "Edna Lopez",
+    "linkedin_url": "https://www.linkedin.com/in/edna-lopez-14a972206",
+    "email": "ednalopez@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T22:49:21.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T22:49:21.000Z",
+    "last_seen": "2026-07-27T22:49:21.000Z",
+    "name": "farah Saeb",
+    "linkedin_url": "https://www.linkedin.com/in/farah-saeb-891b4732",
+    "email": "farahsaeb@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T22:09:42.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T22:09:42.000Z",
+    "last_seen": "2026-07-27T22:09:42.000Z",
+    "name": "Jim Brand",
+    "linkedin_url": "https://www.linkedin.com/in/jim-brand-06a9224",
+    "email": "jbrand@mcrmed.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/marketing",
+      "at": "2026-07-27T20:56:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T20:56:46.000Z",
+    "last_seen": "2026-07-27T20:56:46.000Z",
+    "name": "Shane Hibbeler",
+    "linkedin_url": "https://www.linkedin.com/in/shane-hibbeler-263a9915",
+    "email": "shane@f1payments.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T19:40:08.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T19:40:08.000Z",
+    "last_seen": "2026-07-27T19:40:08.000Z",
+    "name": "Erin  Schwartz",
+    "linkedin_url": "https://www.linkedin.com/in/erin-schwartz6",
+    "email": "erinschwartz6@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T11:47:54.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T11:47:54.000Z",
+    "last_seen": "2026-07-27T11:47:54.000Z",
+    "name": "Irven B. Penn",
+    "linkedin_url": "https://www.linkedin.com/in/irven-b-penn",
+    "email": "ipenn@ipennlaw.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T11:11:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T11:11:07.000Z",
+    "last_seen": "2026-07-27T11:11:07.000Z",
+    "name": "Kim Robinson",
+    "linkedin_url": "https://www.linkedin.com/in/kim-robinson-89b21315a",
+    "email": "rkim53719@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T07:44:40.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T07:44:40.000Z",
+    "last_seen": "2026-07-27T07:44:40.000Z",
+    "name": "Jacqualyn Aiello",
+    "linkedin_url": "https://www.linkedin.com/in/jacqualyn-aiello-1641a193",
+    "email": "ladylabyrinth@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-07-27T03:15:54.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T03:15:54.000Z",
+    "last_seen": "2026-07-27T03:15:54.000Z",
+    "name": "michael meinen",
+    "linkedin_url": "https://www.linkedin.com/in/michael-meinen-84123520a",
+    "email": "michael.meinen@va.gov",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-27T01:15:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-27T01:15:28.000Z",
+    "last_seen": "2026-07-27T01:15:28.000Z",
+    "name": "Susan Reigler",
+    "linkedin_url": "https://www.linkedin.com/in/susan-reigler-a7633b47",
+    "email": "dl_smallwood@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T23:59:51.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T23:59:51.000Z",
+    "last_seen": "2026-07-26T23:59:51.000Z",
+    "name": "Joshua Buckley",
+    "linkedin_url": "https://www.linkedin.com/in/joshua-buckley-9308bba9",
+    "email": "jpbuckley12@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T23:32:35.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T23:32:35.000Z",
+    "last_seen": "2026-07-26T23:32:35.000Z",
+    "name": "Spencer Riggs",
+    "linkedin_url": "https://www.linkedin.com/in/spencer-riggs-9a4014162",
+    "email": "andnowspencer@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T18:20:27.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T18:20:27.000Z",
+    "last_seen": "2026-07-26T18:20:27.000Z",
+    "name": "Jarrod Barnes, MBA",
+    "linkedin_url": "https://www.linkedin.com/in/jarrod-barnes-mba-a359a091",
+    "email": "jbarnes@acnj.gov",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T17:15:34.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T17:15:34.000Z",
+    "last_seen": "2026-07-26T17:15:34.000Z",
+    "name": "Kathy Cabanag",
+    "linkedin_url": "https://www.linkedin.com/in/kathy-cabanag-8a1a0616",
+    "email": "beautifulbrowneyes00@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T14:29:44.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T14:29:44.000Z",
+    "last_seen": "2026-07-26T14:29:44.000Z",
+    "name": "Christine Shafer",
+    "linkedin_url": "https://www.linkedin.com/in/christine-shafer-94400666",
+    "email": "cdshafer67@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T12:49:56.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T12:49:56.000Z",
+    "last_seen": "2026-07-26T12:49:56.000Z",
+    "name": "Christine Neely",
+    "linkedin_url": "https://www.linkedin.com/in/christine-neely",
+    "email": "cneely101@comcast.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T12:38:37.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T12:38:37.000Z",
+    "last_seen": "2026-07-26T12:38:37.000Z",
+    "name": "Alissa Stackhouse",
+    "linkedin_url": "https://www.linkedin.com/in/alissa-stackhouse-7a60a9351",
+    "email": "alissa_stackhouse_09@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T09:23:02.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T09:23:02.000Z",
+    "last_seen": "2026-07-26T09:23:02.000Z",
+    "name": "John Ortiz",
+    "linkedin_url": "https://www.linkedin.com/in/john-ortiz6",
+    "email": "john.ortiz@integrisit.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T08:22:58.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T08:22:58.000Z",
+    "last_seen": "2026-07-26T08:22:58.000Z",
+    "name": "Keisha Bradley",
+    "linkedin_url": "https://www.linkedin.com/in/keisha-bradley-8a525476",
+    "email": "keishabonit@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-26T07:07:16.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-26T07:07:16.000Z",
+    "last_seen": "2026-07-26T07:07:16.000Z",
+    "name": "Jeffrey Lowenkron",
+    "linkedin_url": "https://www.linkedin.com/in/jeffrey-lowenkron-172b2914",
+    "email": "rosynjeff@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T10:06:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T10:06:57.000Z",
+    "last_seen": "2026-07-25T10:06:57.000Z",
+    "name": "Anja Frederix",
+    "linkedin_url": "https://www.linkedin.com/in/anja-frederix-7b2479b2",
+    "email": "a_fred0126@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T08:38:50.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T08:38:50.000Z",
+    "last_seen": "2026-07-25T08:38:50.000Z",
+    "name": "Arlo Mickelsen",
+    "linkedin_url": "https://www.linkedin.com/in/arlo-mickelsen-08a82723",
+    "email": "nathancmickelsen@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T08:25:28.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T08:25:28.000Z",
+    "last_seen": "2026-07-25T08:25:28.000Z",
+    "name": "Raunise Rivers",
+    "linkedin_url": "https://www.linkedin.com/in/raunise-rivers-5897199b",
+    "email": "raunisemcneal@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T04:04:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T04:04:46.000Z",
+    "last_seen": "2026-07-25T04:04:46.000Z",
+    "name": "shanita Smith",
+    "linkedin_url": "https://www.linkedin.com/in/smiller2",
+    "email": "spsmith@judge.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T01:14:58.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T01:14:58.000Z",
+    "last_seen": "2026-07-25T01:14:58.000Z",
+    "name": "Marc Howard",
+    "linkedin_url": "https://www.linkedin.com/in/marc-howard-b3885825",
+    "email": "howardheatingandair@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T01:12:52.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T01:12:52.000Z",
+    "last_seen": "2026-07-25T01:12:52.000Z",
+    "name": "Kevin French",
+    "linkedin_url": "https://www.linkedin.com/in/kevinfrench",
+    "email": "jossfrench@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T01:08:16.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T01:08:16.000Z",
+    "last_seen": "2026-07-25T01:08:16.000Z",
+    "name": "Bret Driver",
+    "linkedin_url": "https://www.linkedin.com/in/bret-driver-4429897",
+    "email": "bretdriver@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T00:26:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T00:26:29.000Z",
+    "last_seen": "2026-07-25T00:26:29.000Z",
+    "name": "zakiyya streeter",
+    "linkedin_url": "https://www.linkedin.com/in/zakiyya-streeter-88b711a4",
+    "email": "zakiyyastreeter@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T00:15:24.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T00:15:24.000Z",
+    "last_seen": "2026-07-25T00:15:24.000Z",
+    "name": "Steve Dalia",
+    "linkedin_url": "https://www.linkedin.com/in/stevedalia",
+    "email": "sdalia@daliasales.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-25T00:08:13.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-25T00:08:13.000Z",
+    "last_seen": "2026-07-25T00:08:13.000Z",
+    "name": "Dr.Albert Adams",
+    "linkedin_url": "https://www.linkedin.com/in/dr-albert-adams-920773a",
+    "email": "sisalberta@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T23:58:40.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T23:58:40.000Z",
+    "last_seen": "2026-07-24T23:58:40.000Z",
+    "name": "Victoria Meyer",
+    "linkedin_url": "https://www.linkedin.com/in/victoria-meyer-ohio",
+    "email": "victoria.meyer@ihs911.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T23:57:38.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T23:57:38.000Z",
+    "last_seen": "2026-07-24T23:57:38.000Z",
+    "name": "Dorian Davis",
+    "linkedin_url": "https://www.linkedin.com/in/dorian-davis-b4a117102",
+    "email": "d.davis@afwonline.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T22:17:51.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T22:17:51.000Z",
+    "last_seen": "2026-07-24T22:17:51.000Z",
+    "name": "Marvin Hodgson",
+    "linkedin_url": "https://www.linkedin.com/in/marvinhodgson",
+    "email": "mike.toney08@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T20:26:39.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T20:26:39.000Z",
+    "last_seen": "2026-07-24T20:26:39.000Z",
+    "name": "Lex Alexander",
+    "linkedin_url": "https://www.linkedin.com/in/lexalexander",
+    "email": "lex@alexanderhancock.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T20:20:08.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T20:20:08.000Z",
+    "last_seen": "2026-07-24T20:20:08.000Z",
+    "name": "Bill Bolger",
+    "linkedin_url": "https://www.linkedin.com/in/bill-bolger-b6b3155",
+    "email": "billbolger@comcast.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T19:14:34.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T19:14:34.000Z",
+    "last_seen": "2026-07-24T19:14:34.000Z",
+    "name": "Kenneth Aveirls II",
+    "linkedin_url": "https://www.linkedin.com/in/kenneth-aveirls-ii-0519a281",
+    "email": "kennethaveirls@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T15:37:01.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T15:37:01.000Z",
+    "last_seen": "2026-07-24T15:37:01.000Z",
+    "name": "Mehmet Ali Kevser",
+    "linkedin_url": "https://www.linkedin.com/in/mehmet-ali-kevser-2289b641",
+    "email": "makevser@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T15:35:22.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T15:35:22.000Z",
+    "last_seen": "2026-07-24T15:35:22.000Z",
+    "name": "Rajeev Unnikrishnan",
+    "linkedin_url": "https://www.linkedin.com/in/rajeev-unnikrishnan-aba43b1",
+    "email": "rajeev.unnikrishnan@ttec.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T15:33:23.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T15:33:23.000Z",
+    "last_seen": "2026-07-24T15:33:23.000Z",
+    "name": "Daniel Koetters",
+    "linkedin_url": "https://www.linkedin.com/in/daniel-koetters-55203523",
+    "email": "tinsoldier1964@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T15:33:17.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T15:33:17.000Z",
+    "last_seen": "2026-07-24T15:33:17.000Z",
+    "name": "Hannah Kleckner Hall",
+    "linkedin_url": "https://www.linkedin.com/in/hannahkleckner",
+    "email": "hannah@emilysentourage.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T15:32:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T15:32:57.000Z",
+    "last_seen": "2026-07-24T15:32:57.000Z",
+    "name": "doug neilson",
+    "linkedin_url": "https://www.linkedin.com/in/doug-neilson-62333b33",
+    "email": "dougneilson12@hotmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T14:20:01.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T14:20:01.000Z",
+    "last_seen": "2026-07-24T14:20:01.000Z",
+    "name": "Lynsey Smith",
+    "linkedin_url": "https://www.linkedin.com/in/lynsey-smith-427b6b62",
+    "email": "lynsey714@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T13:17:59.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T13:17:59.000Z",
+    "last_seen": "2026-07-24T13:17:59.000Z",
+    "name": "Bob Stepp",
+    "linkedin_url": "https://www.linkedin.com/in/bob-stepp-8677777",
+    "email": "bob@innovativemlo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T11:35:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T11:35:07.000Z",
+    "last_seen": "2026-07-24T11:35:07.000Z",
+    "name": "Shane Barth",
+    "linkedin_url": "https://www.linkedin.com/in/shanebarth",
+    "email": "shanebarth@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T08:41:21.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T08:41:21.000Z",
+    "last_seen": "2026-07-24T08:41:21.000Z",
+    "name": "Carnel Jackson",
+    "linkedin_url": "https://www.linkedin.com/in/carnel-jackson-82010a56",
+    "email": "cjackson@brockport.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T08:28:37.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T08:28:37.000Z",
+    "last_seen": "2026-07-24T08:28:37.000Z",
+    "name": "sonia grella",
+    "linkedin_url": "https://www.linkedin.com/in/sonia-grella-6127bb20",
+    "email": "vlupia@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T06:04:00.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T06:04:00.000Z",
+    "last_seen": "2026-07-24T06:04:00.000Z",
+    "name": "Jack Kitterman",
+    "linkedin_url": "https://www.linkedin.com/in/jack-kitterman-b1aa694a",
+    "email": "jackkit4545@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T05:12:24.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T05:12:24.000Z",
+    "last_seen": "2026-07-24T05:12:24.000Z",
+    "name": "Nancy Jarvis",
+    "linkedin_url": "https://www.linkedin.com/in/nancy-jarvis-b526466",
+    "email": "nancy.jarvis@bentley.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T05:06:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T05:06:07.000Z",
+    "last_seen": "2026-07-24T05:06:07.000Z",
+    "name": "Rebekah Ryan",
+    "linkedin_url": "https://www.linkedin.com/in/rebekah-ryan-6b716995",
+    "email": "mbuchman5@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-24T01:06:33.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-24T01:06:33.000Z",
+    "last_seen": "2026-07-24T01:06:33.000Z",
+    "name": "sarah jones",
+    "linkedin_url": "https://www.linkedin.com/in/sarah-jones-0b602766",
+    "email": "sajones0805@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T23:36:32.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T23:36:32.000Z",
+    "last_seen": "2026-07-23T23:36:32.000Z",
+    "name": "angie Thriffiley",
+    "linkedin_url": "https://www.linkedin.com/in/angie-thriffiley-93918a40",
+    "email": "gie28us@yahoo.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T22:34:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T22:34:46.000Z",
+    "last_seen": "2026-07-23T22:34:46.000Z",
+    "name": "Thomas Shields Shields",
+    "linkedin_url": "https://www.linkedin.com/in/thomas-shields-shields-1a82a367",
+    "email": "tshields@harbourmech.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T22:22:11.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T22:22:11.000Z",
+    "last_seen": "2026-07-23T22:22:11.000Z",
+    "name": "jamaal Terry",
+    "linkedin_url": "https://www.linkedin.com/in/jamaal-terry-64a3461a4",
+    "email": "jamonterry@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T22:15:47.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T22:15:47.000Z",
+    "last_seen": "2026-07-23T22:15:47.000Z",
+    "name": "Payal Kahar",
+    "linkedin_url": "https://www.linkedin.com/in/payal-kahar-4257a126a",
+    "email": "pkahar@fgcu.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T21:33:55.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T21:33:55.000Z",
+    "last_seen": "2026-07-23T21:33:55.000Z",
+    "name": "Tony Lenci",
+    "linkedin_url": "https://www.linkedin.com/in/tlenci",
+    "email": "tlenci@bpt3.net",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T21:32:09.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T21:32:09.000Z",
+    "last_seen": "2026-07-23T21:32:09.000Z",
+    "name": "Adam Traynor",
+    "linkedin_url": "https://www.linkedin.com/in/adam-traynor-b7977010a",
+    "email": "adam.traynor@oldcastle.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T21:28:29.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T21:28:29.000Z",
+    "last_seen": "2026-07-23T21:28:29.000Z",
+    "name": "Jeff Heaton",
+    "linkedin_url": "https://www.linkedin.com/in/jeff-heaton",
+    "email": "jheaton001@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T21:19:59.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T21:19:59.000Z",
+    "last_seen": "2026-07-23T21:19:59.000Z",
+    "name": "Loring Larsen",
+    "linkedin_url": "https://www.linkedin.com/in/loring-larsen-87b13543",
+    "email": "llranger@msn.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T21:18:00.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T21:18:00.000Z",
+    "last_seen": "2026-07-23T21:18:00.000Z",
+    "name": "John Berg",
+    "linkedin_url": "https://www.linkedin.com/in/john-berg-b21b36a2",
+    "email": "johntopberg@aol.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T21:15:36.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T21:15:36.000Z",
+    "last_seen": "2026-07-23T21:15:36.000Z",
+    "name": "Luis Castillo",
+    "linkedin_url": "https://www.linkedin.com/in/luis-castillo-03767612b",
+    "email": "rosalescastillo2012@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T21:07:07.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T21:07:07.000Z",
+    "last_seen": "2026-07-23T21:07:07.000Z",
+    "name": "John Wheaton",
+    "linkedin_url": "https://www.linkedin.com/in/john-wheaton-61587663",
+    "email": "jwheaton@nezperce.org",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T13:14:14.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T13:14:14.000Z",
+    "last_seen": "2026-07-23T13:14:14.000Z",
+    "name": "Larry Linamen",
+    "linkedin_url": "https://www.linkedin.com/in/larry-linamen-91991a56",
+    "email": "llinamen@calbaptist.edu",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T04:03:46.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T04:03:46.000Z",
+    "last_seen": "2026-07-23T04:03:46.000Z",
+    "name": "Ashley McMahon",
+    "linkedin_url": "https://www.linkedin.com/in/ashley-mcmahon-83099524",
+    "email": "ashley@dmhowelllaw.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T04:00:35.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T04:00:35.000Z",
+    "last_seen": "2026-07-23T04:00:35.000Z",
+    "name": "Suzanne Parker",
+    "linkedin_url": "https://www.linkedin.com/in/suzparker",
+    "email": "parkers@macrogenics.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T01:53:14.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T01:53:14.000Z",
+    "last_seen": "2026-07-23T01:53:14.000Z",
+    "name": "Eddie Pullen",
+    "linkedin_url": "https://www.linkedin.com/in/eddiepullen",
+    "email": "edmp1960@gmail.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://gtm.hirecharm.com/",
+      "at": "2026-07-23T01:12:57.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T01:12:57.000Z",
+    "last_seen": "2026-07-23T01:12:57.000Z",
+    "name": "carl groff",
+    "linkedin_url": "https://www.linkedin.com/in/carl-groff-41649835",
+    "email": "carl@waterwireworks.com",
+    "submitted": false
+   },
+   {
+    "pages": [
+     {
+      "url": "https://www.hirecharm.com/",
+      "at": "2026-07-23T00:53:08.000Z"
+     }
+    ],
+    "visits": 1,
+    "first_seen": "2026-07-23T00:53:08.000Z",
+    "last_seen": "2026-07-23T00:53:08.000Z",
+    "name": "Jordan Hilgers",
+    "linkedin_url": "https://www.linkedin.com/in/jordanhilgers",
+    "email": "jordan.hilgers@datadoghq.com",
+    "submitted": false
+   }
+  ]
+ },
+ "real_form_fills": 54,
+ "real_bookings": 40,
+ "qualification": {
+  "with_answers": 54,
+  "qualified": 26,
+  "mix": {
+   "qualified": 26,
+   "dq_acv_low": 17,
+   "dq_revenue_acv": 11
+  },
+  "qualification_rate": 48.1,
+  "booked_qualified": 18,
+  "calendar_completion": 69.2
+ },
+ "qualifier_impact": {
+  "gate_date": "2026-07-27",
+  "before": {
+   "subs": 0,
+   "booked": 0,
+   "booking_rate": null
+  },
+  "after": {
+   "subs": 54,
+   "booked": 21,
+   "booking_rate": 38.9
+  }
+ },
+ "lead_quality": {
+  "total": 54,
+  "company": 44,
+  "free": 10,
+  "company_pct": 81.5,
+  "free_pct": 18.5,
+  "website_pct": 100.0,
+  "free_with_site": 10,
+  "free_with_site_pct": 100.0,
+  "by_type": {
+   "company": {
+    "n": 44,
+    "booked": 19,
+    "booking_rate": 43.2
+   },
+   "free": {
+    "n": 10,
+    "booked": 2,
+    "booking_rate": 20.0
+   }
+  }
+ },
+ "bookings_attribution": {
+  "total_real": 40,
+  "ad_attributed": 33,
+  "by_ad": {
+   "(unattributed / direct)": 7,
+   "GTM LinkedIn Email - 5,000 Leads Free": 12,
+   "GTM LinkedIn Email - 40,000 Personalized Emails": 5,
+   "Linked Cold Email Ad #5 - All-In-One Outbound Engine": 12,
+   "Linked Cold Email Ad #7 - Inbox Beats The Feed": 2,
+   "Label them with a problem": 1,
+   "LinkedIn Cold Email Ad #6 - GTM Video Ad #6 - Outbound On The Someday List": 1
+  },
+  "by_adset": {
+   "(unattributed / direct)": 7,
+   "Retargeting Video Ads": 12,
+   "GTM LinkedIn Email Statics 1": 5,
+   "GTM LinkedIn Cold Email - REAL": 15,
+   "\"What If we...\" Ad Body": 1
+  },
+  "retarget_booked": 12,
+  "prospect_booked": 21
+ },
+ "real_bookings_detail": [
+  {
+   "name": "Todd Dugas",
+   "email": "todd.dugas@safetyawardstore.com",
+   "start": "2026-07-24T08:00:00-07:00",
+   "ad": null,
+   "ad_set": null,
+   "retarget": false,
+   "utm_source": null,
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "unqualified",
+   "post_call": false,
+   "form_qual": null,
+   "pre_gate": true
+  },
+  {
+   "name": "Yvette DeCost\u00e0",
+   "email": "yvette3984@gmail.com",
+   "start": "2026-07-27T09:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "unqualified",
+   "post_call": false,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Mark S. Pincus",
+   "email": "mark@2514capitaladvisors.com",
+   "start": "2026-07-27T14:00:00-07:00",
+   "ad": null,
+   "ad_set": null,
+   "retarget": false,
+   "utm_source": null,
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "unqualified",
+   "post_call": false,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Terry Coutsolioutsos",
+   "email": "terry@revrxai.com",
+   "start": "2026-07-27T15:00:00-07:00",
+   "ad": null,
+   "ad_set": null,
+   "retarget": false,
+   "utm_source": null,
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Glen Fields",
+   "email": "glen@bigdealagency.com",
+   "start": "2026-07-28T09:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Brianna Larson",
+   "email": "sparkles@sparklestonecreations.com",
+   "start": "2026-07-28T09:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Azra Rehan",
+   "email": "azrarehan2015@gmail.com",
+   "start": "2026-07-28T11:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Aiden Phan",
+   "email": "aidenp9920@gmail.com",
+   "start": "2026-07-28T13:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Jamilah Jawad",
+   "email": "hello@milahsworldwide.com",
+   "start": "2026-07-28T13:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Daniel Cornejo",
+   "email": "daniel@shopblacktop.com",
+   "start": "2026-07-28T14:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Kealy Fraley",
+   "email": "shayfjfiservices@gmail.con",
+   "start": "2026-07-28T16:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Tonya Daves",
+   "email": "tonyadaves86@gmail.com",
+   "start": "2026-07-28T16:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": true,
+   "rescheduled": false,
+   "outcome": "cancelled",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Ellio Nurieli",
+   "email": "ellio@macmoor.com",
+   "start": "2026-07-29T08:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 40,000 Personalized Emails",
+   "ad_set": "GTM LinkedIn Email Statics 1",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "James Spencer",
+   "email": "james@secfolio.com",
+   "start": "2026-07-29T09:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Syd Rizvi",
+   "email": "sydrizvi786@gmail.com",
+   "start": "2026-07-29T13:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Chris Baus",
+   "email": "chrisbaus111@gmail.com",
+   "start": "2026-07-29T16:00:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "dq_acv_low",
+   "pre_gate": false
+  },
+  {
+   "name": "Chad Smith",
+   "email": "chadwsmithmd@gmail.com",
+   "start": "2026-07-30T09:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 5,000 Leads Free",
+   "ad_set": "Retargeting Video Ads",
+   "retarget": true,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": true,
+   "outcome": "rescheduled",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Michael  Nikolaou ",
+   "email": "michael.nikolaou@fhhins.com",
+   "start": "2026-07-30T14:30:00-07:00",
+   "ad": "GTM LinkedIn Email - 40,000 Personalized Emails",
+   "ad_set": "GTM LinkedIn Email Statics 1",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Garret Kraham",
+   "email": "krahamgarret1@gmail.com",
+   "start": "2026-07-31T12:30:00-07:00",
+   "ad": null,
+   "ad_set": null,
+   "retarget": false,
+   "utm_source": null,
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": null,
+   "pre_gate": false
+  },
+  {
+   "name": "Reg  McGaugh ",
+   "email": "reginald@cornhuskercapital.com",
+   "start": "2026-08-03T14:00:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Reg  McGaugh ",
+   "email": "reginald@cornhuskercapital.com",
+   "start": "2026-08-03T14:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Stephen Cooper",
+   "email": "stevecooper728@gmail.com",
+   "start": "2026-08-03T16:00:00-07:00",
+   "ad": "Linked Cold Email Ad #7 - Inbox Beats The Feed",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Nykelle Schlofman",
+   "email": "nykelle@altgrowth.com",
+   "start": "2026-08-04T14:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Mark  Casey",
+   "email": "hey@mekupelet.com",
+   "start": "2026-08-05T12:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "CH Haywood",
+   "email": "chaywood@execsagency.com",
+   "start": "2026-08-05T16:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "William Prettyman ",
+   "email": "william@studiocenter.com",
+   "start": "2026-08-10T16:00:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": true,
+   "outcome": "rescheduled",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "G Leavitt",
+   "email": "g@multipleclub.com",
+   "start": "2026-08-11T14:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Will R",
+   "email": "will@pomegranium.com",
+   "start": "2026-08-12T12:00:00-07:00",
+   "ad": null,
+   "ad_set": null,
+   "retarget": false,
+   "utm_source": null,
+   "held": false,
+   "no_show": true,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "no_show",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Namrith Namrith ",
+   "email": "namrith.ilneni@sakeshllc.com",
+   "start": "2026-08-12T15:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Shelley Armato",
+   "email": "shelley@mysmartplans.com",
+   "start": "2026-08-13T09:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Cara Schwartz",
+   "email": "cara@mediaopsmachine.com",
+   "start": "2026-08-13T13:30:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "held",
+   "fit": "qualified",
+   "post_call": true,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "William Prettyman ",
+   "email": "william@studiocenter.com",
+   "start": "2026-08-17T16:15:00-07:00",
+   "ad": "Linked Cold Email Ad #5 - All-In-One Outbound Engine",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": true,
+   "outcome": "rescheduled",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Yousif Kurdi",
+   "email": "yousif@metamorphgroup.co",
+   "start": "2026-08-19T13:00:00-07:00",
+   "ad": "Label them with a problem",
+   "ad_set": "\"What If we...\" Ad Body",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Arjun Ahlawat",
+   "email": "arjun@enginius.ai",
+   "start": "2026-08-20T09:30:00-07:00",
+   "ad": "LinkedIn Cold Email Ad #6 - GTM Video Ad #6 - Outbound On The Someday List",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Richard Gaubert",
+   "email": "richard@topsalesproducer.net",
+   "start": "2026-08-20T14:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 40,000 Personalized Emails",
+   "ad_set": "GTM LinkedIn Email Statics 1",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Stephen Cooper",
+   "email": "steve@yourplatinumgroup.com",
+   "start": "2026-08-20T15:30:00-07:00",
+   "ad": "Linked Cold Email Ad #7 - Inbox Beats The Feed",
+   "ad_set": "GTM LinkedIn Cold Email - REAL",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Christopher Marrano",
+   "email": "chris@bluewatermarketing.com",
+   "start": "2026-08-21T13:30:00-07:00",
+   "ad": null,
+   "ad_set": null,
+   "retarget": false,
+   "utm_source": null,
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Richard Gaubert",
+   "email": "richard@topsalesproducer.net",
+   "start": "2026-08-26T14:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 40,000 Personalized Emails",
+   "ad_set": "GTM LinkedIn Email Statics 1",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Daniel Parrillo",
+   "email": "dparrillo@cardinaltalent.ai",
+   "start": "2026-08-27T09:00:00-07:00",
+   "ad": "GTM LinkedIn Email - 40,000 Personalized Emails",
+   "ad_set": "GTM LinkedIn Email Statics 1",
+   "retarget": false,
+   "utm_source": "meta",
+   "held": true,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": "qualified",
+   "pre_gate": false
+  },
+  {
+   "name": "Alex Johnson",
+   "email": "alexmbjohnson78@gail.com",
+   "start": "2026-09-23T11:30:00-07:00",
+   "ad": null,
+   "ad_set": null,
+   "retarget": false,
+   "utm_source": null,
+   "held": false,
+   "no_show": false,
+   "cancelled": false,
+   "rescheduled": false,
+   "outcome": "auto",
+   "fit": null,
+   "post_call": null,
+   "form_qual": null,
+   "pre_gate": false
+  }
+ ],
+ "meetings_held": 21,
+ "meetings_qualified": 15,
+ "deals_closed": 1,
+ "cash_collected": 76900.0,
+ "deals_committed": 0,
+ "committed_value": 0.0,
+ "committed_first_invoice": 0.0,
+ "committed_detail": [],
+ "post_call": {
+  "held": 21,
+  "qualified": 15,
+  "unqualified": 3,
+  "no_show": 9,
+  "cancelled": 1,
+  "rescheduled": 3,
+  "pending": 3
+ },
+ "qualifier_form_date": "2026-07-27",
+ "wistia": {
+  "page_loads": 4122,
+  "visitors": 2923,
+  "plays": 215,
+  "watched_50": 11
+ },
+ "engagement": {
+  "window": {
+   "start": "2026-07-20",
+   "end": "2026-08-20"
+  },
+  "loads_window": 3815,
+  "plays_window": 190,
+  "loads_lifetime": 4122,
+  "visitors_lifetime": 2923,
+  "plays_lifetime": 215,
+  "play_rate": 7.4,
+  "play_rate_basis": "plays per unique visitor (lifetime)",
+  "avg_percent_watched": 11,
+  "anomalies": [],
+  "anomaly_loads": 0
+ },
+ "cs": {
+  "ad": {
+   "spend": 142.9,
+   "clicks": 162,
+   "impressions": 5379,
+   "ad_sets": [
+    "CS Flex \u2014 Cold"
+   ]
+  },
+  "engagement": {
+   "window": {
+    "start": "2026-08-18",
+    "end": "2026-08-20"
+   },
+   "loads_window": 317,
+   "plays_window": 15,
+   "loads_lifetime": 991,
+   "visitors_lifetime": 683,
+   "plays_lifetime": 64,
+   "play_rate": 9.4,
+   "play_rate_basis": "plays per unique visitor (lifetime)",
+   "avg_percent_watched": 4,
+   "anomalies": [],
+   "anomaly_loads": 0
+  },
+  "video": {
+   "loads": 317,
+   "visitors": 683,
+   "plays": 15,
+   "play_rate": 9.4
+  },
+  "form_fills": 0,
+  "form_fills_all": 8,
+  "booked": 0,
+  "bookings_detail": [],
+  "by_ad": {},
+  "by_adset": {},
+  "qualifier_mix": {
+   "who_handles_support": {},
+   "volume_driver": {},
+   "ticket_types": {}
+  },
+  "cost_per_fill": null,
+  "cost_per_booking": null,
+  "fill_rate": 0.0,
+  "booking_rate": null
+ },
+ "_era": {
+  "name": "GHL + long-form VSL",
+  "source": "GoHighLevel forms/calendars",
+  "gtm_media_id": "swyi1909di",
+  "cs_media_id": "lk17fifkvg",
+  "gtm_ended": "2026-08-26",
+  "cs_ended": "2026-08-27",
+  "frozen_at": "2026-08-27",
+  "note": "Closed era. Engagement is NOT comparable to the current tab: these videos ran 14m38s (GTM) and 13m58s (CS) against 1m51s and 1m33s now."
+ }
+}

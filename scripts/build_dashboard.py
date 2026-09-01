@@ -12,6 +12,8 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import iclosed_source
+
 ROOT = Path(__file__).resolve().parent.parent
 # creds come from the environment (hosted/container) with .env overriding locally
 ENV = dict(os.environ)
@@ -27,9 +29,27 @@ WISTIA_TOKEN = ENV["WISTIA_API_TOKEN"]
 GHL_TOKEN = ENV["GHL_PIT_TOKEN"]
 LOCATION_ID = ENV["GHL_LOCATION_ID"]
 
-VSL_MEDIA_ID = "swyi1909di"          # VSL 005 — live GTM VSL
+# ⚠️ THE VSL WAS REPLACED 26/27 Aug 2026 AND THE NEW ONES ARE 8x SHORTER.
+#
+#   GTM: swyi1909di "VSL 005"        14m38s  ->  18w5xszdv9 "small CHARM VSL"  1m51s
+#   CS:  lk17fifkvg "CS VSL"         13m58s  ->  51low6lcfn "small CS VSL"     1m33s
+#
+# Engagement is NOT comparable across that boundary. "Watched 50%" of fourteen minutes and
+# "watched 50%" of one minute fifty-one are different behaviours, and completion rate will
+# jump for reasons that have nothing to do with the creative being better. Any trend line
+# spanning the switch is measuring the edit, not performance. The prior ids are kept so
+# history can be read deliberately, never blended.
+VSL_MEDIA_ID = "18w5xszdv9"                 # small CHARM VSL — live GTM VSL (1m51s)
+VSL_MEDIA_ID_PRIOR = "swyi1909di"           # VSL 005 (14m38s), live until 26 Aug 2026
+VSL_SWITCHED_ON = "2026-08-26"
+# The GHL form and calendar the GTM funnel ran on until 26 Aug 2026. Kept for the record
+# and still referenced by the frozen historic snapshot; NOT fetched on a live build.
 GTM_FORM_ID = "XwtroXXXZ58OVpL4pEqy"  # GTM Services form VSL ONLY
 GTM_CALENDAR_ID = "KDdgICxdFa0FJQgNSt8c"  # Charm - GTM VSL ONLY
+
+# iClosed event ids — the live source. Scoped per lane so GTM never counts a CS booking.
+ICLOSED_GTM_EVENT_IDS = [47452]   # Charm GTM
+ICLOSED_CS_EVENT_IDS = [47740]    # Charm CS Flex
 
 # GHL custom fields that capture the ad UTMs on the contact (written from the booking
 # URL params — NOT in GHL's native attributionSource, which reads "Direct traffic").
@@ -164,7 +184,9 @@ def is_test(email, name=""):
 # Deliberately additive: nothing above this block changes. The GTM funnel is live and
 # was only just repaired, so a refactor to parameterise both funnels is not worth the
 # regression risk today.
-CS_MEDIA_ID = "lk17fifkvg"                  # CS VSL video on cs.hirecharm.com
+CS_MEDIA_ID = "51low6lcfn"                  # small CS VSL (1m33s) on cs.hirecharm.com
+CS_MEDIA_ID_PRIOR = "lk17fifkvg"            # CS VSL (13m58s), live until 27 Aug 2026
+CS_SWITCHED_ON = "2026-08-27"
 CS_STATS_SINCE = "2026-08-01"               # far enough back to see pre-launch test traffic
 CS_FORM_ID = "jQbgnP7paIZUM6BiqvOy"         # CS Services form VSL Only
 CS_CALENDAR_ID = "UiG1GyVkQwBqa4tbHkEN"     # Charm - CS VSL ONLY
@@ -309,60 +331,35 @@ def cs_funnel(now):
     except Exception:
         cs_by_date = []
 
-    # --- form fills ---
-    subs, page = [], 1
-    while True:
-        try:
-            d = ghl(f"forms/submissions?formId={CS_FORM_ID}&limit=100&page={page}")
-        except Exception:
-            break
-        batch = d.get("submissions", [])
-        subs.extend(batch)
-        if len(batch) < 100:
-            break
-        page += 1
+    # --- form fills (iClosed; GHL stopped receiving these at the CS cutover) ---
+    try:
+        subs = iclosed_source.submissions(event_ids=ICLOSED_CS_EVENT_IDS)
+    except Exception as e:
+        print(f"  CS iClosed contacts failed: {e}")
+        subs = []
     real_subs = [x for x in subs if not is_test(x.get("email"), x.get("name"))]
 
     # --- bookings ---
-    start_ms = int(datetime(2026, 8, 1, tzinfo=timezone.utc).timestamp() * 1000)
-    end_ms = int((now + timedelta(days=60)).timestamp() * 1000)
     try:
-        events = ghl(f"calendars/events?calendarId={CS_CALENDAR_ID}"
-                     f"&startTime={start_ms}&endTime={end_ms}").get("events", [])
-    except Exception:
+        events = iclosed_source.appointments(event_ids=ICLOSED_CS_EVENT_IDS)
+    except Exception as e:
+        print(f"  CS iClosed calls failed: {e}")
         events = []
     booked = [e for e in events if e.get("appointmentStatus") not in ("cancelled", "noshow")]
 
-    # Resolve each booking's contact for the test flag and the per-ad UTMs. Same
-    # gotcha as GTM: UTMs live on contact CUSTOM FIELDS, never on the submission.
+    # iClosed puts the invitee email and the UTMs on the call itself, so the per-contact
+    # GHL lookup is gone. Same shape out, so the attribution blocks below are unchanged.
     detail, by_ad, by_adset = [], {}, {}
-    cache = {}
     for e in booked:
-        cid = e.get("contactId")
-        if cid and cid not in cache:
-            try:
-                con = ghl(f"contacts/{cid}").get("contact", {})
-                cf = {f.get("id"): (f.get("value") or None) for f in (con.get("customFields") or [])}
-                ws = lambda v: " ".join(v.split()) if v else None
-                cache[cid] = {
-                    "email": con.get("email"),
-                    "name": con.get("contactName") or " ".join(
-                        x for x in [con.get("firstName"), con.get("lastName")] if x),
-                    "ad": ws(cf.get(UTM_FIELD_IDS["utm_content"])),
-                    "ad_set": ws(cf.get(UTM_FIELD_IDS["utm_term"])),
-                }
-            except Exception:
-                cache[cid] = {}
-        info = cache.get(cid, {})
-        if is_test(info.get("email"), info.get("name")):
+        if is_test(e.get("_email"), e.get("_name")):
             continue
-        detail.append({"name": info.get("name"), "email": info.get("email"),
-                       "start": e.get("startTime"), "ad": info.get("ad"),
-                       "ad_set": info.get("ad_set")})
-        if info.get("ad"):
-            by_ad[info["ad"]] = by_ad.get(info["ad"], 0) + 1
-        if info.get("ad_set"):
-            by_adset[info["ad_set"]] = by_adset.get(info["ad_set"], 0) + 1
+        ad, ad_set = e.get("_utm_content"), e.get("_utm_term")
+        detail.append({"name": e.get("_name"), "email": e.get("_email"),
+                       "start": e.get("startTime"), "ad": ad, "ad_set": ad_set})
+        if ad:
+            by_ad[ad] = by_ad.get(ad, 0) + 1
+        if ad_set:
+            by_adset[ad_set] = by_adset.get(ad_set, 0) + 1
 
     # --- qualifier answer mix (no gate yet — see CS_QUAL_FIELDS) ---
     mix = {k: {} for k in CS_QUAL_FIELDS}
@@ -405,7 +402,9 @@ def cs_funnel(now):
 
 def main():
     now = datetime.now(timezone.utc)
-    since = "2026-06-20"
+    # The live era begins at the video switch. Anything earlier belongs to the frozen
+    # historic tab: a different video of a different length on a different data source.
+    since = VSL_SWITCHED_ON
     until = now.strftime("%Y-%m-%d")
 
     print("Pulling Wistia…")
@@ -414,19 +413,17 @@ def main():
     engagement = wistia(f"stats/medias/{VSL_MEDIA_ID}/engagement.json")
     duration = wistia(f"medias/{VSL_MEDIA_ID}.json").get("duration", 0)
 
-    print("Pulling GHL…")
-    subs, page = [], 1
-    while True:
-        d = ghl(f"forms/submissions?formId={GTM_FORM_ID}&limit=100&page={page}")
-        batch = d.get("submissions", [])
-        subs += batch
-        if len(subs) >= d.get("meta", {}).get("total", len(subs)) or not batch:
-            break
-        page += 1
-
-    start_ms = int(datetime(2026, 6, 1, tzinfo=timezone.utc).timestamp() * 1000)
-    end_ms = int((now + timedelta(days=30)).timestamp() * 1000)
-    events = ghl(f"calendars/events?calendarId={GTM_CALENDAR_ID}&startTime={start_ms}&endTime={end_ms}").get("events", [])
+    # Live funnel comes from iClosed. GHL stopped receiving form fills and bookings at the
+    # cutover: its forms and calendars still answer, they just never grow again, so a live
+    # pull returns a funnel that flatlines and reads as a collapse. Everything before the
+    # cutover is frozen in data/frozen/historic_era.json and shown on its own tab.
+    #
+    # iclosed_source emits GHL-SHAPED rows on purpose, so every computation below this
+    # point is untouched by the migration.
+    print("Pulling iClosed…")
+    subs = iclosed_source.submissions(event_ids=ICLOSED_GTM_EVENT_IDS)
+    events = iclosed_source.appointments(event_ids=ICLOSED_GTM_EVENT_IDS)
+    print(f"  {len(subs)} contact(s) · {len(events)} call(s)")
 
     snap_path = ROOT / "data/dayai/contacts_snapshot.json"
     dayai = json.loads(snap_path.read_text()) if snap_path.exists() else {
@@ -457,30 +454,12 @@ def main():
     watched_50 = round(plays * (curve[n // 2] / 100.0)) if eng else 0
 
     booked = [e for e in events if e.get("appointmentStatus") not in ("cancelled", "noshow")]
-    # resolve appointment contacts: email (test-flagging) + GHL attribution (per-ad UTM)
+    # iClosed carries the invitee email and the UTMs on the call itself, so the per-contact
+    # GHL lookup this used to need is gone. contact_cache is kept (empty) because a later
+    # block still reads names out of it for contacts that predate the cutover.
     contact_cache = {}
-    for e in booked:
-        cid = e.get("contactId")
-        if cid and cid not in contact_cache:
-            try:
-                con = ghl(f"contacts/{cid}").get("contact", {})
-                # UTMs are captured into custom fields on the contact (not native attribution).
-                cf = {f.get("id"): (f.get("value") or None) for f in (con.get("customFields") or [])}
-                nm = con.get("contactName") or " ".join(
-                    x for x in [con.get("firstName"), con.get("lastName")] if x)
-                ws = lambda v: " ".join(v.split()) if v else None  # collapse URL-encoding spaces
-                contact_cache[cid] = {"email": con.get("email"), "name": nm,
-                                      "utm_content": ws(cf.get(UTM_FIELD_IDS["utm_content"])),
-                                      "utm_source": ws(cf.get(UTM_FIELD_IDS["utm_source"])),
-                                      "utm_term": ws(cf.get(UTM_FIELD_IDS["utm_term"]))}
-            except Exception:
-                contact_cache[cid] = {}
-        info = contact_cache.get(cid, {})
-        e["_email"] = info.get("email")
-        e["_utm_content"] = info.get("utm_content")
-        e["_utm_source"] = info.get("utm_source")
-        e["_utm_term"] = info.get("utm_term")   # ad set (e.g. "Retargeting Video Ads")
-        e["_test"] = is_test(e.get("_email"), info.get("name"))
+    for e in events:
+        e["_test"] = is_test(e.get("_email"), e.get("_name"))
     real_booked = [e for e in booked if not e["_test"]]
 
     # person-level attribution: bookings grouped by ad (utm_content = ad name).
@@ -629,9 +608,38 @@ def main():
             day = _dayai.DayAI()
             meetings = day.recent_meetings("2026-06-01T00:00:00Z")
 
-            def is_held(name, email):
+            # iClosed names its calendar events "<First> with Charm @ <D Mon YYYY> - <HH:MM>",
+            # and Day AI exposes the prospect only as an object UUID — their email never
+            # appears in `attendees`. So for every booking made since the cutover, the email
+            # match below cannot fire and the name match cannot either: the title carries a
+            # FIRST name only, while the name rule deliberately requires two tokens so
+            # "mark" does not match "Go-to-Market". Result was 0 of 14 held, which reads as
+            # a total no-show week rather than a broken matcher.
+            #
+            # Matched on first name PLUS the meeting date, which the title also carries.
+            # Not on the time: the title renders it in the invitee's timezone, not UTC.
+            def iclosed_title_match(name, start_iso, mt):
+                title = (mt.get("title") or "")
+                # "Canceled: Updated - Sarah with Charm @ ..." — a cancelled call is not a
+                # held call, and the prefix is the only thing distinguishing it.
+                if re.match(r"^\s*(canceled|cancelled)\b", title, re.I):
+                    return False
+                first = next((t for t in re.findall(r"[A-Za-z]+", name or "") if len(t) > 1), "")
+                if not first:
+                    return False
+                try:
+                    d = datetime.fromisoformat((start_iso or "").replace("Z", "+00:00"))
+                except ValueError:
+                    return False
+                # "28 Aug 2026" — no leading zero, matching how iClosed renders it.
+                stamp = f"{d.day} {d.strftime('%b %Y')}"
+                return bool(re.search(rf"\b{re.escape(first)}\b\s+with\s+Charm\s*@\s*{re.escape(stamp)}", title, re.I))
+
+            def is_held(name, email, start_iso=None):
                 email = (email or "").lower()
                 if email and any(email in mt["attendees"] for mt in meetings):
+                    return True
+                if start_iso and any(iclosed_title_match(name, start_iso, mt) for mt in meetings):
                     return True
                 # exact FULL name (>=2 word-boundary tokens) so "mark" != "market"
                 toks = [t for t in re.findall(r"[a-z]+", (name or "").lower()) if len(t) > 2]
@@ -644,8 +652,10 @@ def main():
                 return False
 
             for e in real_booked:
-                nm = contact_cache.get(e.get("contactId"), {}).get("name")
-                held = is_held(nm, e.get("_email"))
+                # contact_cache is empty since the iClosed cutover — the per-contact GHL
+                # lookup that filled it is gone — so the name has to come off the row.
+                nm = e.get("_name") or contact_cache.get(e.get("contactId"), {}).get("name")
+                held = is_held(nm, e.get("_email"), e.get("startTime"))
                 # A call scheduled in the future can't have been held yet. Day AI
                 # creates a meeting-recording object for a booked-but-upcoming call,
                 # which the name match would otherwise count as held (e.g. Ellio).
@@ -788,12 +798,18 @@ def main():
                    + ("Live." if landing_status == "live" else "Receiver is deployed and connected; visitors populate once the Clay HTTP API column is firing.")},
         {"stage": "VSL video engagement", "source": "Wistia", "status": "live",
          "detail": "Plays, play rate, avg % watched, and the drop-off curve — all live."},
-        {"stage": "Form fill", "source": "GHL forms", "status": "live",
-         "detail": "GTM Services form (VSL only), live via API."},
-        {"stage": "Booking", "source": "GHL calendar", "status": "live",
-         "detail": "GTM VSL calendar appointments, live via API."},
+        # These two moved to iClosed at the cutover and the labels did not follow, so the
+        # page kept naming GHL as a live source days after it stopped receiving anything.
+        # A stale source label is worse than a missing one: it tells a reader the number
+        # came from somewhere it did not, and there is nothing on the page to contradict it.
+        {"stage": "Form fill", "source": "iClosed contacts", "status": "live",
+         "detail": "Charm GTM event, live via the iClosed API. GHL stopped receiving form "
+                   "fills at the 26 Aug cutover — pre-cutover fills are on the historic tab."},
+        {"stage": "Booking", "source": "iClosed eventCalls", "status": "live",
+         "detail": "Charm GTM bookings, live via the iClosed API, with UTMs read off the "
+                   "call itself. The GHL calendar is no longer written to."},
         {"stage": "Show / call held", "source": "Day AI (meeting recordings)", "status": "live" if dayai_conn else "available",
-         "detail": ("Connected — a Day AI meeting recording with the lead as attendee = the call was held. Show-rate computes automatically once real leads book."
+         "detail": ("Connected. Matched on iClosed's calendar title (\"<First> with Charm @ <date>\") because Day AI exposes the prospect only as an object id, so their email never appears in the attendee list. Cancelled calls are excluded. This confirms the meeting happened and was not cancelled — not that the prospect turned up."
                     if dayai_conn else "A Day AI meeting recording with the lead as attendee = the call was held. Connection set up; add DAYAI_* creds to .env to activate.")},
         {"stage": "Qualified (post-call)", "source": "Chris (manual verdict)", "status": "live",
          "detail": "Chris's fit judgment after each held call — separate from the automatic form gate."},
@@ -889,6 +905,26 @@ def main():
     except Exception as e:
         data["cs"] = {"error": str(e)}
         print(f"CS funnel FAILED (GTM unaffected): {e}")
+
+    # The closed GHL + long-VSL era, read from disk and never recomputed. It rides along
+    # in the same payload so the historic tab is a tab, not a second page to keep in sync.
+    hist_path = ROOT / "data/frozen/historic_era.json"
+    if hist_path.exists():
+        data["historic"] = json.loads(hist_path.read_text())
+        era = data["historic"].get("_era", {})
+        print(f"Historic era attached (frozen {era.get('frozen_at')})")
+    else:
+        data["historic"] = None
+        print("WARNING: no frozen historic era — run scripts/freeze_historic.py")
+
+    data["era"] = {
+        "name": "iClosed + short VSL",
+        "source": "iClosed",
+        "gtm_media_id": VSL_MEDIA_ID,
+        "cs_media_id": CS_MEDIA_ID,
+        "gtm_started": VSL_SWITCHED_ON,
+        "cs_started": CS_SWITCHED_ON,
+    }
 
     html = build_html(data)
     out = ROOT / "dashboard/vsl_dashboard.html"

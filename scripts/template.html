@@ -217,6 +217,15 @@ const tiles = [
   {v: D.avg_percent_watched + '%', l: 'Avg % watched', d: 'per play, incl. rewatch'},
   {v: fmt(realSubs), l: 'Real leads', d: `${D.submissions.length} total incl. tests`},
   {v: fmt(D.real_meetings), l: 'Real meetings booked', d: `${f['Meetings booked']} total incl. tests`},
+  // Attendance, not "held". A booked meeting object exists whether or not anyone turned
+  // up, so the old number counted no-shows as held and read 5 of 5 on a day with two.
+  (D.attendance && D.attendance.attended !== null ? {
+     v: `${D.attendance.attended}/${D.attendance.attended + D.attendance.no_transcript}`,
+     l: 'Calls attended',
+     d: D.attendance.no_transcript
+        ? `${D.attendance.no_transcript} with no transcript — usually a no-show, sometimes the notetaker`
+        : 'every completed call has a transcript'}
+   : {v: '—', l: 'Calls attended', d: 'Day AI not connected'}),
   {v: D.rb2b.connected ? fmt(D.rb2b.count) : '—', l: 'Identified visitors', d: D.rb2b.connected ? `${D.rb2b.no_form} never submitted` : 'RB2B feed not connected'},
 ];
 $('tiles').innerHTML = tiles.map(t =>

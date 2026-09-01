@@ -125,20 +125,60 @@ class DayAI:
             timeframeStart=since)
         return len(res.get("native_meetingrecording", {}).get("results", [])) > 0
 
+    def search_all(self, queries, max_pages=12, **options):
+        """Every page of a search, not just the first.
+
+        ⚠️ Day AI paginates at the TOP LEVEL of the response — hasMore / nextOffset /
+        totalRecords — NOT inside the native_<type> bucket, which only carries `results`
+        and `totalCount`. Reading the bucket for pagination gives `undefined`, so a caller
+        silently stops after one page and looks like it worked. One page is 40 rows
+        against 95 matching records here, and the meetings that fall off the end are the
+        oldest — which is exactly where a missed call would hide.
+        """
+        merged, offset = {}, 0
+        for _ in range(max_pages):
+            res = self.search(queries, offset=offset, **options)
+            for key, bucket in res.items():
+                if not isinstance(bucket, dict) or "results" not in bucket:
+                    continue
+                merged.setdefault(key, {"results": [], "totalCount": bucket.get("totalCount")})
+                merged[key]["results"].extend(bucket.get("results") or [])
+            if not res.get("hasMore"):
+                break
+            nxt = res.get("nextOffset")
+            if not isinstance(nxt, int) or nxt <= offset:
+                break            # no forward progress: stop rather than loop forever
+            offset = nxt
+        return merged
+
     def recent_meetings(self, since="2026-06-01T00:00:00Z"):
         """Recent meeting recordings with their title + linked contact emails (attendees).
 
         Attendee-email linkage lags in Day AI, so held detection also uses the title
         (e.g. 'Todd Dugas & Charm'). Returns [{title, attendees:[email,...]}].
         """
-        res = self.search([{"objectType": "native_meetingrecording"}],
-                          includeRelationships=True, timeframeStart=since)
+        # `topic` is Day AI's summary of what was discussed, so it only exists once there
+        # is a transcript — which makes its PRESENCE the closest thing to an attendance
+        # signal this API offers. The meeting object itself is created when the call is
+        # booked, so its existence proves nothing: a no-show looks identical to a held
+        # call until you look at the topic.
+        #
+        # Requested by name rather than "*": the full property set over a wide window
+        # returns HTTP 502, and a partial response reads as "fewer meetings" rather than
+        # as an error. Do NOT add "type" here — Day AI rejects it as a selectable name,
+        # and an invalid name is silently omitted from every row, which would make the
+        # value read as empty for everybody.
+        res = self.search_all([{"objectType": "native_meetingrecording"}],
+                              includeRelationships=True, propertiesToReturn=["topic"],
+                              timeframeStart=since)
         out = []
         for m in res.get("native_meetingrecording", {}).get("results", []):
             rels = m.get("relationships") or []
             atts = [(r.get("objectId") or "").lower() for r in rels
                     if isinstance(r, dict) and r.get("objectType") == "native_contact"]
-            out.append({"title": (m.get("title") or ""), "attendees": atts})
+            topic = (m.get("properties") or {}).get("topic")
+            out.append({"title": (m.get("title") or ""), "attendees": atts,
+                        "topic": topic, "transcribed": bool(topic)})
         return out
 
 

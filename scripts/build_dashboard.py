@@ -599,6 +599,7 @@ def main():
     # meeting recording. Email-only (deterministic) — no name/title matching, which
     # produced false positives (e.g. "mark" matching "Go-to-Market").
     dayai_conn, meetings_held, deals_closed, cash_collected = False, None, None, None
+    attended = no_transcript = None
     deals_committed, committed_value, committed_detail = None, None, []
     committed_first_invoice = None
     try:
@@ -635,11 +636,22 @@ def main():
                 stamp = f"{d.day} {d.strftime('%b %Y')}"
                 return bool(re.search(rf"\b{re.escape(first)}\b\s+with\s+Charm\s*@\s*{re.escape(stamp)}", title, re.I))
 
-            def is_held(name, email, start_iso=None):
+            # Returns the MATCHED meeting rather than a bool, so the caller can read its
+            # transcript state. Attendance and existence are different questions and the
+            # old bool could only answer the second one.
+            def matched_meeting(name, email, start_iso=None):
                 email = (email or "").lower()
-                if email and any(email in mt["attendees"] for mt in meetings):
-                    return True
-                if start_iso and any(iclosed_title_match(name, start_iso, mt) for mt in meetings):
+                for mt in meetings:
+                    if email and email in mt["attendees"]:
+                        return mt
+                if start_iso:
+                    for mt in meetings:
+                        if iclosed_title_match(name, start_iso, mt):
+                            return mt
+                return None
+
+            def is_held(name, email, start_iso=None):
+                if matched_meeting(name, email, start_iso):
                     return True
                 # exact FULL name (>=2 word-boundary tokens) so "mark" != "market"
                 toks = [t for t in re.findall(r"[a-z]+", (name or "").lower()) if len(t) > 2]
@@ -655,17 +667,41 @@ def main():
                 # contact_cache is empty since the iClosed cutover — the per-contact GHL
                 # lookup that filled it is gone — so the name has to come off the row.
                 nm = e.get("_name") or contact_cache.get(e.get("contactId"), {}).get("name")
-                held = is_held(nm, e.get("_email"), e.get("startTime"))
+                mt = matched_meeting(nm, e.get("_email"), e.get("startTime"))
+                held = bool(mt)
                 # A call scheduled in the future can't have been held yet. Day AI
                 # creates a meeting-recording object for a booked-but-upcoming call,
                 # which the name match would otherwise count as held (e.g. Ellio).
                 try:
-                    if held and datetime.fromisoformat(e.get("startTime") or "") > now:
+                    e["_past"] = datetime.fromisoformat(e.get("startTime") or "") <= now
+                    if held and not e["_past"]:
                         held = False
                 except ValueError:
-                    pass
+                    e["_past"] = False
                 e["_held"] = held
+
+                # THREE states, not two. A booked meeting object exists whether or not
+                # anybody turned up, so "a meeting exists" was counting no-shows as held
+                # and reported 5 of 5 on a day with real no-shows. Day AI writes `topic`
+                # from the transcript, so its presence is the attendance signal.
+                #
+                # "no transcript" is deliberately NOT reported as a confirmed no-show:
+                # it also happens when the notetaker fails to join or the call runs
+                # somewhere Day AI is not. Those are different problems with different
+                # fixes, so the number says "unconfirmed" and lets a human look.
+                if not held:
+                    e["_attendance"] = "upcoming" if not e.get("_past") else "no_meeting"
+                elif mt.get("transcribed"):
+                    e["_attendance"] = "attended"
+                else:
+                    e["_attendance"] = "no_transcript"
+
             meetings_held = sum(1 for e in real_booked if e.get("_held"))
+            attended = sum(1 for e in real_booked if e.get("_attendance") == "attended")
+            no_transcript = sum(1 for e in real_booked if e.get("_attendance") == "no_transcript")
+            print(f"Attendance — {attended} with a transcript, {no_transcript} without "
+                  f"(no transcript usually means a no-show, but can also mean the "
+                  f"notetaker never joined)")
             held_names = [e.get("_email") for e in real_booked if e.get("_held")]
             print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call (by email): {held_names}")
 
@@ -881,6 +917,9 @@ def main():
                                if (x.get("email") or "").lower() == (e.get("_email") or "").lower() and x.get("qual")), None),
             "pre_gate": ((e.get("startTime") or "")[:10] < QUALIFIER_FORM_DATE)} for e in real_booked],
         "meetings_held": meetings_held,
+        # Split out because "held" cannot distinguish a call that happened from one
+        # nobody joined — the meeting object exists either way.
+        "attendance": {"attended": attended, "no_transcript": no_transcript},
         "meetings_qualified": meetings_qualified,
         "deals_closed": deals_closed,
         "cash_collected": cash_collected,

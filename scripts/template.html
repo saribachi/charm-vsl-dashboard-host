@@ -119,6 +119,7 @@ footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
   <button class="era-tab" role="tab" id="tab-historic" aria-selected="false">Historic — long VSL</button>
 </div>
 <div class="era-note" id="era-note" hidden></div>
+<div class="era-note" id="era-pointer" hidden></div>
 <div class="banner"><b>Low-sample period.</b> The funnel is in test/early-launch phase — most form submissions are internal tests and traffic volume is small. Percentages below are directional, not statistically stable. <span id="banner-extra"></span></div>
 
 <div class="tiles" id="tiles"></div>
@@ -173,7 +174,7 @@ footer{color:var(--ink3);font-size:12px;margin-top:8px;line-height:1.8}
     <div class="hint">Charm — GTM VSL ONLY calendar</div>
     <div id="appt-table"></div>
     <h2 style="margin-top:20px">Day AI contacts</h2>
-    <div class="hint">Contacts created via the GHL → Day AI bridge · snapshot <span id="dayai-ts"></span></div>
+    <div class="hint">Contacts synced into Day AI by the bridge · snapshot <span id="dayai-ts"></span></div>
     <div id="dayai-table"></div>
   </div>
 </div>
@@ -373,7 +374,7 @@ function hideTT(){ tt.style.opacity = 0; }
     out.push({warn:1, text:`<b>Play rate is ${playRate2.toFixed(0)}%</b> — most visitors never press play. Thumbnail, autoplay-muted preview, or above-the-fold placement are the levers here.`});
   const noBook = realSubs - f['Meetings booked'];
   if (noBook > 0)
-    out.push({warn:0, text:`<b>${noBook} real lead(s) submitted the form but never booked.</b> These are the warmest re-engagement targets — they exist in GHL with contact info and a known interest.`});
+    out.push({warn:0, text:`<b>${noBook} real lead(s) submitted the form but never booked.</b> The warmest re-engagement targets you have — qualified, ad-paid, and one step from the calendar. Since the cutover they exist <b>only in iClosed</b>: no GHL contact, no tag, so no workflow can reach them. The bridge posts each one to #charm-discovery-call-details with their answers and phone number.`});
   if (D.rb2b.connected)
     out.push({warn:0, text:`<b>${D.rb2b.no_form} identified visitor(s) were on the VSL page but never submitted the form.</b> RB2B named them (person + company) — this is a re-engagement list you couldn't see before. See the RB2B table below.`});
   else
@@ -450,6 +451,23 @@ function setEra(key){
     const btn = document.getElementById('tab-' + k);
     if (btn) btn.setAttribute('aria-selected', String(k === key));
   }
+  // A reader landing on Current sees the funnel start at the cutover and reasonably
+  // concludes the earlier data was lost. It was not — it is one tab away. Say so there,
+  // rather than leaving the absence to be interpreted.
+  const ptr = document.getElementById('era-pointer');
+  if (ptr) {
+    const h = ERAS.historic.data;
+    if (key === 'live' && h) {
+      ptr.innerHTML = 'Counting from the <b>26 Aug</b> cutover. Everything before it — '
+        + `<b>${h.real_form_fills}</b> form fills, <b>${h.real_bookings}</b> bookings, `
+        + `<b>$${Number(h.cash_collected || 0).toLocaleString()}</b> collected — is on the `
+        + '<b>Historic</b> tab, frozen and complete.';
+      ptr.hidden = false;
+    } else {
+      ptr.hidden = true;
+    }
+  }
+
   const note = document.getElementById('era-note');
   if (era.note){ note.innerHTML = era.note; note.hidden = false; }
   else { note.hidden = true; }

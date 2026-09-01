@@ -908,14 +908,23 @@ def main():
 
     # The closed GHL + long-VSL era, read from disk and never recomputed. It rides along
     # in the same payload so the historic tab is a tab, not a second page to keep in sync.
-    hist_path = ROOT / "data/frozen/historic_era.json"
+    # Candidate locations, in order. data/frozen is the natural home and works locally,
+    # but on the deploy host the frozen era did NOT arrive under data/ while a new file
+    # added to scripts/ in the SAME commit did — so something is mounted over data/ at
+    # runtime, which is also why data/ghl and friends survive redeploys. Shipping a copy
+    # beside the scripts sidesteps that entirely; it is a static, committed artefact, so
+    # having it in two places costs nothing and the tab stops depending on mount layout.
+    hist_path = next(
+        (p for p in (ROOT / "data/frozen/historic_era.json",
+                     ROOT / "scripts/historic_era.json") if p.exists()),
+        ROOT / "data/frozen/historic_era.json")
     if hist_path.exists():
         data["historic"] = json.loads(hist_path.read_text())
         era = data["historic"].get("_era", {})
         print(f"Historic era attached (frozen {era.get('frozen_at')})")
     else:
         data["historic"] = None
-        print("WARNING: no frozen historic era — run scripts/freeze_historic.py")
+        print(f"WARNING: no frozen historic era at {hist_path} — run scripts/freeze_historic.py")
 
     data["era"] = {
         "name": "iClosed + short VSL",

@@ -108,9 +108,13 @@ COMMITTED_STAGE_ID = "559edc45-0431-483b-abcd-f9d960469c63"
 # Shape: {"lead@example.com": {"monthly": 4500, "setup": 1000}}
 try:
     COMMITTED_TERMS = json.loads(ENV.get("COMMITTED_TERMS_JSON") or "{}")
+    CLOSED_TERMS = json.loads(ENV.get("CLOSED_TERMS_JSON") or "{}")
+    VSL_LEAD_EXTRA = json.loads(ENV.get("VSL_LEAD_EXTRA_JSON") or "[]")
 except ValueError:
     print("COMMITTED_TERMS_JSON is not valid JSON — falling back to CRM Amount")
     COMMITTED_TERMS = {}
+    CLOSED_TERMS = {}
+    VSL_LEAD_EXTRA = []
 
 # Internal/test/invalid submitters — excluded from "real lead" counts.
 #
@@ -129,6 +133,14 @@ if not TEST_EMAILS:
     # silently inflate form fills, bookings, and every cost-per metric derived from them.
     print("WARNING: TEST_EMAILS_JSON is empty — test submitters will count as real leads")
 TEST_DOMAINS = {"hirecharm.com", "goober.com"}
+
+# Extra addresses belonging to a lead already in the funnel. Lives in env, never in source:
+# these are real people. Shape: {"second@example.com": "known-lead@example.com"}
+try:
+    VSL_LEAD_ALIASES = json.loads(ENV.get("VSL_LEAD_ALIASES_JSON") or "{}")
+except ValueError:
+    print("VSL_LEAD_ALIASES_JSON is not valid JSON — no alias attribution applied")
+    VSL_LEAD_ALIASES = {}
 
 
 def http_get(url, headers):
@@ -598,7 +610,11 @@ def main():
     # A call is "held" only when the booked lead's EMAIL is an attendee on a Day AI
     # meeting recording. Email-only (deterministic) — no name/title matching, which
     # produced false positives (e.g. "mark" matching "Go-to-Market").
+    hist_path_for_leads = ROOT / "data/frozen/historic_era.json"
+    if not hist_path_for_leads.exists():
+        hist_path_for_leads = ROOT / "scripts/historic_era.json"
     dayai_conn, meetings_held, deals_closed, cash_collected = False, None, None, None
+    closed_detail = []
     attended = no_transcript = None
     deals_committed, committed_value, committed_detail = None, None, []
     committed_first_invoice = None
@@ -707,8 +723,43 @@ def main():
 
             # VSL-attributed closed deals + cash from Day AI Closed Won opps.
             # Match ONLY real external VSL leads (drop internal reps who are on every deal).
+            # EVERY lead the funnel has ever produced, not just this era's.
+            #
+            # This was built from sub_rows alone, which after the cutover holds only
+            # post-cutover contacts. A lead who came through the GHL era and closed later
+            # therefore matched nothing: the live tab could not see them, and the historic
+            # tab is FROZEN, so it can never see a deal that closed after the freeze.
+            # Macmoor's $55k committed deal fell straight down that gap and appeared
+            # nowhere. Revenue arrives long after the lead does, so the lead list has to
+            # span both eras even though the traffic numbers do not.
             vsl_lead_emails = {(x["email"] or "").lower() for x in sub_rows
                                if not x["test"] and x.get("email")}
+            try:
+                _hist = json.loads(hist_path_for_leads.read_text()) if hist_path_for_leads.exists() else {}
+                for x in (_hist.get("submissions") or []):
+                    if not x.get("test") and x.get("email"):
+                        vsl_lead_emails.add(x["email"].lower())
+            except Exception as e:
+                print(f"WARNING: could not read frozen leads for attribution: {e}")
+
+            # Leads known to be from this funnel but with no submission on record. VSL
+            # submission history starts 28 Jul, when the qualifier form went live, so
+            # anyone who came through before that cannot be matched — Macmoor's Ellio is
+            # one, and his deal was invisible in every tab as a result. An explicit list,
+            # because it asserts revenue is ad-attributed on a human's say-so rather than
+            # on data, and that claim should be visible in config rather than inferred.
+            for e in (VSL_LEAD_EXTRA or []):
+                vsl_lead_emails.add(str(e).lower())
+
+            # Second emails for a lead we already know. One person can close more than one
+            # deal under different addresses — Nykelle produced both AltGrowth (Dash) and
+            # Path. Wellness — and matching on email alone credits only the first.
+            # Deliberately an explicit map rather than fuzzy name matching: this decides
+            # which revenue is ad-attributed, and a wrong guess overstates ROAS.
+            # Shape: {"second@example.com": "known-vsl-lead@example.com"}
+            for alias, known in (VSL_LEAD_ALIASES or {}).items():
+                if known.lower() in vsl_lead_emails:
+                    vsl_lead_emails.add(alias.lower())
             def vsl_contact(o):
                 """The external VSL lead on a deal, or None. Internal reps are on
                 every deal, so they must never be what makes a deal match."""
@@ -717,12 +768,33 @@ def main():
                         return e
                 return None
 
-            deals_closed, cash_collected = 0, 0.0
+            # Day AI's Amount on a closed deal is NOT the contract. It carries an
+            # annualised ceiling: AltGrowth (Dash) reads $76,900 against a real value of
+            # $7,000 — $1,500/mo on a four-month commit plus $1,000 onboarding. Overstated
+            # by $51,900 on one deal, which is the difference between a 4.9x ROAS and a
+            # fictional 8.8x. Same failure the COMMITTED_TERMS override already exists for.
+            #
+            # CLOSED_TERMS is keyed by the deal's VSL lead email and wins over Amount.
+            # Shape: {"lead@example.com": {"monthly": 4500, "months": 4, "onboarding": 0}}
+            # Drop an entry once Day AI's Amount is corrected at source.
+            deals_closed, cash_collected, closed_detail = 0, 0.0, []
             for o in day.opps_in_stage(CLOSED_WON_STAGE_ID):
-                if vsl_contact(o):
-                    deals_closed += 1
-                    if o.get("amount"):
-                        cash_collected += o["amount"]
+                lead = vsl_contact(o)
+                if not lead:
+                    continue
+                deals_closed += 1
+                terms = CLOSED_TERMS.get(o.get("title")) or CLOSED_TERMS.get(lead)
+                if terms:
+                    value = terms["monthly"] * terms.get("months", 1) + terms.get("onboarding", 0)
+                    source = "confirmed terms"
+                else:
+                    value = o.get("amount") or 0
+                    source = "Day AI Amount (unverified)"
+                cash_collected += value
+                closed_detail.append({"title": o.get("title"), "email": lead,
+                                      "value": value, "source": source,
+                                      "monthly": (terms or {}).get("monthly"),
+                                      "months": (terms or {}).get("months")})
             print(f"Day AI VSL-attributed closed deals: {deals_closed} · cash ${cash_collected:.0f}")
 
             # Committed = verbal yes + contract out, payment NOT collected.
@@ -735,7 +807,12 @@ def main():
                     terms = COMMITTED_TERMS.get(lead)
                     if terms:
                         monthly, setup = terms["monthly"], terms.get("setup", 0)
-                        year_one, first_invoice = monthly * 12 + setup, monthly + setup
+                        # `months` because these are fixed-term commitments, not annual
+                        # subscriptions. Macmoor is 4,500/mo on a FOUR month commit —
+                        # 18,000, not the 54,000 a 12-month assumption produces. Defaults
+                        # to 12 so any existing entry keeps its previous meaning.
+                        months = terms.get("months", 12)
+                        year_one, first_invoice = monthly * months + setup, monthly + setup
                     else:
                         # No confirmed terms — fall back to the CRM Amount as year-one
                         # value, and leave first-invoice unknown rather than guessing.
@@ -917,6 +994,7 @@ def main():
                                if (x.get("email") or "").lower() == (e.get("_email") or "").lower() and x.get("qual")), None),
             "pre_gate": ((e.get("startTime") or "")[:10] < QUALIFIER_FORM_DATE)} for e in real_booked],
         "meetings_held": meetings_held,
+        "closed_detail": closed_detail,
         # Split out because "held" cannot distinguish a call that happened from one
         # nobody joined — the meeting object exists either way.
         "attendance": {"attended": attended, "no_transcript": no_transcript},

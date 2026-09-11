@@ -158,22 +158,105 @@ td{vertical-align:top}
 .tip{position:absolute;pointer-events:none;background:#2a2140;color:#fff;font-size:12px;padding:6px 9px;border-radius:7px;opacity:0;transition:opacity .1s;white-space:nowrap;z-index:9}
 footer{color:var(--ink3);font-size:12px;margin-top:22px;text-align:center;line-height:1.7}
 a.plain{color:var(--purple);text-decoration:none}
+/* ---- show-up rate ---- */
+.su-head{display:flex;gap:18px;flex-wrap:wrap;align-items:stretch;margin-bottom:10px}
+.su-big{min-width:190px;padding:12px 16px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.su-v{font-size:34px;font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.su-l{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink3);margin-top:3px}
+.su-s{font-size:12px;color:var(--ink3);margin-top:4px}
+.su-side{display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:200px}
+.su-row{font-size:13px;color:var(--ink3)}
+.su-row b{color:var(--ink);font-size:15px;margin-right:5px}
+.su-row.warn b{color:var(--amber-ink,#8a6100)}
+.su-note{font-size:11.5px;color:var(--ink3);font-weight:400}
+.su-cov{font-size:12.5px;color:var(--ink3);padding:9px 12px;border-radius:8px;
+  background:#faf8fe;border:1px solid var(--line);margin-bottom:12px}
+.su-cov.warn{background:var(--amber-bg,#fdf6e6);border-color:var(--amber-l,#e8d29a)}
+.su-cov b{color:var(--ink)}
+.su-people{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  color:var(--ink3);margin:14px 0 6px}
+/* ---- timeframe control ---- */
+.tfbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 6px;
+  padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:10px}
+.tfbar label{font-size:12px;color:var(--ink3);font-weight:600;letter-spacing:.02em}
+.tfbar select,.tfbar input[type=date]{font:inherit;font-size:13px;padding:6px 8px;
+  border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink)}
+.tfbar select:focus,.tfbar input:focus{outline:2px solid var(--purple);outline-offset:1px}
+.tfrange{font-size:12px;color:var(--ink3)}
+.tfrange b{color:var(--ink)}
+.tfcustom{display:none;gap:6px;align-items:center}
+.tfcustom.on{display:flex}
+/* ---- windowed funnel ---- */
+.wfunnel{margin-top:10px}
+.wrow{display:grid;grid-template-columns:190px 1fr 150px;gap:10px;align-items:center;
+  padding:7px 10px;border-bottom:1px solid var(--line)}
+.wrow:last-child{border-bottom:0}
+.wname{font-size:13px;font-weight:600}
+.wsub{font-size:11px;color:var(--ink3);font-weight:400}
+.wtrack{position:relative;height:22px;background:var(--grid,#f4f1fb);border-radius:5px;overflow:hidden}
+.wfill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:8px;
+  color:#fff;font-size:12px;font-weight:700}
+.wnum{position:absolute;left:8px;top:3px;font-size:12px;font-weight:700}
+.wconv{font-size:12px;color:var(--ink3);text-align:right}
+.wconv b{color:var(--ink)}
+.wnowire{font-size:11.5px;color:var(--amber,#c47f00);background:var(--amber-bg,#fdf6e6);
+  border:1px dashed var(--amber-l,#e8d29a);border-radius:5px;padding:3px 8px;display:inline-block}
+.wallt{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--ink3);
+  border:1px solid var(--line);border-radius:4px;padding:1px 5px;margin-left:6px}
+.wempty{padding:14px;font-size:13px;color:var(--ink3)}
+.wwarn{margin:10px 0;padding:9px 12px;border-radius:8px;font-size:12.5px;
+  background:var(--amber-bg,#fdf6e6);border:1px solid var(--amber-l,#e8d29a)}
+.wire-chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 2px}
+.wchip{font-size:10.5px;font-weight:700;letter-spacing:.03em;border-radius:4px;padding:2px 6px;
+  border:1px solid var(--line);color:var(--ink3)}
+.wchip.on{background:#f3edfb;border-color:#d9c8f5;color:var(--purple)}
+.wchip.off{background:var(--amber-bg,#fdf6e6);border-color:var(--amber-l,#e8d29a);color:var(--amber,#c47f00)}
+.offhead{margin:2px 0 0}
+.alltime-h{margin:26px 0 8px;padding:10px 12px;border-radius:9px;
+  background:#faf8fe;border:1px solid var(--line);border-left:3px solid var(--ink3)}
+.offhead .on{font-size:13px;color:var(--ink3)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Charm <span>VSL</span> — Ad to Cash</h1>
-    <div class="sub">Two funnels, each followed from ad dollar to booked call and cash.</div>
+    <div class="sub" id="subline">Every offer, followed from ad dollar to booked call and cash.</div>
     <div class="ctx" id="ctx"></div>
   </header>
 
+  <!-- One timeframe control for the whole page. It re-aggregates the dated rows each
+       offer ships; it does NOT re-query anything. Stages with no per-day source (unique
+       visitors, Day AI cash) are marked ALL TIME rather than silently windowed. -->
+  <div class="tfbar">
+    <label for="tfsel">Timeframe</label>
+    <select id="tfsel"></select>
+    <span class="tfcustom" id="tfcustom">
+      <input type="date" id="tfrom" aria-label="From"><span class="tfrange">to</span>
+      <input type="date" id="tfto" aria-label="To">
+    </span>
+    <span class="tfrange" id="tfrange"></span>
+  </div>
+  <div id="tfwarn"></div>
+
   <div class="ftabs" id="ftabs" role="tablist"></div>
 
+
   <div id="pane-gtm" role="tabpanel">
+  <div id="win-gtm"></div>
+
+  <!-- Everything from here down is LIFETIME, not the selected window. It is the deep
+       GTM read — Day AI attendance, post-call verdicts, cash — none of which has a
+       per-day source to window against. Labelled rather than quietly left to look like
+       it answers the same question as the panel above. -->
+  <div class="alltime-h">
+    <div class="section-h" style="margin:0">All time — GTM lifetime figures</div>
+    <div class="st-note" style="padding:0">Not filtered by the timeframe above. Attendance, post-call
+      verdicts and cash come from Day AI per lead, not per day, so they cannot honestly be windowed.</div>
+  </div>
   <div class="kpis" id="kpis"></div>
 
-  <div class="section-h">The GTM funnel — where people drop off</div>
+  <div class="section-h">The GTM funnel — where people drop off <span style="color:var(--ink3);font-weight:400;font-size:13px">— all time</span></div>
   <div id="freshness"></div>
   <div class="funnel" id="funnel"></div>
   <div class="legend">
@@ -188,9 +271,18 @@ a.plain{color:var(--purple);text-decoration:none}
   </div><!-- /pane-gtm -->
 
   <div id="pane-cs" role="tabpanel" hidden>
-    <div class="section-h">The CS Flex funnel — cs.hirecharm.com</div>
+    <div id="win-cs"></div>
+    <div class="alltime-h">
+      <div class="section-h" style="margin:0">All time — CS Flex lifetime figures</div>
+      <div class="st-note" style="padding:0">Not filtered by the timeframe above.</div>
+    </div>
+    <div class="section-h">The CS Flex funnel — cs.hirecharm.com <span style="color:var(--ink3);font-weight:400;font-size:13px">— all time</span></div>
     <div id="csflex"></div>
   </div>
+
+  <!-- Panes for every other registered offer are generated here, so adding an offer is
+       a registry entry in offers.py and nothing in this file changes. -->
+  <div id="panes-extra"></div>
 
   <footer id="footer"></footer>
 </div>
@@ -205,7 +297,7 @@ document.title = `Charm VSL — Ad to Cash (${DATA.generated_at||''})`;
 // context line
 (function(){
   const c = DATA.context;
-  $('ctx').innerHTML = `<b>${(c.impressions||0).toLocaleString()}</b> impressions · <b>${(c.reach||0).toLocaleString()}</b> reach · <b>${c.cpm||'—'}</b> CPM · <b>${c.ctr||'—'}</b> CTR &nbsp;·&nbsp; data as of ${DATA.generated_at||'—'}`;
+  $('ctx').innerHTML = `<b>${(c.impressions||0).toLocaleString()}</b> impressions · <b>${(c.reach||0).toLocaleString()}</b> reach · <b>${c.cpm||'—'}</b> CPM · <b>${c.ctr||'—'}</b> CTR &nbsp;·&nbsp; <b>GTM, all time</b> — not the selected timeframe &nbsp;·&nbsp; data as of ${DATA.generated_at||'—'}`;
 })();
 
 // KPI strip
@@ -213,60 +305,377 @@ $('kpis').innerHTML = DATA.kpis.map(k =>
   `<div class="kpi ${k.status}"><div class="dot ${k.status}"></div>
    <div class="v">${k.value||'—'}</div><div class="l">${k.label}</div><div class="s">${k.sub||''}</div></div>`).join('');
 
-// Funnel tabs. Each tab carries its own headline numbers, so switching views costs
-// nothing at a glance — and every pane below is scoped to exactly one funnel, which is
-// the whole point: GTM's spend and CS's spend are different businesses.
+// ============================ TIMEFRAME ============================
+// One control for the whole page. It re-aggregates the dated rows each offer ships in
+// `rows` — it never re-queries, and it never invents a daily series for a source that
+// has none. Anything that cannot honestly be windowed is rendered with an ALL TIME
+// badge instead, because a lifetime number silently displayed under a "last 7 days"
+// heading is exactly the denominator lie this page has twice been rebuilt to remove.
 //
-// DATA.detail directly, NOT the `D` const — that is declared further down and touching
-// it here is a TDZ ReferenceError that blanks every render below.
-(function(){
-  const host = $('ftabs'); if(!host) return;
-  const CS = (DATA.detail||{}).cs||{}, csAd = CS.ad||{}, F = {};
-  DATA.funnel.forEach(s => { F[s.label] = s.value; });
-  const kpi = l => (DATA.kpis.find(k=>k.label===l)||{}).value || '—';
-  const money = n => (n===null||n===undefined) ? '—' : '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+// Dates are compared as plain YYYY-MM-DD strings in UTC, matching how every row is
+// stamped. Doing it with local Date objects shifts rows across midnight for any viewer
+// west of UTC and quietly moves a booking into the wrong week.
+const TF = (function(){
+  const pad = n => String(n).padStart(2,'0');
+  const iso = d => `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+  const mk = (y,m,d) => new Date(Date.UTC(y,m,d));
+  const addDays = (d,n) => { const x = new Date(d.getTime()); x.setUTCDate(x.getUTCDate()+n); return x; };
+  // Week starts Monday: Charm reports on a Mon-Sun week, and getUTCDay() calls Sunday 0.
+  const mondayOf = d => addDays(d, -(((d.getUTCDay()+6)%7)));
 
-  const tab = (id, cls, tag, name, domain, cells) =>
-    `<button class="ftab ${cls}" id="tab-${id}" role="tab" aria-selected="false" aria-controls="pane-${id}">
-       <div class="th"><div class="tn"><span class="ftag ${cls}">${tag}</span> &nbsp;${name}</div><div class="td">${domain}</div></div>
+  const DEFS = [
+    {key:'last7',    label:'Last 7 days',       fn:t => [addDays(t,-6), t]},
+    {key:'last14',   label:'Last 14 days',      fn:t => [addDays(t,-13), t]},
+    {key:'last30',   label:'Last 30 days',      fn:t => [addDays(t,-29), t]},
+    {key:'wtd',      label:'This week so far',  fn:t => [mondayOf(t), t]},
+    {key:'lastweek', label:'Last week',         fn:t => { const m = mondayOf(t); return [addDays(m,-7), addDays(m,-1)]; }},
+    {key:'mtd',      label:'This month so far', fn:t => [mk(t.getUTCFullYear(), t.getUTCMonth(), 1), t]},
+    {key:'lastmonth',label:'Last month',        fn:t => [mk(t.getUTCFullYear(), t.getUTCMonth()-1, 1),
+                                                         mk(t.getUTCFullYear(), t.getUTCMonth(), 0)]},
+    {key:'qtd',      label:'This quarter so far',fn:t => [mk(t.getUTCFullYear(), Math.floor(t.getUTCMonth()/3)*3, 1), t]},
+    {key:'lastquarter',label:'Last quarter',    fn:t => { const q = Math.floor(t.getUTCMonth()/3)*3;
+                                                         return [mk(t.getUTCFullYear(), q-3, 1), mk(t.getUTCFullYear(), q, 0)]; }},
+    {key:'ytd',      label:'Year to date',      fn:t => [mk(t.getUTCFullYear(),0,1), t]},
+    {key:'all',      label:'All time',          fn:() => null},
+    {key:'custom',   label:'Custom range…',     fn:() => null},
+  ];
+
+  function resolve(key, from, to){
+    const t = new Date(); const today = mk(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate());
+    const def = DEFS.find(d => d.key===key) || DEFS[0];
+    if(key === 'all')    return {key, label:'All time', start:'0000-01-01', end:'9999-12-31', all:true};
+    if(key === 'custom'){
+      const a = from || iso(addDays(today,-6)), b = to || iso(today);
+      return {key, label:'Custom', start: a<=b?a:b, end: a<=b?b:a};
+    }
+    const [s,e] = def.fn(today);
+    return {key, label:def.label, start:iso(s), end:iso(e)};
+  }
+  return {DEFS, resolve, iso};
+})();
+
+// Rows whose date field falls inside the range. A row with no date is dropped rather
+// than counted: an undated row cannot belong to a window, and defaulting it into the
+// current one inflates whatever you are looking at right now.
+function inRange(rows, field, r){
+  if(!rows || !rows.length) return [];
+  return rows.filter(x => { const d = x && x[field]; return d && d >= r.start && d <= r.end; });
+}
+const sumBy = (rows, k) => rows.reduce((a,x) => a + (Number(x[k])||0), 0);
+
+// ============================ WINDOWED FUNNEL ============================
+// Built from each offer's dated rows. Three groups, kept apart on purpose:
+//   "Traffic bought"     impressions, clicks, spend — Meta, windowed
+//   "What the traffic did" fills, qualified, booked, calls run, outcomes — iClosed, windowed
+//   "Page & video"       loads, plays — Wistia, windowed, NO conversion arrow into anything
+// Page and video are not funnel stages: they count everyone who loaded the page, paid or
+// not. Putting them on the spine is what printed 129% into visitors and 660% into form
+// fills on this dashboard for weeks.
+function windowedFunnel(o, r){
+  const R = o.rows || {};
+  const ad   = inRange(R.ad_daily,    'date',   r);
+  const vid  = inRange(R.video_daily, 'date',   r);
+  const fill = inRange(R.fills,       'date',   r);
+  // `booked` is when the call was made, `call` is when it runs. A call booked Friday for
+  // the following Tuesday belongs to different weeks depending which you ask about, so
+  // the two are counted on their own dates and never divided into one another.
+  const bkAll = inRange(R.bookings,   'booked', r);
+  const bk    = bkAll.filter(b => b.status !== 'cancelled' && b.status !== 'noshow');
+  const ran   = inRange(R.bookings,   'call',   r).filter(b => b.status !== 'cancelled');
+
+  const impressions = sumBy(ad,'impressions'), clicks = sumBy(ad,'clicks');
+  const spend = Math.round(sumBy(ad,'spend')*100)/100;
+  const qualified = fill.filter(f => f.qual === 'qualified').length;
+  const withOutcome = ran.filter(b => b.outcome).length;
+
+  return {
+    ad:{impressions, clicks, spend, days:ad.length},
+    video:{loads:sumBy(vid,'loads'), plays:sumBy(vid,'plays'), days:vid.length},
+    fills:fill.length, qualified, booked:bk.length, cancelled:bkAll.length-bk.length,
+    ran:ran.length, withOutcome,
+    leaked: fill.filter(f => f.gate_leak).length,
+    rows:{fills:fill, bookings:bkAll, ran},
+  };
+}
+
+const money0 = n => (n===null||n===undefined) ? '—' : '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+const money2 = n => (n===null||n===undefined) ? '—' : '$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const numf   = n => (n===null||n===undefined) ? '—' : Number(n).toLocaleString();
+const rate   = (a,b) => (b>0) ? (Math.round(1000*a/b)/10)+'%' : null;
+
+// Does the ad export cover this window? 'none' (export ends before the window starts),
+// 'partial' (window runs past where the export stops), or 'full'.
+function adCoverage(r, W){
+  const C = DATA.ad_coverage || {}, through = C.through || DATA.ad_data_through;
+  if(!through) return 'none';
+  if(W.ad.days === 0) return 'none';
+  if(r.all) return 'partial';                 // all-time always runs past the export
+  if(r.end > through || (C.from && r.start < C.from)) return 'partial';
+  // A HOLE IN THE MIDDLE counts too. The 11 Sep import left Aug 21-31 missing, so a
+  // window like "Last 30 days" ends inside the export and still only half covers its
+  // own range — the end-boundary test alone calls that complete and lets spend be
+  // divided by a full window of leads.
+  if((C.gaps || []).some(d => d >= r.start && d <= r.end)) return 'partial';
+  return 'full';
+}
+
+// How many days of the selected window the export actually covers, for the message.
+function adGapDays(r){
+  const C = DATA.ad_coverage || {};
+  if(r.all) return (C.gaps || []).length;
+  return (C.gaps || []).filter(d => d >= r.start && d <= r.end).length;
+}
+
+function winHTML(o, r){
+  if(o.error) return `<div class="wempty">This offer failed to build: ${o.error}</div>`;
+  const W = windowedFunnel(o, r), wir = o.wiring||{};
+  const adWired = wir.ads;
+  // THREE ad-coverage states, not two. The dangerous one is PARTIAL: the Meta export is
+  // uploaded by hand and stops before the window does, so spend covers only part of the
+  // range while fills and bookings cover all of it. Dividing them makes every cost-per
+  // figure read LOW — "Last 30 days" put cost per form fill at $34 against a true $132,
+  // because eight days of spend met thirty days of leads. Cost metrics are withheld
+  // rather than shown wrong.
+  const cov = adCoverage(r, W);
+  const noAdData = adWired && cov === 'none';
+
+  // Wiring chips: what this offer actually has a source for. An unwired stage renders as
+  // NOT WIRED below, never as 0 — zero claims nothing happened, not-wired says nobody is
+  // measuring, and for four of the five offers the second is the truth.
+  const chips = [['ads','Meta ad sets'],['page','Landing page'],['video','VSL'],
+                 ['gate','Qualification gate'],['held','Attendance'],['cash','Cash']]
+    .map(([k,l]) => `<span class="wchip ${wir[k]?'on':'off'}">${wir[k]?'✓':'✕'} ${l}</span>`).join('');
+
+  const row = (name, sub, val, opts={}) => {
+    const {of, ofLabel, wired=true, bar=null, allTime=false, money=false} = opts;
+    if(!wired) return `<div class="wrow"><div class="wname">${name}<div class="wsub">${sub||''}</div></div>
+      <div><span class="wnowire">NOT WIRED — no source configured</span></div><div class="wconv"></div></div>`;
+    // A zero stage gets NO bar. The shared minimum-width trick used on the lifetime
+    // funnel below paints a visible nub for 0, which reads as "a little" at a glance —
+    // and with four offers sitting at zero that is four wrong impressions per screen.
+    const w = (bar===null || !val) ? 0 : Math.max(1.5, Math.min(100, bar*100));
+    const disp = money ? money2(val) : numf(val);
+    const inside = w > 24;
+    const conv = (of>0 && !money) ? `<b>${rate(val,of)}</b> of ${ofLabel}` : '';
+    const fill = w > 0
+      ? `<div class="wfill" style="width:${w}%;background:${o.color||'#8733ed'}">${inside?disp:''}</div>` : '';
+    return `<div class="wrow">
+      <div class="wname">${name}${allTime?'<span class="wallt">ALL TIME</span>':''}<div class="wsub">${sub||''}</div></div>
+      <div class="wtrack">${inside?'':`<span class="wnum">${disp}</span>`}${fill}</div>
+      <div class="wconv">${conv}</div></div>`;
+  };
+
+  // Two linear scales, never one. Against impressions every post-click row is a 0.1%
+  // sliver; against clicks the traffic rows run off the end.
+  const bT = v => W.ad.impressions ? v/W.ad.impressions : 0;
+  const bC = v => W.ad.clicks ? v/W.ad.clicks : (W.fills ? v/Math.max(W.fills,1) : 0);
+
+  let h = `<div class="offhead"><div class="section-h" style="margin-bottom:2px">${o.name}
+      ${o.domain?`<span class="on">· ${o.domain}</span>`:'<span class="on">· no landing page of its own</span>'}</div></div>
+    <div class="wire-chips">${chips}</div>
+    ${o.note?`<div class="st-note" style="padding:2px 0 0">${o.note}</div>`:''}`;
+
+  if(adWired && cov === 'partial'){
+    const gaps = adGapDays(r);
+    h += `<div class="wwarn"><b>Ad data covers only part of this window.</b> ${gaps
+      ? `<b>${gaps} day(s) inside this range are missing from the Meta export entirely</b>
+         (${(DATA.ad_coverage.gaps||[])[0]} onward) — the export was uploaded in two pieces with a hole between them.`
+      : `The Meta export stops at <b>${DATA.ad_data_through}</b> while this range runs to <b>${r.all?'today':r.end}</b>.`}
+      Spend below counts ${W.ad.days} day(s) against form fills and bookings that count the whole range.
+      <b>Cost-per figures are withheld for this window</b> rather than shown too low — pick a range ending on or before
+      ${DATA.ad_data_through}, or upload a newer export at <code>/upload</code>.</div>`;
+  }
+  // A window reaching back before the cutover shows real ad spend against zero fills,
+  // because the live era starts at the iClosed/short-VSL switch and everything earlier
+  // is on the frozen Historic tab by design. Without this the page looks like a funnel
+  // that collapsed, which is the exact misreading the era split exists to prevent.
+  if(!r.all && o.live_from && r.start < o.live_from){
+    h += `<div class="wwarn"><b>This window reaches back before ${o.name} went live on iClosed
+      (${o.live_from}).</b> Form fills and bookings from before that date are on the <b>Historic</b> tab —
+      a different data source and a VSL roughly 8x longer — so they read 0 here rather than being
+      blended into a series they are not comparable with. Ad spend in the window is still real.</div>`;
+  }
+  if(noAdData){
+    h += `<div class="wwarn"><b>No ad data in this range.</b> The Meta export is uploaded by hand and stops at
+      <b>${DATA.ad_data_through||'—'}</b>, so impressions, clicks and spend below are 0 for a window that starts after it —
+      and every cost-per figure is unavailable rather than $0. Upload a newer export at <code>/upload</code>,
+      or switch the timeframe to a range the export covers.</div>`;
+  }
+
+  h += `<div class="wfunnel">
+    <div class="fgroup">Traffic bought${W.ad.days?` · ${W.ad.days} day(s) of ad data in range`:''}</div>
+    ${row('Impressions','Meta, windowed', W.ad.impressions, {wired:adWired, bar:bT(W.ad.impressions)})}
+    ${row('Link clicks','Meta, windowed', W.ad.clicks, {wired:adWired, bar:bT(W.ad.clicks), of:W.ad.impressions, ofLabel:'impressions'})}
+    ${row('Ad spend', cov==='partial'?`Meta, windowed — only ${W.ad.days} of this window's days are covered`:'Meta, windowed', W.ad.spend, {wired:adWired, bar:0, money:true})}
+
+    <div class="fgroup">What the traffic did</div>
+    ${row('Form fills','iClosed contacts created in range', W.fills, {bar:bC(W.fills), of:W.ad.clicks, ofLabel:'link clicks'})}
+    ${wir.gate
+      ? row('Passed the gate','answers meet this offer\'s rules', W.qualified, {bar:bC(W.qualified), of:W.fills, ofLabel:'form fills'})
+      : row('Passed the gate','this offer screens nobody', null, {wired:false})}
+    ${row('Calls booked','by the date the call was BOOKED', W.booked, {bar:bC(W.booked), of:W.fills, ofLabel:'form fills'})}
+    ${row('Calls scheduled to run','by the date the call RUNS — a different question, so no arrow', W.ran, {bar:bC(W.ran)})}
+    ${row('Outcome logged in iClosed','rep filled in call_outcome', W.withOutcome, {bar:bC(W.withOutcome), of:W.ran, ofLabel:'calls in range'})}
+
+    <div class="fgroup">Page &amp; video — all traffic, NOT a funnel stage</div>
+    ${row('Page loads','Wistia, windowed · paid + direct + organic', W.video.loads, {wired:wir.video, bar:0})}
+    ${row('Video plays','Wistia, windowed', W.video.plays, {wired:wir.video, bar:0, of:W.video.loads, ofLabel:'page loads'})}
+  </div>`;
+
+  // Cost-per figures, only where BOTH halves exist in the same window. A cost divided by
+  // a spend of zero is not "free", and a live count over a stale spend reads far too low.
+  const cp = (label, n) => {
+    if(!adWired) return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">no ad sets wired to this offer</div></div>`;
+    if(noAdData) return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">no ad data in this range</div></div>`;
+    if(cov === 'partial') return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">ad data covers ${W.ad.days} day(s) of this window — would read too low</div></div>`;
+    if(!n)       return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">nothing to divide by in range</div></div>`;
+    return `<div class="kpi live"><div class="dot live"></div><div class="v">${money2(W.ad.spend/n)}</div><div class="l">${label}</div><div class="s">${money0(W.ad.spend)} over ${n} in range</div></div>`;
+  };
+  h += `<div class="kpis" style="margin-top:12px">
+    ${cp('Cost / form fill', W.fills)}${cp('Cost / booked call', W.booked)}
+    <div class="kpi ${W.leaked?'needs':'live'}"><div class="dot ${W.leaked?'needs':'live'}"></div>
+      <div class="v">${wir.gate?W.leaked:'—'}</div><div class="l">Booked despite failing the gate</div>
+      <div class="s">${wir.gate?'answers fail the rules but a call is booked':'no gate on this offer'}</div></div>
+  </div>`;
+  return h;
+}
+
+// ============================ OFFER TABS ============================
+// Built from DATA.offer_order, so adding an offer is a registry entry in offers.py and
+// nothing in this file changes. Each tab carries its own headline numbers FOR THE
+// SELECTED WINDOW, so switching costs nothing at a glance — and every pane below is
+// scoped to exactly one offer, which is the whole point: these are different businesses
+// and one of them (Booth 1-1) is a different brand entirely.
+//
+// DATA.detail is read directly, NOT the `D` const — that is declared further down and
+// touching it here is a TDZ ReferenceError that blanks every render below.
+const OFFER_KEYS = (DATA.offer_order||[]).filter(k => (DATA.offers||{})[k]);
+// Panels rendered later in the file register here and get called on every timeframe
+// change. They CANNOT be called from apply() directly: the drill-down section closes
+// over `const D` declared below, so an early call is a temporal-dead-zone ReferenceError
+// that kills every render after it.
+const TF_LISTENERS = [];
+let CURRENT_RANGE = TF.resolve('last7');
+
+(function(){
+  const extra = $('panes-extra');
+  if(extra) extra.innerHTML = OFFER_KEYS.filter(k => k!=='gtm' && k!=='cs')
+    .map(k => `<div id="pane-${k}" role="tabpanel" hidden><div id="win-${k}"></div></div>`).join('');
+})();
+
+function renderTabs(r){
+  const host = $('ftabs'); if(!host) return;
+  const cur = document.querySelector('.ftab[aria-selected="true"]');
+  const sel = cur ? cur.id.replace('tab-','') : null;
+  host.innerHTML = OFFER_KEYS.map(k => {
+    const o = DATA.offers[k];
+    const W = o.error ? null : windowedFunnel(o, r);
+    const cells = W ? [
+      [numf(W.ad.impressions), 'impressions'],
+      [numf(W.ad.clicks), 'link clicks'],
+      [W.ad.days ? money0(W.ad.spend) : '—', 'ad spend'],
+      [numf(W.fills), 'form fills'],
+      [numf(W.booked), 'booked'],
+      [(adCoverage(r, W) === 'full' && W.booked) ? money0(W.ad.spend/W.booked) : '—', 'cost / booked'],
+    ] : [['—','impressions'],['—','link clicks'],['—','ad spend'],['—','form fills'],['—','booked'],['—','cost / booked']];
+    return `<button class="ftab" id="tab-${k}" role="tab" aria-selected="${k===sel?'true':'false'}" aria-controls="pane-${k}">
+       <div class="th"><div class="tn"><span class="ftag" style="background:${o.color};color:#fff">${o.tag}</span> &nbsp;${o.name}</div>
+         <div class="td">${o.domain||'no page of its own'}</div></div>
        <div class="tr">${cells.map(c=>`<div><div class="tv">${c[0]}</div><div class="tl">${c[1]}</div></div>`).join('')}</div>
      </button>`;
+  }).join('');
+  OFFER_KEYS.forEach(k => { const t = $('tab-'+k); if(t) t.addEventListener('click', () => show(k)); });
+}
 
-  // Both cards lead with what the funnel BOUGHT (impressions, clicks) before what it
-  // produced, so the two funnels compare from the top of the funnel down rather than
-  // from spend. Same six cells in the same order on both — that is what makes the
-  // side-by-side readable at a glance.
-  const num = n => (n===null||n===undefined) ? '—' : Number(n).toLocaleString();
-  const ctrOf = a => (a && a.impressions) ? (Math.round(1000*(a.clicks||0)/a.impressions)/10)+'% CTR' : 'link clicks';
-  const gctx = DATA.context||{};
-  host.innerHTML =
-    tab('gtm','', 'GTM','Lead generation','gtm.hirecharm.com',
-        [[num(gctx.impressions),'impressions'],[F['Link clicks']||'0',gctx.ctr?gctx.ctr+' CTR':'link clicks'],
-         [kpi('Ad spend'),'ad spend'],
-         [F['Form fills']||'0','form fills'],[F['Booked calls']||'0','booked'],
-         [kpi('Cost / booked call'),'cost / booked']]) +
-    tab('cs','cs','CS FLEX','Customer success','cs.hirecharm.com',
-        CS.error ? [['—','impressions'],['—','link clicks'],['—','ad spend'],['—','form fills'],['—','booked'],['—','cost / booked']]
-                 : [[num(csAd.impressions),'impressions'],[num(csAd.clicks),ctrOf(csAd)],
-                    [money(csAd.spend),'ad spend'],
-                    [CS.form_fills||0,'form fills'],[CS.booked||0,'booked'],
-                    [money(CS.cost_per_booking),'cost / booked']]);
+function show(which){
+  OFFER_KEYS.forEach(k => {
+    const on = k===which;
+    const pane = $('pane-'+k); if(pane) pane.hidden = !on;
+    const t = $('tab-'+k); if(t) t.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  try{ localStorage.setItem('vslFunnel', which); }catch(e){}
+}
 
-  const panes = {gtm: $('pane-gtm'), cs: $('pane-cs')};
-  function show(which){
-    for(const k of ['gtm','cs']){
-      const on = k===which;
-      if(panes[k]) panes[k].hidden = !on;
-      const t = $('tab-'+k); if(t) t.setAttribute('aria-selected', on ? 'true' : 'false');
+function renderWindows(r){
+  OFFER_KEYS.forEach(k => {
+    const host = $('win-'+k); if(!host) return;
+    host.innerHTML = winHTML(DATA.offers[k], r);
+  });
+}
+
+// ---- wire the control ----
+(function(){
+  const sel = $('tfsel'); if(!sel) return;
+  sel.innerHTML = TF.DEFS.map(d => `<option value="${d.key}">${d.label}</option>`).join('');
+  let saved = 'last7', cFrom = '', cTo = '';
+  try{
+    const q = new URLSearchParams(window.location.search);
+    saved = q.get('range') || localStorage.getItem('vslRange') || 'last7';
+    if(q.get('from')){ cFrom = q.get('from'); cTo = q.get('to') || ''; saved = 'custom'; }
+    else cFrom = localStorage.getItem('vslRangeFrom') || '';
+    if(!cTo) cTo = localStorage.getItem('vslRangeTo') || '';
+  }catch(e){}
+  if(!TF.DEFS.some(d => d.key===saved)) saved = 'last7';
+  sel.value = saved;
+  if(cFrom) $('tfrom').value = cFrom;
+  if(cTo) $('tfto').value = cTo;
+
+  function apply(){
+    const key = sel.value;
+    $('tfcustom').classList.toggle('on', key==='custom');
+    const r = TF.resolve(key, $('tfrom').value, $('tfto').value);
+    CURRENT_RANGE = r;
+    $('tfrange').innerHTML = r.all
+      ? 'everything on record — <b>not</b> a like-for-like period comparison'
+      : `<b>${r.start}</b> → <b>${r.end}</b> UTC`;
+    // The ad export is uploaded by hand. Say so at the top of the page whenever the
+    // selected window runs past where it stops, rather than letting five panes each
+    // show a silent zero.
+    const through = DATA.ad_data_through;
+    let warn = '';
+    if(!r.all && through && r.start > through){
+      warn = `<div class="wwarn"><b>This window has no Meta ad data at all.</b> The export stops at <b>${through}</b>
+        and the window starts ${r.start}. Form fills, bookings and call outcomes below are live; impressions,
+        clicks, spend and every cost-per figure are unavailable for this range.</div>`;
+    } else if(through && adGapDays(r) > 0){
+      const C = DATA.ad_coverage||{};
+      warn = `<div class="wwarn"><b>The Meta export has a ${adGapDays(r)}-day hole inside this window.</b>
+        It was uploaded in two pieces — ${C.from} to 2026-08-20, then 2026-09-01 to ${through} — so
+        <b>${(C.gaps||[])[0]} to ${(C.gaps||[])[(C.gaps||[]).length-1]}</b> has no ad data at all.
+        Spend, impressions and clicks for this range are understated and <b>cost-per figures are withheld</b>.
+        Export those days from Ads Manager and upload at <code>/upload</code> — imports merge, so it will fill
+        the hole without touching what is already there.</div>`;
+    } else if(through && (r.all || r.end > through)){
+      warn = `<div class="wwarn"><b>Ad data covers only part of this window.</b> The Meta export is uploaded by hand
+        and stops at <b>${through}</b>. Spend is counted to there while fills, bookings and outcomes are live to
+        ${DATA.generated_at||'now'}, so <b>cost-per figures are withheld</b> rather than shown too low.
+        Upload a newer export at <code>/upload</code>, or pick a range ending on or before ${through}.</div>`;
     }
-    try{ localStorage.setItem('vslFunnel', which); }catch(e){}
+    $('tfwarn').innerHTML = warn;
+    try{
+      localStorage.setItem('vslRange', key);
+      localStorage.setItem('vslRangeFrom', $('tfrom').value||'');
+      localStorage.setItem('vslRangeTo', $('tfto').value||'');
+    }catch(e){}
+    renderTabs(r); renderWindows(r);
+    TF_LISTENERS.forEach(fn => { try { fn(r); } catch(e){ console.error('timeframe listener failed', e); } });
+    // ?offer=<key> wins over the remembered tab, so a link to one offer's pane is
+    // shareable — which is how these get discussed with anyone who is not Chris.
+    const startKey = (function(){
+      try{
+        const q = new URLSearchParams(window.location.search).get('offer');
+        if(OFFER_KEYS.includes(q)) return q;
+        const s = localStorage.getItem('vslFunnel');
+        if(OFFER_KEYS.includes(s)) return s;
+      }catch(e){}
+      return OFFER_KEYS[0];
+    })();
+    show(startKey);
   }
-  for(const k of ['gtm','cs']){
-    const t = $('tab-'+k); if(t) t.addEventListener('click', () => show(k));
-  }
-  let start = 'gtm';
-  try{ const saved = localStorage.getItem('vslFunnel'); if(saved==='cs'||saved==='gtm') start = saved; }catch(e){}
-  show(start);
+  sel.addEventListener('change', apply);
+  $('tfrom').addEventListener('change', apply);
+  $('tfto').addEventListener('change', apply);
+  apply();
 })();
 
 // DATA FRESHNESS — the two clocks on this page, and what happens when they diverge.
@@ -399,7 +808,7 @@ function engHTML(e, who){
   html += `<details open><summary>Page &amp; video engagement <span style="color:var(--ink3);font-weight:400;font-size:12px">— all traffic, NOT a funnel stage</span> <span class="cnt">${cnt}</span></summary><div class="det-body" id="engpanel"></div></details>`;
 })();
 
-html += `<details open><summary>Call outcomes <span style="color:var(--ink3);font-weight:400;font-size:12px">— log what happened</span> <span class="cnt" id="oc-cnt"></span></summary><div class="det-body" id="outcomes"></div></details>`;
+html += `<details open><summary>Show-up rate <span style="color:var(--ink3);font-weight:400;font-size:12px">— from Day AI · follows the timeframe above</span> <span class="cnt" id="oc-cnt"></span></summary><div class="det-body" id="outcomes"></div></details>`;
 
 // Where the QUALIFIED leads come from — the ad-level answer to "what's working"
 const QA = (D.report||{}).qualified_by_ad||{};
@@ -407,7 +816,7 @@ html += `<details open><summary>Where qualified leads come from <span style="col
 
 // Daily ad spend — the number to watch as Meta unthrottles now that Lead is live
 const DS = D.daily_spend||[];
-html += `<details open><summary>Daily ad spend <span style="color:var(--ink3);font-weight:400;font-size:12px">— is Meta unthrottling?</span> <span class="cnt">${DS.length?`${DS.length} day(s) · $${D.daily_budget||0}/day budget`:'awaiting ad data'}</span></summary><div class="det-body" id="dspend"></div></details>`;
+html += `<details open><summary>Daily ad spend <span style="color:var(--ink3);font-weight:400;font-size:12px">— follows the timeframe above</span> <span class="cnt" id="dspend-cnt"></span></summary><div class="det-body" id="dspend"></div></details>`;
 
 // Best ads + lead-to-ad attribution (the report)
 const R = D.report||{};
@@ -433,10 +842,24 @@ $('details').innerHTML = html;
 // Fill the engagement panel now that its container exists in the DOM.
 (function(){ const el=$('engpanel'); if(el) el.innerHTML = engHTML(DATA.engagement||{}, 'GTM'); })();
 
-// daily ad spend bar chart — the number to watch as Meta unthrottles
-(function(){
-  const host = $('dspend'), days = D.daily_spend||[], budget = D.daily_budget||0;
-  if(!days.length){ host.innerHTML = '<div class="empty">No ad-spend data yet — upload a Meta CSV at /upload.</div>'; return; }
+// daily ad spend bar chart — NOW WINDOWED by the timeframe control.
+// It used to render every day the export held on one axis: at 54 days the bars were a
+// few pixels wide with overlapping date labels, which is not a chart, it is a smear.
+// Re-rendered on every timeframe change so "last 7 days" is seven readable bars.
+function renderSpend(r){
+  const host = $('dspend'); if(!host) return;
+  const all = D.daily_spend||[], budget = D.daily_budget||0;
+  const days = r && !r.all ? all.filter(d => d.date >= r.start && d.date <= r.end) : all;
+  const cnt = $('dspend-cnt');
+  if(cnt) cnt.textContent = all.length
+    ? `${days.length} of ${all.length} day(s) · $${budget}/day budget`
+    : 'awaiting ad data';
+  if(!all.length){ host.innerHTML = '<div class="empty">No ad-spend data yet — upload a Meta CSV at /upload.</div>'; return; }
+  if(!days.length){
+    host.innerHTML = `<div class="empty">No ad spend inside ${r.start} → ${r.end}. The export covers
+      ${(DATA.ad_coverage||{}).from} → ${(DATA.ad_coverage||{}).through}.</div>`;
+    return;
+  }
   const spends = days.map(d=>d.spend);
   const maxv = (Math.max(budget, ...spends)*1.15) || 1;
   const avg = spends.reduce((a,b)=>a+b,0)/days.length;
@@ -444,13 +867,17 @@ $('details').innerHTML = html;
   const last = days[days.length-1];
   const shortd = s => s.slice(5).replace('-','/');
   let h = `<div class="mini" style="grid-template-columns:repeat(3,1fr)">`+
-    `<div class="b"><div class="bv">$${avg.toFixed(0)}</div><div class="bl">avg / day</div></div>`+
+    `<div class="b"><div class="bv">$${avg.toFixed(0)}</div><div class="bl">avg / day in range</div></div>`+
     `<div class="b"><div class="bv">${util!=null?util.toFixed(0)+'%':'—'}</div><div class="bl">budget utilization (vs $${budget}/day)</div></div>`+
     `<div class="b"><div class="bv">$${last.spend.toFixed(0)}</div><div class="bl">latest · ${shortd(last.date)}</div></div></div>`;
   const W=880,H=220,P={t:18,r:14,b:30,l:14};
   const n=days.length, iw=W-P.l-P.r, ih=H-P.t-P.b;
   const step=iw/n, bw=Math.min(54, step*0.62);
   const y=v=>P.t+ih-(v/maxv)*ih;
+  // Past ~20 bars the per-bar value labels collide into a grey band and the date labels
+  // overlap each other, so both thin out rather than being drawn on top of one another.
+  const showVals = n <= 20;
+  const tickEvery = n <= 14 ? 1 : Math.ceil(n/14);
   let g='';
   const by=y(budget);
   g+=`<line x1="${P.l}" y1="${by.toFixed(1)}" x2="${W-P.r}" y2="${by.toFixed(1)}" stroke="var(--magenta)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
@@ -459,30 +886,41 @@ $('details').innerHTML = html;
     const x=P.l+step*i+(step-bw)/2, yy=y(d.spend), bh=Math.max(0,P.t+ih-yy);
     const over=d.spend>=budget;
     g+=`<rect x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="${over?'var(--amber)':'var(--purple)'}"><title>${d.date}: $${d.spend.toFixed(2)}</title></rect>`;
-    g+=`<text x="${(x+bw/2).toFixed(1)}" y="${(yy-5).toFixed(1)}" font-size="10.5" fill="var(--ink2)" text-anchor="middle">$${d.spend.toFixed(0)}</text>`;
-    g+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-10}" font-size="10" fill="var(--ink3)" text-anchor="middle">${shortd(d.date)}</text>`;
+    if(showVals) g+=`<text x="${(x+bw/2).toFixed(1)}" y="${(yy-5).toFixed(1)}" font-size="10.5" fill="var(--ink2)" text-anchor="middle">$${d.spend.toFixed(0)}</text>`;
+    if(i % tickEvery === 0) g+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-10}" font-size="10" fill="var(--ink3)" text-anchor="middle">${shortd(d.date)}</text>`;
   });
   h+=`<div class="chart" style="margin-top:6px"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">${g}</svg></div>`;
-  h+='<div class="st-note" style="margin-top:8px">Watch this as Meta digests the now-live <b>Lead</b> event — the account was throttled to ~24% of the $'+budget+'/day budget with no conversion signal to optimize toward. Bars climbing toward the dashed line = delivery unblocking; <b>gold</b> bars hit or exceed budget.</div>';
+  h+=`<div class="st-note" style="margin-top:8px">Daily spend against the $${budget}/day budget for the selected
+      timeframe. <b>Gold</b> bars hit or exceed budget; bars climbing toward the dashed line mean Meta is
+      unthrottling delivery.${n>20?' Value labels are hidden above 20 bars — hover a bar for its exact spend.':''}</div>`;
   host.innerHTML=h;
-})();
+}
 
-// ── Call-outcomes queue: one question per call, single click, optimistic UI ──
-// Maps the two-axis data model (outcome + fit) onto 4 intuitive answers.
+// ---- SHOW-UP RATE ----------------------------------------------------------------
+// Replaces the manual "Call outcomes" queue, which asked Chris to click a verdict for
+// every booking and grew a row per call until it was the loudest thing on the page.
+// Attendance now comes from the Day AI contact property `Discovery Attended`, written
+// by the workspace, so the headline is ONE number and the names live behind a caret.
+//
+// ⚠️ THE DENOMINATOR IS CALLS WITH A VERDICT, NOT ALL BOOKINGS. A booking nobody has
+// judged yet is "awaiting", never a no-show — and cancelled sits outside both halves of
+// the rate, because a call called off in advance is a different problem from one nobody
+// joined. Coverage is printed next to the rate so a rate built on two calls reads as a
+// rate built on two calls.
+//
+// The only thing still logged by hand is the post-call FIT verdict (qualified / not a
+// fit), because Day AI has no property for it. It is offered ONLY on people who showed
+// up — a list of two today rather than twenty-three — which is what keeps this clean.
 const CHOICES = [
-  {label:'Qualified',   cls:'q',  outcome:'held',        fit:'qualified'},
-  {label:'Not a fit',   cls:'nf', outcome:'held',        fit:'unqualified'},
-  {label:'No-show',     cls:'ns', outcome:'no_show',     fit:null},
-  {label:'Reschedule',  cls:'rs', outcome:'rescheduled', fit:null},
-  {label:'Cancelled',   cls:'ca', outcome:'cancelled',   fit:null},
+  {label:'Qualified', cls:'q',  outcome:'held', fit:'qualified'},
+  {label:'Not a fit', cls:'nf', outcome:'held', fit:'unqualified'},
 ];
 const _local = {};          // email → {outcome,fit} optimistic overrides
-const _changing = {};       // email → true (re-picking a logged call)
+const _changing = {};       // email → true (re-picking a logged fit)
 const _saveQ = []; let _saving = false, _errs = {};
-// Which outcome groups are expanded. Survives the optimistic re-render after a
-// save — otherwise logging one verdict would collapse everything you had open.
-// Only the action queue starts open; settled groups stay shut until asked for.
-const _ocOpen = {needs:true};
+// Which groups are expanded. Survives the optimistic re-render after a save — otherwise
+// logging one verdict would collapse everything you had open.
+const _ocOpen = {};
 function openGroup(key){
   const el = document.getElementById('ocg-'+key);
   if(!el) return;
@@ -490,28 +928,13 @@ function openGroup(key){
   el.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
-function _eff(b){
-  const lv = _local[(b.email||'').toLowerCase()];
-  const outcome = lv ? lv.outcome : b.outcome, fit = lv ? lv.fit : b.fit;
-  let status = null;
-  if(outcome==='no_show') status='No-show';
-  else if(outcome==='cancelled') status='Cancelled';
-  else if(fit==='qualified') status='Qualified';
-  else if(fit==='unqualified') status='Not a fit';
-  return {status};
-}
-const _badge = s => s==='Qualified'?'<span class="tag live">Qualified</span>'
-  : s==='Not a fit'?'<span class="tag needs">Not a fit</span>'
-  : s==='No-show'?'<span class="tag needs">No-show</span>'
-  : s==='Cancelled'?'<span class="tag test">Cancelled</span>':'—';
-
 function setOutcome(email, outcome, fit){
   _local[email.toLowerCase()] = {outcome, fit};
   delete _changing[email.toLowerCase()];
-  renderOutcomes();
+  renderShowUp(CURRENT_RANGE);
   _saveQ.push({email, outcome, fit}); drainQ();
 }
-function changeOutcome(email){ _changing[email.toLowerCase()] = true; renderOutcomes(); }
+function changeOutcome(email){ _changing[email.toLowerCase()] = true; renderShowUp(CURRENT_RANGE); }
 
 async function drainQ(){
   if(_saving) return; _saving = true; saveBadge();
@@ -536,64 +959,114 @@ function saveBadge(){
   else el.innerHTML = '';
 }
 
-function renderOutcomes(){
+function renderShowUp(r){
   const host = $('outcomes'); if(!host) return;
-  const bookings = (D.report||{}).bookings||[];
-  const now = new Date();
-  const needs=[], g={qualified:[],notfit:[],noshow:[],rescheduled:[],cancelled:[]}, up=[];
-  bookings.forEach(b=>{
-    const started = b.start ? (new Date(b.start) <= now) : true;
-    const em = (b.email||'').toLowerCase();
-    const lv = _local[em]; const outcome = lv?lv.outcome:b.outcome, fit = lv?lv.fit:b.fit;
-    let st = null;
-    if(outcome==='no_show') st='noshow';
-    else if(outcome==='cancelled') st='cancelled';
-    else if(outcome==='rescheduled') st='rescheduled';
-    else if(fit==='qualified') st='qualified';
-    else if(fit==='unqualified') st='notfit';
-    if(!started && !st){ up.push(b); return; }
-    if(st && !_changing[em]) g[st].push(b); else needs.push(b);
-  });
-  const when = b => (b.start||'').slice(5,16).replace('T',' · ').replace('-','/');
-  const btns = b => CHOICES.map(c=>`<button class="ob ${c.cls}" onclick="setOutcome('${(b.email||'').replace(/'/g,"\\'")}','${c.outcome}',${c.fit?`'${c.fit}'`:'null'})">${c.label}</button>`).join('');
-  const chg = b => `<a class="plain" style="font-size:11px" href="javascript:changeOutcome('${(b.email||'').replace(/'/g,"\\'")}')">change</a>`;
+  const A = D.attendance || {};
+  const all = (D.report||{}).bookings||[];
+  r = r || CURRENT_RANGE;
+
+  // WINDOWED, like every other number on this page. Attendance is counted on the date
+  // the call RAN — that is when someone either turned up or did not — so a call booked
+  // last month for this week belongs to this week.
+  //
+  // This is also what stops the panel reading as a to-do list. Unwindowed it showed every
+  // unjudged call ever booked, so "17 awaiting" sat there permanently: most of those calls
+  // predate the Day AI property and will never be filled in retrospectively. Scoped to the
+  // selected timeframe it asks about the period you are actually looking at.
+  const bookings = r.all ? all
+    : all.filter(b => { const d = (b.start||'').slice(0,10); return d && d >= r.start && d <= r.end; });
+
+  // Group by the Day AI verdict. `attendance` is stamped per booking by the builder:
+  // showed | no_show | cancelled | awaiting | upcoming.
+  const g = {showed:[], no_show:[], cancelled:[], awaiting:[], upcoming:[]};
+  bookings.forEach(b => (g[b.attendance] || g.awaiting).push(b));
+
+  // Counts come from the windowed rows, never from the server's all-time totals — mixing
+  // the two would print a lifetime rate over a one-week list of names.
+  const nShowed = g.showed.length, nNo = g.no_show.length, nCancel = g.cancelled.length;
+  const nAwait = g.awaiting.length;
+  const pastCalls = bookings.filter(b => b.past).length;
+  const withVerdict = nShowed + nNo + nCancel;
+  const judged = nShowed + nNo;
+  const rate = judged ? Math.round(1000*nShowed/judged)/10 : null;
+  const covPct = pastCalls ? Math.round(100*withVerdict/pastCalls) : null;
+  const cov = `${withVerdict} of ${pastCalls} past call${(pastCalls===1)?'':'s'} judged`;
+
+  // The headline. One number, its denominator spelled out underneath, and the coverage
+  // beside it — never a bare percentage.
   let h = `<div id="oc-save" style="font-size:12px;min-height:16px;margin-bottom:8px"></div>`;
-  // at-a-glance summary — each card opens its group
-  const card = (key,n,label,color) =>
-    `<div class="b oc-card" onclick="openGroup('${key}')" title="Show the ${label} list">`+
-    `<div class="bv" style="color:${color}">${n}</div><div class="bl">${label}</div></div>`;
-  h += `<div class="mini" style="grid-template-columns:repeat(6,1fr)">`+
-    card('needs', needs.length, 'need a status', needs.length?'var(--amber-ink)':'var(--ink3)')+
-    card('qualified', g.qualified.length, 'qualified', 'var(--good)')+
-    card('notfit', g.notfit.length, 'not a fit', 'var(--ink)')+
-    card('noshow', g.noshow.length, 'no-show', 'var(--bad)')+
-    card('rescheduled', g.rescheduled.length, 'rescheduled', '#2b5aa8')+
-    card('upcoming', up.length, 'upcoming', 'var(--ink)')+`</div>`;
-  // Every group is a collapsed drawer: click the header (or its summary card) to
-  // see the people and their emails. Only the action queue opens by default.
-  const grp = (key,label,color,rows,rowFn) => rows.length ?
+  h += `<div class="su-head">
+    <div class="su-big">
+      <div class="su-v">${rate===null||rate===undefined ? '—' : rate+'%'}</div>
+      <div class="su-l">Show-up rate</div>
+      <div class="su-s">${judged ? `${nShowed} showed of ${judged} judged` : 'no verdict in this range'}</div>
+      <div class="su-s">${r.all ? 'all time' : r.start+' → '+r.end}</div>
+    </div>
+    <div class="su-side">
+      <div class="su-row"><b>${nShowed}</b> showed up</div>
+      <div class="su-row"><b>${nNo}</b> no-show</div>
+      <div class="su-row"><b>${nCancel}</b> cancelled <span class="su-note">— outside the rate</span></div>
+      <div class="su-row"><b>${nAwait}</b> no verdict recorded</div>
+    </div>
+  </div>`;
+
+  // Coverage is the honesty check. A rate on two calls is a rate on two calls.
+  h += `<div class="su-cov">
+    <b>${cov}</b>${covPct!==null?` · ${covPct}% coverage`:''} — source: ${A.source||'Day AI · Discovery Attended'},
+    written by the workspace. Nothing here needs logging by hand.
+    ${nAwait ? `A call with no verdict is <b>not</b> counted as a no-show — it sits outside the rate entirely,
+       so the number above describes ${judged} call${judged===1?'':'s'}.` : 'Every past call in this range has a verdict.'}
+  </div>`;
+
+  // ---- the caret: individuals, grouped, all collapsed by default ----
+  const when = b => (b.start||'').slice(5,16).replace('T',' · ').replace('-','/');
+  const esc = e => (e||'').replace(/'/g,"\\'");
+  const btns = b => CHOICES.map(c=>`<button class="ob ${c.cls}" onclick="setOutcome('${esc(b.email)}','${c.outcome}',${c.fit?`'${c.fit}'`:'null'})">${c.label}</button>`).join('');
+  const fitOf = b => { const lv=_local[(b.email||'').toLowerCase()]; return lv?lv.fit:b.fit; };
+  const fitBadge = f => f==='qualified' ? '<span class="tag live">Qualified</span>'
+                      : f==='unqualified' ? '<span class="tag needs">Not a fit</span>' : '';
+
+  const plainRow = (b, tail) => `<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span>
+    <div class="oc-sub">${b.email||''} · ${when(b)}</div></div><span class="oc-sub">${tail||''}</span></div>`;
+  // Showed-up rows keep the ONE remaining manual control: was this a fit? Nothing else
+  // on this page asks for a click any more.
+  const showedRow = b => {
+    const f = fitOf(b), em = (b.email||'').toLowerCase();
+    const right = (f && !_changing[em])
+      ? `${fitBadge(f)} <a class="plain" style="font-size:11px" href="javascript:changeOutcome('${esc(b.email)}')">change</a>`
+      : `<div class="oc-btns">${btns(b)}</div>`;
+    return `<div class="oc-row"><div><div class="oc-name">${b.name||b.email||''}</div>
+      <div class="oc-sub">${b.email||''} · ${when(b)}</div></div>${right}</div>`;
+  };
+  const awaitingRow = b => plainRow(b, b.transcript==='attended' ? 'transcript exists'
+                                    : b.transcript==='no_transcript' ? 'no transcript' : '');
+
+  const grp = (key,label,color,rows,rowFn,hint) => rows.length ?
     `<details class="ocg" id="ocg-${key}"${_ocOpen[key]?' open':''} ontoggle="_ocOpen['${key}']=this.open">`+
-    `<summary><span class="dot" style="background:${color}"></span>${label} <span class="n">${rows.length}</span><span class="chev">&#9654;</span></summary>`+
+    `<summary><span class="dot" style="background:${color}"></span>${label} <span class="n">${rows.length}</span>`+
+    `${hint?`<span class="su-note"> — ${hint}</span>`:''}<span class="chev">&#9654;</span></summary>`+
     `<div class="ocg-body">${rows.map(rowFn).join('')}</div></details>` : '';
-  const actionRow = b => `<div class="oc-row"><div><div class="oc-name">${b.name||b.email||''}</div>`+
-    `<div class="oc-sub">${b.email||''} · ${when(b)}</div></div><div class="oc-btns">${btns(b)}</div></div>`;
-  const settledRow = b => `<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span>`+
-    `<div class="oc-sub">${b.email||''} · ${when(b)}</div></div>${chg(b)}</div>`;
-  const upcomingRow = b => `<div class="oc-row"><div><span class="oc-name">${b.name||b.email||''}</span>`+
-    `<div class="oc-sub">${b.email||''} · ${when(b)}</div></div><span class="oc-sub">scheduled</span></div>`;
-  h += grp('needs','Needs a status','var(--amber-ink)',needs,actionRow);
-  h += grp('qualified','Qualified','var(--good)',g.qualified,settledRow);
-  h += grp('notfit','Not a fit','var(--amber-ink)',g.notfit,settledRow);
-  h += grp('noshow','No-show','var(--bad)',g.noshow,settledRow);
-  h += grp('rescheduled','Rescheduled','#2b5aa8',g.rescheduled,settledRow);
-  h += grp('cancelled','Cancelled','var(--ink3)',g.cancelled,settledRow);
-  h += grp('upcoming','Upcoming — not yet','var(--ink3)',up,upcomingRow);
+
+  h += `<div class="su-people">Who these are <span class="su-note">— click a group to expand</span></div>`;
+  h += grp('showed','Showed up','var(--good)',g.showed,showedRow,'set fit here');
+  h += grp('no_show','No-show','var(--bad)',g.no_show,b=>plainRow(b,''));
+  h += grp('cancelled','Cancelled','var(--ink3)',g.cancelled,b=>plainRow(b,''));
+  // Neutral, not amber, and no call to action. These are mostly calls that predate the
+  // Day AI property; presenting them as a queue is what made this panel shout.
+  h += grp('awaiting','No verdict recorded','var(--ink3)',g.awaiting,awaitingRow);
+  h += grp('upcoming','Upcoming — not yet','var(--ink3)',g.upcoming,b=>plainRow(b,'scheduled'));
   if(!bookings.length) h += '<div class="empty">No calls yet.</div>';
+
   host.innerHTML = h;
-  const cnt = $('oc-cnt'); if(cnt) cnt.textContent = needs.length ? `${needs.length} awaiting a status` : 'all logged';
+  const cnt = $('oc-cnt');
+  if(cnt) cnt.textContent = (rate===null) ? `no verdict in this range` : `${rate}% · ${cov}`;
   saveBadge();
 }
-renderOutcomes();
+// Both panels follow the timeframe from here on. Registered AFTER the drill-down HTML
+// is injected, then called once for the range already selected.
+TF_LISTENERS.push(renderSpend, renderShowUp);
+renderSpend(CURRENT_RANGE);
+renderShowUp(CURRENT_RANGE);
 
 // Where qualified leads come from — ranked by ad creative, names behind each row
 (function(){
@@ -654,7 +1127,7 @@ renderOutcomes();
     `<div class="b"><div class="bv">${R.ad_attributed||0}</div><div class="bl">ad-attributed bookings</div></div>`+
     `<div class="b"><div class="bv">${R.retarget_booked||0}</div><div class="bl">retargeting (warm)</div></div>`+
     `<div class="b"><div class="bv">${R.prospect_booked||0}</div><div class="bl">prospecting (cold)</div></div></div>`;
-  h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad <span style="color:var(--ink3);font-weight:400;font-size:12px">— status is set in “Call outcomes” above</span></div>';
+  h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad <span style="color:var(--ink3);font-weight:400;font-size:12px">— fit is set under “Show-up rate” above</span></div>';
   // read-only status (editing lives in the Call outcomes queue)
   const stCell = b => b.no_show?'<span class="tag needs">No-show</span>'
     : b.cancelled?'<span class="tag test">Cancelled</span>'

@@ -76,6 +76,46 @@ class DayAI:
         txt = (r.get("result", {}).get("content") or [{}])[0].get("text", "")
         return json.loads(txt) if txt else {}
 
+    # Day AI contact property "Discovery Attended" — the workspace now writes a rep's
+    # show-up verdict here, which is what replaced the manual queue on the dashboard.
+    DISCOVERY_ATTENDED = "ec9f0062-5772-448f-aa78-59fbb5274f4a"
+    # Its three options, by label. The API returns the LABEL (as a one-item list), not
+    # the option id, so these are matched on the label and normalised here — the dashboard
+    # never sees Day AI's wording.
+    _ATTENDANCE = {"showed up": "showed", "no-show": "no_show", "cancelled": "cancelled"}
+
+    def discovery_attendance(self, emails, chunk=40):
+        """{email -> showed|no_show|cancelled} for the contacts that have a verdict.
+
+        An email absent from the result has NO verdict recorded — which is NOT a no-show.
+        Callers must keep those two apart: treating "nobody wrote it down" as "they did
+        not turn up" is the same mistake that once made show rate read 5 of 5 on a day
+        with two real no-shows, only inverted.
+        """
+        want = [e.lower() for e in {(x or "").lower() for x in emails} if e]
+        out = {}
+        for i in range(0, len(want), chunk):
+            batch = want[i:i + chunk]
+            try:
+                res = self.search(
+                    [{"objectType": "native_contact",
+                      "where": {"OR": [{"propertyId": "email", "operator": "eq", "value": e}
+                                       for e in batch]}}],
+                    propertiesToReturn=["email", self.DISCOVERY_ATTENDED])
+            except Exception as exc:
+                print(f"  Day AI attendance batch failed ({len(batch)} email(s)): {exc}")
+                continue
+            for c in res.get("native_contact", {}).get("results", []):
+                props = c.get("properties") or {}
+                email = (props.get("email") or "").lower()
+                raw = props.get("Discovery Attended") or props.get(self.DISCOVERY_ATTENDED)
+                if isinstance(raw, list):
+                    raw = raw[0] if raw else None
+                key = self._ATTENDANCE.get(str(raw).strip().lower()) if raw else None
+                if email and key:
+                    out[email] = key
+        return out
+
     def opps_in_stage(self, stage_id, since="2026-06-01T00:00:00Z"):
         """Opportunities in one pipeline stage, with deal Amount + contact emails.
         Caller must filter to the funnel's real (external) leads — every deal also

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import iclosed_source
+import offers
 
 ROOT = Path(__file__).resolve().parent.parent
 # creds come from the environment (hosted/container) with .env overriding locally
@@ -24,6 +25,10 @@ if _env_file.exists():
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
             ENV[k.strip()] = v.strip()
+# Imported modules (iclosed_source) read os.environ directly, so a .env-only value was
+# invisible to them and every local build failed on ICLOSED_API_KEY while the container
+# — where these are real env vars — worked fine. Push them back so both paths agree.
+os.environ.update(ENV)
 
 WISTIA_TOKEN = ENV["WISTIA_API_TOKEN"]
 GHL_TOKEN = ENV["GHL_PIT_TOKEN"]
@@ -48,8 +53,11 @@ GTM_FORM_ID = "XwtroXXXZ58OVpL4pEqy"  # GTM Services form VSL ONLY
 GTM_CALENDAR_ID = "KDdgICxdFa0FJQgNSt8c"  # Charm - GTM VSL ONLY
 
 # iClosed event ids — the live source. Scoped per lane so GTM never counts a CS booking.
-ICLOSED_GTM_EVENT_IDS = [47452]   # Charm GTM
-ICLOSED_CS_EVENT_IDS = [47740]    # Charm CS Flex
+# Which iClosed meeting event belongs to which offer now lives in offers.py, so adding
+# an offer is a registry entry rather than a new constant plus a new code path. GTM is
+# still pulled by name here because main() computes its deep panels (Day AI attendance,
+# RB2B, cash) that no other offer has a source for yet.
+GTM = offers.BY_KEY["gtm"]
 
 # GHL custom fields that capture the ad UTMs on the contact (written from the booking
 # URL params — NOT in GHL's native attributionSource, which reads "Direct traffic").
@@ -187,93 +195,99 @@ def is_test(email, name=""):
     return bool(re.search(r"\b(test|goober)\b", (name or "").lower()))
 
 
-# ---------------------------------------------------------------- CS funnel --
-# The CS (customer-success) funnel launched 2026-08-18 alongside GTM. It shares the
-# Meta dataset, the bridge and this dashboard, but it is a separate offer with its own
-# page, video, form and calendar — so it gets its own funnel rather than being folded
-# into GTM's numbers, which would make both unreadable.
-#
-# Deliberately additive: nothing above this block changes. The GTM funnel is live and
-# was only just repaired, so a refactor to parameterise both funnels is not worth the
-# regression risk today.
-CS_MEDIA_ID = "51low6lcfn"                  # small CS VSL (1m33s) on cs.hirecharm.com
-CS_MEDIA_ID_PRIOR = "lk17fifkvg"            # CS VSL (13m58s), live until 27 Aug 2026
-CS_SWITCHED_ON = "2026-08-27"
-CS_STATS_SINCE = "2026-08-01"               # far enough back to see pre-launch test traffic
-CS_FORM_ID = "jQbgnP7paIZUM6BiqvOy"         # CS Services form VSL Only
-CS_CALENDAR_ID = "UiG1GyVkQwBqa4tbHkEN"     # Charm - CS VSL ONLY
+# ------------------------------------------------------------- offer funnels --
+# One generic funnel, driven by the registry in offers.py. This replaces cs_funnel(),
+# which was a near-copy of the GTM computation and had already drifted from it (it
+# divided play rate by page loads while GTM divided by visitors, so CS read 4.4% against
+# GTM's 7.3% when like-for-like they were 8.2% and 7.3%). With five offers, five copies
+# would drift five ways.
 
-# CS qualifier questions. Unlike GTM these have no disqualification rules yet — the
-# answers are reported as a mix so the shape of incoming demand is visible, and a gate
-# can be defined once there is enough real data to know what a bad fit looks like.
-CS_QUAL_FIELDS = {
-    "who_handles_support": "GOS9ePxFcZVLcxICP2Xc",
-    "volume_driver": "I1Uzm4LbH3SmM21M07Yq",
-    "ticket_types": "i1S56AS9bJVItMrsJ6IP",
-}
-
-# Which Meta ad sets belong to CS. Explicit prefix, not a guess: ad set NAMES get
-# repurposed (GTM's "- REAL" became "- Videos" mid-flight and split one set into two on
-# this very dashboard). If the CS ad sets are renamed away from this prefix, update it.
-CS_ADSET_PREFIX = "cs flex"
+ANOMALY_MIN_LOADS = 60      # ignore quiet days, where any ratio is noise
+ANOMALY_RATIO = 8           # loads per ad click before a day looks non-ad
 
 
 def ad_daily_rows():
-    """Every row of the shared Meta export. One file, two funnels — always split it."""
+    """Every row of the shared Meta export. One file, many offers — always split it."""
     try:
         return json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
     except Exception:
         return []
 
 
-def is_cs_row(r):
-    return (r.get("ad_set_name") or "").lower().startswith(CS_ADSET_PREFIX)
+def adset_assignment():
+    """Which offer each ad set in the export belongs to, and how it was decided.
 
-
-def ad_clicks_by_day(funnel):
-    """Ad link clicks per calendar day for ONE funnel. Used to sanity-check page
-    loads: a day with far more page loads than ad clicks is not ad traffic."""
-    want_cs = (funnel == "cs")
-    by = {}
+    Reported on the page rather than kept internal. GTM is the catch-all owner, so an ad
+    set named outside every known prefix still counts (nothing silently drops out of
+    spend) but shows as `default` — which is the only way a mis-assigned set is ever
+    noticed. Ad set names get repurposed on this account: GTM's "- REAL" became
+    "- Videos" mid-flight and split one set into two.
+    """
+    seen = {}
     for r in ad_daily_rows():
-        if is_cs_row(r) != want_cs:
-            continue
+        name = r.get("ad_set_name")
+        if name and name not in seen:
+            key, how = offers.assign_adset(name)
+            seen[name] = {"ad_set": name, "offer": key, "matched_by": how}
+    return sorted(seen.values(), key=lambda x: (x["offer"], x["ad_set"]))
+
+
+def offer_ad_rows(offer):
+    return [r for r in ad_daily_rows()
+            if offers.assign_adset(r.get("ad_set_name"))[0] == offer.key]
+
+
+def ad_daily_for(offer):
+    """Per-day spend/clicks/impressions for ONE offer, dated so the page can window it."""
+    by = {}
+    for r in offer_ad_rows(offer):
         d = r.get("date")
-        if d:
-            by[d] = by.get(d, 0) + int(r.get("link_clicks") or 0)
-    return by
+        if not d:
+            continue
+        acc = by.setdefault(d, {"date": d, "spend": 0.0, "clicks": 0, "impressions": 0, "reach": 0})
+        acc["spend"] += float(r.get("spend") or 0)
+        acc["clicks"] += int(r.get("link_clicks") or 0)
+        acc["impressions"] += int(r.get("impressions") or 0)
+        acc["reach"] += int(r.get("reach") or 0)
+    for v in by.values():
+        v["spend"] = round(v["spend"], 2)
+    return [by[d] for d in sorted(by)]
 
 
-def ad_window(funnel):
-    """First/last date the export actually covers for ONE funnel. Derived, never
+def offer_ad_spend(offer):
+    rows = offer_ad_rows(offer)
+    return {
+        "spend": round(sum(r.get("spend") or 0 for r in rows), 2),
+        "clicks": int(sum(r.get("link_clicks") or 0 for r in rows)),
+        "impressions": int(sum(r.get("impressions") or 0 for r in rows)),
+        "ad_sets": sorted({r.get("ad_set_name") for r in rows if r.get("ad_set_name")}),
+        "wired": bool(rows),
+    }
+
+
+def ad_clicks_by_day(offer):
+    """Ad link clicks per calendar day for ONE offer. Used to sanity-check page loads:
+    a day with far more page loads than ad clicks is not ad traffic."""
+    return {r["date"]: r["clicks"] for r in ad_daily_for(offer)}
+
+
+def ad_window(offer):
+    """First/last date the export actually covers for ONE offer. Derived, never
     hardcoded — Wistia is windowed to this so the two sources share a time base."""
-    days = sorted(ad_clicks_by_day(funnel))
+    days = sorted(ad_clicks_by_day(offer))
     return (days[0], days[-1]) if days else (None, None)
 
 
-# A day is flagged when page loads dwarf that day's ad clicks. Ads cannot produce
-# loads they did not buy, so the excess is direct/organic/bot traffic. Aug 19 2026
-# recorded 696 loads against 7 GTM ad clicks — 18% of the video's lifetime loads in
-# a single day. Flagged rather than deleted: the number is real, its SOURCE is not ads.
-ANOMALY_MIN_LOADS = 60      # ignore quiet days, where any ratio is noise
-ANOMALY_RATIO = 8           # loads per ad click before a day looks non-ad
+def engagement_block(media_stats, by_date, offer):
+    """Page + video engagement for ONE offer, in a shape IDENTICAL across offers.
 
-
-def engagement_block(media_stats, by_date, funnel):
-    """Page + video engagement for ONE funnel, in a shape IDENTICAL for GTM and CS.
-
-    Every field carries its own basis, because the two are not the same:
+    Every field carries its own basis, because they are not the same:
       - loads / plays are WINDOWED to the ad export's date range (from by_date)
       - unique visitors is LIFETIME — Wistia's API exposes no per-day unique count,
         so it cannot honestly be windowed. Labelled rather than silently mixed.
-
-    This function exists because GTM and CS previously computed play rate on
-    different denominators (visitors vs page loads), which made CS read 4.4% against
-    GTM's 7.3% when like-for-like they are 7% and 6%. One function, one definition,
-    so the two funnels cannot drift apart again.
     """
     stats = media_stats or {}
-    start, end = ad_window(funnel)
+    start, end = ad_window(offer)
     rows = [r for r in (by_date or [])
             if not start or start <= (r.get("date") or "")[:10] <= end]
 
@@ -283,12 +297,12 @@ def engagement_block(media_stats, by_date, funnel):
     plays_life = int(stats.get("plays") or 0)
     loads_life = int(stats.get("pageLoads") or 0)
 
-    # Play rate on ONE basis for both funnels: plays per unique visitor, lifetime.
+    # Play rate on ONE basis for every offer: plays per unique visitor, lifetime.
     # Wistia's own percentOfVisitorsClickingPlay rounds to whole percents, so it is
     # recomputed here to keep a decimal place.
     play_rate = round(100 * plays_life / visitors_life, 1) if visitors_life else None
 
-    clicks_by_day = ad_clicks_by_day(funnel)
+    clicks_by_day = ad_clicks_by_day(offer)
     anomalies = []
     for r in rows:
         d = (r.get("date") or "")[:10]
@@ -311,100 +325,173 @@ def engagement_block(media_stats, by_date, funnel):
         "avg_percent_watched": stats.get("averagePercentWatched"),
         "anomalies": anomalies,
         "anomaly_loads": sum(a["loads"] for a in anomalies),
+        # Per-day rows so the timeframe control can window loads and plays. Unique
+        # visitors deliberately has no daily equivalent — see the note above.
+        "daily": [{"date": (r.get("date") or "")[:10],
+                   "loads": int(r.get("load_count") or 0),
+                   "plays": int(r.get("play_count") or 0)} for r in (by_date or [])],
     }
 
 
-def cs_ad_spend():
-    """Meta spend + clicks for CS ad sets only, from the shared daily export."""
-    hit = [r for r in ad_daily_rows() if is_cs_row(r)]
-    return {
-        "spend": round(sum(r.get("spend") or 0 for r in hit), 2),
-        "clicks": int(sum(r.get("link_clicks") or 0 for r in hit)),
-        "impressions": int(sum(r.get("impressions") or 0 for r in hit)),
-        "ad_sets": sorted({r.get("ad_set_name") for r in hit if r.get("ad_set_name")}),
-    }
-
-
-def cs_funnel(now):
-    """The CS funnel, end to end. Mirrors the GTM computation but stands alone."""
-    # --- video ---
-    # Stats live on medias/{id}/stats.json. The plain medias/{id}.json returns the
-    # media record with stats:null, which silently reads as a video nobody watched.
+def offer_video(offer, now):
+    """Wistia stats for an offer that owns a video. ({}, []) when it owns none."""
+    mid = (offer.wistia or {}).get("media_id")
+    if not mid:
+        return {}, [], None
+    # Stats live on medias/{id}/stats.json. The plain medias/{id}.json returns the media
+    # record with stats:null, which silently reads as a video nobody watched.
     try:
-        stats = (wistia(f"medias/{CS_MEDIA_ID}/stats.json") or {}).get("stats", {}) or {}
-    except Exception:
-        stats = {}
-    # by_date is what makes a WINDOWED load/play count possible. Without it CS would
-    # report lifetime traffic against a windowed ad spend — CS's video logged 49 loads
-    # on Aug 17, the day BEFORE the funnel launched, purely from pre-launch testing.
-    try:
-        cs_by_date = wistia(f"stats/medias/{CS_MEDIA_ID}/by_date.json"
-                            f"?start_date={CS_STATS_SINCE}&end_date={now.strftime('%Y-%m-%d')}") or []
-    except Exception:
-        cs_by_date = []
-
-    # --- form fills (iClosed; GHL stopped receiving these at the CS cutover) ---
-    try:
-        subs = iclosed_source.submissions(event_ids=ICLOSED_CS_EVENT_IDS)
+        stats = (wistia(f"medias/{mid}/stats.json") or {}).get("stats", {}) or {}
     except Exception as e:
-        print(f"  CS iClosed contacts failed: {e}")
+        print(f"  {offer.key}: Wistia stats failed: {e}")
+        stats = {}
+    since = offer.wistia.get("stats_since") or offer.live_from
+    try:
+        by_date = wistia(f"stats/medias/{mid}/by_date.json"
+                         f"?start_date={since}&end_date={now.strftime('%Y-%m-%d')}") or []
+    except Exception as e:
+        print(f"  {offer.key}: Wistia by_date failed: {e}")
+        by_date = []
+    try:
+        name = (wistia(f"medias/{mid}.json") or {}).get("name")
+    except Exception:
+        name = None
+    return stats, by_date, name
+
+
+def offer_funnel(offer, now):
+    """One offer, end to end — the same computation for all five.
+
+    Returns dated ROW LISTS alongside the totals. The totals are the all-time figures;
+    the rows are what the timeframe control re-aggregates in the browser. Anything that
+    cannot honestly be windowed (lifetime unique visitors) is returned as a total only
+    and flagged, never faked into a daily series.
+    """
+    stats, by_date, video_name = offer_video(offer, now)
+
+    try:
+        subs = iclosed_source.submissions(offer)
+    except Exception as e:
+        print(f"  {offer.key}: iClosed contacts failed: {e}")
         subs = []
     real_subs = [x for x in subs if not is_test(x.get("email"), x.get("name"))]
 
-    # --- bookings ---
     try:
-        events = iclosed_source.appointments(event_ids=ICLOSED_CS_EVENT_IDS)
+        events = iclosed_source.appointments(offer)
     except Exception as e:
-        print(f"  CS iClosed calls failed: {e}")
+        print(f"  {offer.key}: iClosed calls failed: {e}")
         events = []
-    booked = [e for e in events if e.get("appointmentStatus") not in ("cancelled", "noshow")]
+    real_events = [e for e in events if not is_test(e.get("_email"), e.get("_name"))]
+    booked = [e for e in real_events if e.get("appointmentStatus") not in ("cancelled", "noshow")]
 
-    # iClosed puts the invitee email and the UTMs on the call itself, so the per-contact
-    # GHL lookup is gone. Same shape out, so the attribution blocks below are unchanged.
-    detail, by_ad, by_adset = [], {}, {}
+    # --- dated rows: what the timeframe filter re-aggregates ---
+    fill_rows = [{
+        "date": (x.get("createdAt") or "")[:10],
+        "ts": x.get("createdAt"),
+        "email": x.get("email"),
+        "name": x.get("name"),
+        "qual": x.get("_qual"),
+        "status": x.get("_status"),
+        "gate_leak": x.get("_gate_leak", False),
+        "answers": x.get("answers") or {},
+    } for x in real_subs]
+
+    booking_rows = [{
+        # Two dates, two questions. `booked` is when the call was made; `call` is when it
+        # runs. A call booked on Friday for the following Tuesday belongs to different
+        # weeks depending on which one you ask about, so both travel to the page.
+        "booked": (e.get("_booked_at") or "")[:10],
+        "call": (e.get("_call_at") or "")[:10],
+        "email": e.get("_email"),
+        "name": e.get("_name"),
+        "ad": e.get("_utm_content"),
+        "ad_set": e.get("_utm_term"),
+        "utm_source": e.get("_utm_source"),
+        "status": e.get("appointmentStatus"),
+        "rescheduled": e.get("_rescheduled"),
+        "cancel_reason": e.get("_cancel_reason"),
+        "outcome": e.get("_call_outcome"),
+        "no_sale_reason": e.get("_no_sale_reason"),
+        "objection": e.get("_objection"),
+    } for e in real_events]
+
+    # --- attribution ---
+    by_ad, by_adset = {}, {}
     for e in booked:
-        if is_test(e.get("_email"), e.get("_name")):
-            continue
-        ad, ad_set = e.get("_utm_content"), e.get("_utm_term")
-        detail.append({"name": e.get("_name"), "email": e.get("_email"),
-                       "start": e.get("startTime"), "ad": ad, "ad_set": ad_set})
-        if ad:
-            by_ad[ad] = by_ad.get(ad, 0) + 1
-        if ad_set:
-            by_adset[ad_set] = by_adset.get(ad_set, 0) + 1
+        if e.get("_utm_content"):
+            by_ad[e["_utm_content"]] = by_ad.get(e["_utm_content"], 0) + 1
+        if e.get("_utm_term"):
+            by_adset[e["_utm_term"]] = by_adset.get(e["_utm_term"], 0) + 1
 
-    # --- qualifier answer mix (no gate yet — see CS_QUAL_FIELDS) ---
-    mix = {k: {} for k in CS_QUAL_FIELDS}
+    # --- answer mix, in the offer's OWN canonical keys ---
+    mix = {k: {} for _s, k, _f in offer.questions}
     for x in real_subs:
-        others = x.get("others") or {}
-        for key, fid in CS_QUAL_FIELDS.items():
-            v = others.get(fid)
-            for item in (v if isinstance(v, list) else [v]):
-                if item:
-                    mix[key][str(item)] = mix[key].get(str(item), 0) + 1
+        for key, val in (x.get("answers") or {}).items():
+            if key in mix and val:
+                mix[key][str(val)] = mix[key].get(str(val), 0) + 1
 
-    ad = cs_ad_spend()
-    plays = stats.get("plays") or 0
-    fills, books = len(real_subs), len(detail)
+    # --- qualification, only where a gate exists ---
+    qualification = None
+    if offer.gate:
+        graded = [x for x in fill_rows if x.get("qual")]
+        qmix = {}
+        for x in graded:
+            qmix[x["qual"]] = qmix.get(x["qual"], 0) + 1
+        n_with, n_q = len(graded), qmix.get("qualified", 0)
+        booked_emails = {(e.get("_email") or "").lower() for e in booked} - {""}
+        q_emails = {(x["email"] or "").lower() for x in graded if x["qual"] == "qualified"} - {""}
+        leaked = [x for x in fill_rows if x.get("gate_leak")]
+        qualification = {
+            "with_answers": n_with, "qualified": n_q, "mix": qmix,
+            # Leads the gate should have stopped who hold a booking anyway. Not folded
+            # into any rate — it is a defect count, not a conversion.
+            "gate_leak": len(leaked),
+            "gate_leak_detail": [{"email": x["email"], "qual": x["qual"],
+                                  "status": x["status"]} for x in leaked],
+            "qualification_rate": round(100 * n_q / n_with, 1) if n_with else None,
+            "booked_qualified": len(q_emails & booked_emails),
+            "calendar_completion": round(100 * len(q_emails & booked_emails) / n_q, 1) if n_q else None,
+        }
+
+    # --- iClosed's own post-call outcomes (partial; see iclosed_source._call_outcome) ---
+    oc_mix, ns_mix = {}, {}
+    for e in real_events:
+        if e.get("_call_outcome"):
+            oc_mix[e["_call_outcome"]] = oc_mix.get(e["_call_outcome"], 0) + 1
+        if e.get("_no_sale_reason"):
+            ns_mix[e["_no_sale_reason"]] = ns_mix.get(e["_no_sale_reason"], 0) + 1
+
+    ad = offer_ad_spend(offer)
+    eng = engagement_block(stats, by_date, offer) if stats or by_date else None
+    fills, books = len(real_subs), len(booked)
     div = lambda a, b: round(a / b, 2) if b else None
-    eng = engagement_block(stats, cs_by_date, "cs")
+
     return {
+        "key": offer.key, "name": offer.name, "tag": offer.tag, "color": offer.color,
+        "domain": offer.domain, "note": offer.note, "live_from": offer.live_from,
+        "wiring": offer.wiring,
+        "event_ids": offer.iclosed_event_ids,
+        "video": ({"id": offer.wistia.get("media_id"), "name": video_name,
+                   "duration": stats.get("duration")} if offer.wistia.get("media_id") else None),
         "ad": ad,
+        "ad_daily": ad_daily_for(offer),
         "engagement": eng,
-        # `video` kept for the existing CS panel. play_rate now matches GTM's basis
-        # (plays per unique VISITOR); it was plays per page LOAD, which made CS look
-        # half as engaging as GTM when the two are in fact the same.
-        "video": {"loads": eng["loads_window"],
-                  "visitors": eng["visitors_lifetime"],
-                  "plays": eng["plays_window"],
-                  "play_rate": eng["play_rate"]},
         "form_fills": fills,
         "form_fills_all": len(subs),          # incl. tests, so the gap is visible
         "booked": books,
-        "bookings_detail": sorted(detail, key=lambda d: d.get("start") or ""),
+        "booked_all": len(events),
+        "cancelled": sum(1 for e in real_events if e.get("appointmentStatus") == "cancelled"),
+        "noshow": sum(1 for e in real_events if e.get("appointmentStatus") == "noshow"),
         "by_ad": by_ad,
         "by_adset": by_adset,
         "qualifier_mix": mix,
+        "qualification": qualification,
+        "outcomes": {"mix": oc_mix, "no_sale_reasons": ns_mix,
+                     "with_outcome": sum(1 for e in real_events if e.get("_call_outcome")),
+                     "total_calls": len(real_events)},
+        "rows": {"fills": fill_rows, "bookings": booking_rows,
+                 "ad_daily": ad_daily_for(offer),
+                 "video_daily": (eng or {}).get("daily", [])},
         "cost_per_fill": div(ad["spend"], fills),
         "cost_per_booking": div(ad["spend"], books),
         "fill_rate": round(100 * fills / ad["clicks"], 1) if ad["clicks"] else None,
@@ -433,8 +520,8 @@ def main():
     # iclosed_source emits GHL-SHAPED rows on purpose, so every computation below this
     # point is untouched by the migration.
     print("Pulling iClosed…")
-    subs = iclosed_source.submissions(event_ids=ICLOSED_GTM_EVENT_IDS)
-    events = iclosed_source.appointments(event_ids=ICLOSED_GTM_EVENT_IDS)
+    subs = iclosed_source.submissions(GTM)
+    events = iclosed_source.appointments(GTM)
     print(f"  {len(subs)} contact(s) · {len(events)} call(s)")
 
     snap_path = ROOT / "data/dayai/contacts_snapshot.json"
@@ -454,7 +541,11 @@ def main():
                  "email": x.get("email"),
                  "name": x.get("name"),
                  "website": (x.get("others") or {}).get("website"),
-                 "qual": classify_qual(x.get("others") or {}),
+                 # iClosed decides qualification itself, so its verdict wins where it
+                 # exists. classify_qual stays the fallback for the frozen GHL era,
+                 # whose rows predate iClosed and carry no status.
+                 "qual": x.get("_qual") or classify_qual(x.get("others") or {}),
+                 "gate_leak": x.get("_gate_leak", False),
                  "test": is_test(x.get("email"), x.get("name"))} for x in subs]
     real_subs = [x for x in sub_rows if not x["test"]]
 
@@ -498,9 +589,14 @@ def main():
     booked_emails = {(e.get("_email") or "").lower() for e in real_booked} - {""}
     qualified_emails = {(x["email"] or "").lower() for x in qual_rows if x["qual"] == "qualified"} - {""}
     booked_qualified = len(qualified_emails & booked_emails)
+    leaked_rows = [x for x in sub_rows if not x["test"] and x.get("gate_leak")]
     qualification = {
         "with_answers": n_with,                      # real subs carrying the qualifier answers
         "qualified": n_qualified,
+        # Leads whose answers fail the gate but who booked regardless. Reported as a
+        # count, never folded into qualification rate: it is a defect, not a conversion.
+        "gate_leak": len(leaked_rows),
+        "gate_leak_detail": [{"email": x["email"], "qual": x["qual"]} for x in leaked_rows],
         "mix": qual_mix,                             # counts by dq_capacity/dq_acv_low/dq_revenue_acv/qualified
         "qualification_rate": round(100 * n_qualified / n_with, 1) if n_with else None,
         "booked_qualified": booked_qualified,
@@ -616,6 +712,7 @@ def main():
     dayai_conn, meetings_held, deals_closed, cash_collected = False, None, None, None
     closed_detail = []
     attended = no_transcript = None
+    showed = no_show = cancelled = awaiting = past_calls = 0
     deals_committed, committed_value, committed_detail = None, None, []
     committed_first_invoice = None
     try:
@@ -706,20 +803,53 @@ def main():
                 # somewhere Day AI is not. Those are different problems with different
                 # fixes, so the number says "unconfirmed" and lets a human look.
                 if not held:
-                    e["_attendance"] = "upcoming" if not e.get("_past") else "no_meeting"
+                    e["_transcript"] = "upcoming" if not e.get("_past") else "no_meeting"
                 elif mt.get("transcribed"):
-                    e["_attendance"] = "attended"
+                    e["_transcript"] = "attended"
                 else:
-                    e["_attendance"] = "no_transcript"
+                    e["_transcript"] = "no_transcript"
 
+            # ---- attendance: the Day AI contact property is now the source of truth ----
+            #
+            # `Discovery Attended` is written per contact by the workspace. It replaced
+            # the manual queue on the dashboard, where Chris had to confirm every call by
+            # hand, and it replaces transcript-sniffing as the headline signal: a missing
+            # transcript is ambiguous (no-show, or the notetaker failed to join), while
+            # this property is somebody's actual verdict.
+            #
+            # ⚠️ ABSENCE IS NOT A NO-SHOW. Only the contacts with a recorded verdict count
+            # toward the rate; everyone else is "awaiting a verdict" and is reported as
+            # coverage, never folded into the denominator. Reading a blank as a no-show is
+            # the same error as the old "a meeting object exists, so it was held" — which
+            # printed 5 of 5 on a day with two real no-shows — just pointing the other way.
+            try:
+                verdicts = day.discovery_attendance([e.get("_email") for e in real_booked])
+            except Exception as exc:
+                verdicts = {}
+                print(f"  Day AI attendance property pull failed: {exc}")
+
+            for e in real_booked:
+                v = verdicts.get((e.get("_email") or "").lower())
+                e["_attendance"] = v or ("upcoming" if not e.get("_past") else "awaiting")
+                # `_held` still drives the post-call fit control and the funnel row. A
+                # recorded "showed" is authoritative; with no verdict yet it falls back to
+                # the transcript signal so the funnel does not collapse to 2 overnight
+                # while the property backfills. The two sources are reported separately
+                # below so the fallback is never mistaken for a verdict.
+                e["_held"] = True if v == "showed" else (False if v in ("no_show", "cancelled")
+                                                         else e.get("_held", False))
+
+            showed = sum(1 for e in real_booked if e.get("_attendance") == "showed")
+            no_show = sum(1 for e in real_booked if e.get("_attendance") == "no_show")
+            cancelled = sum(1 for e in real_booked if e.get("_attendance") == "cancelled")
+            past_calls = sum(1 for e in real_booked if e.get("_past"))
+            awaiting = sum(1 for e in real_booked if e.get("_attendance") == "awaiting")
             meetings_held = sum(1 for e in real_booked if e.get("_held"))
-            attended = sum(1 for e in real_booked if e.get("_attendance") == "attended")
-            no_transcript = sum(1 for e in real_booked if e.get("_attendance") == "no_transcript")
-            print(f"Attendance — {attended} with a transcript, {no_transcript} without "
-                  f"(no transcript usually means a no-show, but can also mean the "
-                  f"notetaker never joined)")
-            held_names = [e.get("_email") for e in real_booked if e.get("_held")]
-            print(f"Day AI connected — {meetings_held} of {len(real_booked)} real booked lead(s) have a held call (by email): {held_names}")
+            attended = sum(1 for e in real_booked if e.get("_transcript") == "attended")
+            no_transcript = sum(1 for e in real_booked if e.get("_transcript") == "no_transcript")
+            print(f"Attendance (Day AI property) — {showed} showed, {no_show} no-show, "
+                  f"{cancelled} cancelled · {awaiting} of {past_calls} past call(s) awaiting a verdict")
+            print(f"  transcript signal, secondary: {attended} with a transcript, {no_transcript} without")
 
             # VSL-attributed closed deals + cash from Day AI Closed Won opps.
             # Match ONLY real external VSL leads (drop internal reps who are on every deal).
@@ -900,7 +1030,14 @@ def main():
         "watch_through":    {**rate(watched_50, s["plays"], "plays"), "label": "Watch-through ≥50%", "of": "play → watched half"},
         "application_rate": {**rate(len(real_subs), s["visitors"], "visitors"), "label": "Application rate", "of": "visitor → form fill"},
         "booking_rate":     {**rate(len(real_booked), len(real_subs), "form fills"), "label": "Booking rate", "of": "form fill → booked call"},
-        "show_rate":        {**(rate(meetings_held, len(real_booked), "booked calls") if meetings_held is not None else {"status": "insufficient", "text": "Day AI not connected"}), "label": "Show rate", "of": "booked → call held"},
+        # Denominator is calls WITH A VERDICT, not all booked calls. Dividing by every
+        # booking would count "nobody has written it down yet" as a no-show.
+        "show_rate": {**(rate(showed, showed + no_show, "calls with a verdict")
+                         if (showed + no_show) else
+                         {"status": "insufficient",
+                          "text": (f"0 of {past_calls} past call(s) have a Day AI verdict"
+                                   if dayai_conn else "Day AI not connected")}),
+                      "label": "Show-up rate", "of": "showed ÷ (showed + no-show)"},
     }
 
     # ---- post-ad funnel coverage map (every stage below the ad) ----
@@ -984,6 +1121,11 @@ def main():
             "retarget": is_retarget(e.get("_utm_term")),
             "utm_source": e.get("_utm_source"),
             "held": e.get("_held", False),
+            # showed | no_show | cancelled | awaiting | upcoming — drives the grouped
+            # dropdown under the show-up metric.
+            "attendance": e.get("_attendance"),
+            "transcript": e.get("_transcript"),
+            "past": e.get("_past", False),
             "no_show": e.get("_no_show", False),
             "cancelled": e.get("_cancelled", False),
             "rescheduled": e.get("_rescheduled", False),
@@ -995,9 +1137,29 @@ def main():
             "pre_gate": ((e.get("startTime") or "")[:10] < QUALIFIER_FORM_DATE)} for e in real_booked],
         "meetings_held": meetings_held,
         "closed_detail": closed_detail,
-        # Split out because "held" cannot distinguish a call that happened from one
-        # nobody joined — the meeting object exists either way.
-        "attendance": {"attended": attended, "no_transcript": no_transcript},
+        # ---- show-up rate, from the Day AI `Discovery Attended` contact property ----
+        #
+        # ONE clean headline with an honest denominator: showed / (showed + no-show).
+        # Cancelled is excluded from BOTH halves — a call the prospect called off in
+        # advance is not a no-show, and burying it in the denominator would understate
+        # the rate for something that is a different problem with a different fix.
+        #
+        # `coverage` is the number that keeps this honest. Only calls with a recorded
+        # verdict count, so a rate computed on 2 of 20 past calls is a rate on 2 calls,
+        # and the page says so rather than implying it describes the funnel.
+        "attendance": {
+            "showed": showed, "no_show": no_show, "cancelled": cancelled,
+            "awaiting": awaiting, "past_calls": past_calls,
+            "with_verdict": showed + no_show + cancelled,
+            "show_rate": (round(100 * showed / (showed + no_show), 1)
+                          if (showed + no_show) else None),
+            "coverage_pct": (round(100 * (showed + no_show + cancelled) / past_calls, 1)
+                             if past_calls else None),
+            "source": "Day AI · Discovery Attended",
+            # The transcript signal is kept as a SECONDARY read for calls with no verdict
+            # yet, clearly separate so a fallback is never mistaken for somebody's verdict.
+            "transcript": {"attended": attended, "no_transcript": no_transcript},
+        },
         "meetings_qualified": meetings_qualified,
         "deals_closed": deals_closed,
         "cash_collected": cash_collected,
@@ -1010,18 +1172,47 @@ def main():
         "wistia": {"page_loads": s["pageLoads"], "visitors": s["visitors"],
                    "plays": s["plays"], "watched_50": watched_50},
         # Same builder as CS, so the two funnels are comparable by construction.
-        "engagement": engagement_block(s, by_date, "gtm"),
+        "engagement": engagement_block(s, by_date, GTM),
     }
 
-    # The CS funnel is computed independently and attached alongside. A failure here
-    # must never take the GTM dashboard down with it — CS is new, GTM pays the bills.
+    # ---- every offer, through one code path ----
+    # Each is computed independently and wrapped on its own, because a failure in a new
+    # offer must never take the dashboard down with it: GTM pays the bills. GTM's deep
+    # blocks (attendance, cash, RB2B) stay on the top-level payload above; what lands
+    # here is the spine every offer shares, plus the dated rows the timeframe control
+    # re-aggregates in the browser.
+    data["offers"] = {}
+    for off in offers.OFFERS:
+        try:
+            data["offers"][off.key] = offer_funnel(off, now)
+            f = data["offers"][off.key]
+            print(f"  {off.key:11s} {f['form_fills']:3d} fill(s) · {f['booked']:3d} booking(s) · "
+                  f"${f['ad']['spend']:,.2f} spend"
+                  + ("" if f["wiring"]["ads"] else "  [no ad sets wired]"))
+        except Exception as e:
+            data["offers"][off.key] = {"key": off.key, "name": off.name, "tag": off.tag,
+                                       "color": off.color, "error": str(e)}
+            print(f"  {off.key} FAILED (other offers unaffected): {e}")
+
+    # Back-compat alias. build_unified.py and the historic snapshot still read data["cs"].
+    data["cs"] = data["offers"].get("cs", {})
+
+    # Which ad set feeds which offer, and whether that was decided by an explicit prefix
+    # or by GTM's catch-all. On the page so a mis-assigned set is visible rather than
+    # buried inside a spend total.
+    data["adset_assignment"] = adset_assignment()
+
+    # An event created in iClosed but not declared in offers.py is invisible to this
+    # dashboard — its bookings are filtered out by id and nothing says they exist. Check
+    # every build and put it on the page.
     try:
-        data["cs"] = cs_funnel(now)
-        print(f"CS funnel: {data['cs']['form_fills']} real form fill(s), "
-              f"{data['cs']['booked']} booking(s), ${data['cs']['ad']['spend']:,.2f} spend")
+        data["unregistered_events"] = offers.unregistered(iclosed_source.events())
+        if data["unregistered_events"]:
+            names = ", ".join(f"{e['name']} ({e['id']})" for e in data["unregistered_events"])
+            print(f"WARNING: iClosed events with no offer declared: {names}")
     except Exception as e:
-        data["cs"] = {"error": str(e)}
-        print(f"CS funnel FAILED (GTM unaffected): {e}")
+        data["unregistered_events"] = []
+        print(f"  could not list iClosed events: {e}")
 
     # The closed GHL + long-VSL era, read from disk and never recomputed. It rides along
     # in the same payload so the historic tab is a tab, not a second page to keep in sync.
@@ -1046,10 +1237,13 @@ def main():
     data["era"] = {
         "name": "iClosed + short VSL",
         "source": "iClosed",
-        "gtm_media_id": VSL_MEDIA_ID,
-        "cs_media_id": CS_MEDIA_ID,
-        "gtm_started": VSL_SWITCHED_ON,
-        "cs_started": CS_SWITCHED_ON,
+        "offers": {o.key: {"media_id": (o.wistia or {}).get("media_id"),
+                           "started": o.live_from} for o in offers.OFFERS},
+        # Kept for the historic tab, which was frozen when only these two existed.
+        "gtm_media_id": GTM.wistia.get("media_id"),
+        "cs_media_id": offers.BY_KEY["cs"].wistia.get("media_id"),
+        "gtm_started": GTM.live_from,
+        "cs_started": offers.BY_KEY["cs"].live_from,
     }
 
     html = build_html(data)

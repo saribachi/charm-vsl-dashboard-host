@@ -6,8 +6,10 @@ one continuous funnel with the headline KPIs on top. Run after both builds.
 """
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import offers
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -245,18 +247,14 @@ def path_efficiency(eff):
     return out
 
 
-# Must match CS_ADSET_PREFIX in build_dashboard.py. Two funnels now share one Meta
-# export, so every GTM number has to exclude CS ad sets or GTM's spend, CPC and cost
-# per booking all silently absorb the other funnel's budget.
-CS_ADSET_PREFIX = "cs flex"
-
-
-def _is_cs_row(r):
-    return (r.get("ad_set_name") or "").lower().startswith(CS_ADSET_PREFIX)
+# Ad-set ownership comes from the offer registry, so this file cannot drift from
+# build_dashboard.py. It used to keep its own copy of the CS prefix, and for two days it
+# did not filter CS out at all — GTM's spend, CPC, CTR and cost-per-form-fill were
+# quietly absorbing the other funnel's budget.
 
 
 def _ad_rows(scope="gtm"):
-    """Ad rows for one funnel. Defaults to GTM because every existing caller is a GTM
+    """Ad rows for one offer. Defaults to GTM because every existing caller is a GTM
     view — a caller that wants everything has to ask for it explicitly."""
     try:
         rows = json.loads((ROOT / "data/meta/ad_daily.json").read_text()).get("rows", [])
@@ -264,9 +262,7 @@ def _ad_rows(scope="gtm"):
         return []
     if scope == "all":
         return rows
-    if scope == "cs":
-        return [r for r in rows if _is_cs_row(r)]
-    return [r for r in rows if not _is_cs_row(r)]
+    return [r for r in rows if offers.assign_adset(r.get("ad_set_name"))[0] == scope]
 
 
 def gtm_agg():
@@ -285,13 +281,41 @@ def gtm_agg():
 def daily_spend():
     """Per-day total ad spend (summed across ad sets) — the number to watch as
     Meta's Lead event unthrottles delivery against the daily budget."""
-    rows = _ad_rows()
+    rows = _ad_rows("gtm")      # GTM only, matching every other figure on the GTM pane
     by = {}
     for r in rows:
         d = r.get("date")
         if d:
             by[d] = by.get(d, 0.0) + (r.get("spend") or 0)
     return [{"date": d, "spend": round(by[d], 2)} for d in sorted(by)]
+
+
+def ad_day_coverage():
+    """Which calendar days the Meta export actually covers, and which it does not.
+
+    A window's ad data can be incomplete in three different ways and only one of them
+    was previously detected. The 11 Sep import merged Sep 1-11 onto a history ending
+    Aug 20, leaving **Aug 21-31 missing in the middle** — so "Last 30 days" spans a
+    date range the export only half covers while still ENDING inside it, which the
+    end-boundary check reads as complete. Spend would then be divided by a full window's
+    worth of leads, understating every cost-per figure exactly as a stale export does.
+
+    Missing days are read as real gaps rather than paused days because this export has
+    never skipped a day inside its own range: Jul 20-Aug 20 is 32 consecutive days and
+    Sep 1-11 is 11, with nothing else absent.
+    """
+    days = sorted({r["date"] for r in _ad_rows("all") if r.get("date")})
+    if not days:
+        return {"from": None, "through": None, "days": [], "gaps": []}
+    lo = datetime.strptime(days[0], "%Y-%m-%d").date()
+    hi = datetime.strptime(days[-1], "%Y-%m-%d").date()
+    have, gaps, cur = set(days), [], lo
+    while cur <= hi:
+        iso = cur.isoformat()
+        if iso not in have:
+            gaps.append(iso)
+        cur += timedelta(days=1)
+    return {"from": days[0], "through": days[-1], "days": days, "gaps": gaps}
 
 
 def spend_window():
@@ -520,6 +544,24 @@ def main():
     data = {
         "generated_at": vsl.get("generated_at"),
         "qualifier_form_date": vsl.get("qualifier_form_date"),
+        # Every offer, in registry order, each carrying its own dated rows. The page
+        # builds one tab per entry, so adding an offer is a registry edit and nothing
+        # here or in the template changes.
+        "offers": vsl.get("offers", {}),
+        "offer_order": [o.key for o in offers.OFFERS],
+        # Which ad set feeds which offer, and whether an explicit prefix decided it or
+        # GTM's catch-all did. Shown so a mis-assigned set is visible, not buried.
+        "adset_assignment": vsl.get("adset_assignment", []),
+        # iClosed events with no offer declared. Their bookings are filtered out by id
+        # and would otherwise be invisible.
+        "unregistered_events": vsl.get("unregistered_events", []),
+        # The last day the Meta export covers. The timeframe control needs it: a window
+        # that starts after this date has NO ad data, so cost-per metrics must read
+        # "no ad data in range" rather than dividing by a spend of zero.
+        "ad_data_through": (daily_spend() or [{}])[-1].get("date"),
+        # Full day coverage of the export, so the page can tell a window that runs past
+        # the export from one with a hole in the middle. Both make cost-per unreadable.
+        "ad_coverage": ad_day_coverage(),
         # Page + video engagement, deliberately OUTSIDE the funnel: it counts all page
         # traffic, not just ad traffic, so it has no honest conversion arrow into the
         # spine. Same builder as CS's — see engagement_block() in build_dashboard.py.
@@ -542,6 +584,11 @@ def main():
             # dataset and bridge, different offer, page, video, form and calendar.
             # Merging the two would make both unreadable.
             "cs": vsl.get("cs", {}),
+            # Show-up rate, from the Day AI `Discovery Attended` property. Without this
+            # the panel rendered its group lists correctly from the per-booking rows
+            # while the headline above them read 0% on 0 judged — right names, wrong
+            # number, which is the worst of both.
+            "attendance": vsl.get("attendance", {}),
             "qualification": vsl.get("qualification", {}),
             "qualifier_impact": vsl.get("qualifier_impact", {}),
             "lead_quality": vsl.get("lead_quality", {}),

@@ -566,6 +566,14 @@ def main():
         # Full day coverage of the export, so the page can tell a window that runs past
         # the export from one with a hole in the middle. Both make cost-per unreadable.
         "ad_coverage": ad_day_coverage(),
+        # The latest day any funnel activity happened. All-time ad coverage is only
+        # "full" if the export reaches this far; otherwise an all-time cost-per divides
+        # a truncated spend by a complete set of conversions.
+        "last_activity": max([d for o in (vsl.get("offers") or {}).values()
+                              for k in ("fills", "bookings")
+                              for row in ((o.get("rows") or {}).get(k) or [])
+                              for d in [row.get("date") or row.get("booked") or row.get("call")]
+                              if d] or [None]),
         # Page + video engagement, deliberately OUTSIDE the funnel: it counts all page
         # traffic, not just ad traffic, so it has no honest conversion arrow into the
         # spine. Same builder as CS's — see engagement_block() in build_dashboard.py.

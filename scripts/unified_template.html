@@ -169,6 +169,8 @@ a.plain{color:var(--purple);text-decoration:none}
 .su-row b{color:var(--ink);font-size:15px;margin-right:5px}
 .su-row.warn b{color:var(--amber-ink,#8a6100)}
 .su-note{font-size:11.5px;color:var(--ink3);font-weight:400}
+.su-run{font-size:12.5px;color:var(--ink3);margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+.su-run b{color:var(--ink)}
 .su-cov{font-size:12.5px;color:var(--ink3);padding:9px 12px;border-radius:8px;
   background:#faf8fe;border:1px solid var(--line);margin-bottom:12px}
 .su-cov.warn{background:var(--amber-bg,#fdf6e6);border-color:var(--amber-l,#e8d29a)}
@@ -204,6 +206,9 @@ a.plain{color:var(--purple);text-decoration:none}
 .wnum{position:absolute;left:8px;top:3px;font-size:12px;font-weight:700}
 .wconv{font-size:12px;color:var(--ink3);text-align:right}
 .wconv b{color:var(--ink)}
+.encard.enrun{background:#faf8fe}
+.encard .wallt{margin-left:6px;vertical-align:middle}
+.wrun{font-size:11px;color:var(--ink3);margin-top:2px}
 .wnowire{font-size:11.5px;color:var(--amber,#c47f00);background:var(--amber-bg,#fdf6e6);
   border:1px dashed var(--amber-l,#e8d29a);border-radius:5px;padding:3px 8px;display:inline-block}
 .wallt{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--ink3);
@@ -511,7 +516,11 @@ function adCoverage(r, W){
   const covers = (!C.from || r.all) ? false : (r.start >= C.from && r.end <= through
                                                && !(C.gaps||[]).some(d => d >= r.start && d <= r.end));
   if(W.ad.days === 0) return covers ? 'full' : 'none';
-  if(r.all) return 'partial';                 // all-time always runs past the export
+  // All-time used to be hardcoded partial, from when the export ended three weeks before
+  // the funnel data did. Now that it runs to today with no gaps, all-time is genuinely
+  // complete — and a running cost-per baseline is only possible if we say so.
+  if(r.all) return ((C.gaps||[]).length === 0 && through >= (DATA.last_activity||through))
+    ? 'full' : 'partial';
   if(r.end > through || (C.from && r.start < C.from)) return 'partial';
   // A HOLE IN THE MIDDLE counts too. The 11 Sep import left Aug 21-31 missing, so a
   // window like "Last 30 days" ends inside the export and still only half covers its
@@ -531,6 +540,8 @@ function adGapDays(r){
 function winHTML(o, r){
   if(o.error) return `<div class="wempty">This offer failed to build: ${o.error}</div>`;
   const W = windowedFunnel(o, r), wir = o.wiring||{};
+  // The running baseline for every rate on this spine.
+  const A = r.all ? W : windowedFunnel(o, TF.resolve('all'));
   const adWired = wir.ads;
   // THREE ad-coverage states, not two. The dangerous one is PARTIAL: the Meta export is
   // uploaded by hand and stops before the window does, so spend covers only part of the
@@ -549,7 +560,8 @@ function winHTML(o, r){
     .map(([k,l]) => `<span class="wchip ${wir[k]?'on':'off'}">${wir[k]?'✓':'✕'} ${l}</span>`).join('');
 
   const row = (name, sub, val, opts={}) => {
-    const {of, ofLabel, wired=true, bar=null, allTime=false, money=false} = opts;
+    const {of, ofLabel, wired=true, bar=null, allTime=false, money=false,
+           runVal=null, run_of=null} = opts;
     if(!wired) return `<div class="wrow"><div class="wname">${name}<div class="wsub">${sub||''}</div></div>
       <div><span class="wnowire">NOT WIRED — no source configured</span></div><div class="wconv"></div></div>`;
     // A zero stage gets NO bar. The shared minimum-width trick used on the lifetime
@@ -558,13 +570,17 @@ function winHTML(o, r){
     const w = (bar===null || !val) ? 0 : Math.max(1.5, Math.min(100, bar*100));
     const disp = money ? money2(val) : numf(val);
     const inside = w > 24;
+    // Window rate on top, running rate underneath. A 7-day window can put a rate on
+    // three calls; the running figure says what it actually is without hiding the trend.
     const conv = (of>0 && !money) ? `<b>${rate(val,of)}</b> of ${ofLabel}` : '';
+    const run = (!r.all && run_of > 0 && !money && of > 0)
+      ? `<div class="wrun">${rate(runVal, run_of)} running</div>` : '';
     const fill = w > 0
       ? `<div class="wfill" style="width:${w}%;background:${o.color||'#8733ed'}">${inside?disp:''}</div>` : '';
     return `<div class="wrow">
       <div class="wname">${name}${allTime?'<span class="wallt">ALL TIME</span>':''}<div class="wsub">${sub||''}</div></div>
       <div class="wtrack">${inside?'':`<span class="wnum">${disp}</span>`}${fill}</div>
-      <div class="wconv">${conv}</div></div>`;
+      <div class="wconv">${conv}${run}</div></div>`;
   };
 
   // Two linear scales, never one. Against impressions every post-click row is a 0.1%
@@ -598,23 +614,23 @@ function winHTML(o, r){
   h += `<div class="wfunnel">
     <div class="fgroup">Traffic bought${W.ad.days?` · ${W.ad.days} day(s) of ad data in range`:''}</div>
     ${row('Impressions','Meta, windowed', W.ad.impressions, {wired:adWired, bar:bT(W.ad.impressions)})}
-    ${row('Link clicks','Meta, windowed', W.ad.clicks, {wired:adWired, bar:bT(W.ad.clicks), of:W.ad.impressions, ofLabel:'impressions'})}
+    ${row('Link clicks','Meta, windowed', W.ad.clicks, {wired:adWired, bar:bT(W.ad.clicks), of:W.ad.impressions, ofLabel:'impressions', runVal:A.ad.clicks, run_of:A.ad.impressions})}
     ${row('Ad spend', cov==='partial'?`Meta, windowed — only ${W.ad.days} of this window's days are covered`:'Meta, windowed', W.ad.spend, {wired:adWired, bar:0, money:true})}
 
     <div class="fgroup">What the traffic did</div>
-    ${row('Form fills','iClosed contacts', W.fills, {bar:bC(W.fills), of:W.ad.clicks, ofLabel:'link clicks'})}
+    ${row('Form fills','iClosed contacts', W.fills, {bar:bC(W.fills), of:W.ad.clicks, ofLabel:'link clicks', runVal:A.fills, run_of:A.ad.clicks})}
     ${wir.gate
-      ? row('Passed the gate','answers meet the rules', W.qualified, {bar:bC(W.qualified), of:W.fills, ofLabel:'form fills'})
+      ? row('Passed the gate','answers meet the rules', W.qualified, {bar:bC(W.qualified), of:W.fills, ofLabel:'form fills', runVal:A.qualified, run_of:A.fills})
       : row('Passed the gate','this offer screens nobody', null, {wired:false})}
-    ${row('Calls booked','by booking date', W.booked, {bar:bC(W.booked), of:W.fills, ofLabel:'form fills'})}
+    ${row('Calls booked','by booking date', W.booked, {bar:bC(W.booked), of:W.fills, ofLabel:'form fills', runVal:A.booked, run_of:A.fills})}
     ${row('Calls that ran','by call date — a different question, so no arrow', W.ran, {bar:bC(W.ran)})}
     ${wir.held
-      ? row('Showed up','Day AI · Discovery Attended', W.showed, {bar:bC(W.showed), of:W.judged, ofLabel:'calls judged'})
+      ? row('Showed up','Day AI · Discovery Attended', W.showed, {bar:bC(W.showed), of:W.judged, ofLabel:'calls judged', runVal:A.showed, run_of:A.judged})
       : row('Showed up','no attendance source', null, {wired:false})}
     ${wir.held ? row('No-show','prospect never joined', W.noShow, {bar:bC(W.noShow)}) : ''}
     ${wir.held ? row('Cancelled','told us in advance — outside the show-up rate', W.cancelledCalls, {bar:bC(W.cancelledCalls)}) : ''}
     ${wir.held
-      ? row('Qualified','a deal was opened in the pipeline', W.dealOpened, {bar:bC(W.dealOpened), of:W.showed, ofLabel:'showed up'})
+      ? row('Qualified','a deal was opened in the pipeline', W.dealOpened, {bar:bC(W.dealOpened), of:W.showed, ofLabel:'showed up', runVal:A.dealOpened, run_of:A.showed})
       : row('Qualified','no pipeline source', null, {wired:false})}
     ${wir.cash
       ? row('Committed','year-one contracted, not yet cash', W.committed, {bar:0, money:true})
@@ -625,20 +641,21 @@ function winHTML(o, r){
 
     <div class="fgroup">Page &amp; video — all traffic, not a funnel stage</div>
     ${row('Page loads','Wistia, windowed', W.video.loads, {wired:wir.video, bar:0})}
-    ${row('Video plays','Wistia, windowed', W.video.plays, {wired:wir.video, bar:0, of:W.video.loads, ofLabel:'page loads'})}
+    ${row('Video plays','Wistia, windowed', W.video.plays, {wired:wir.video, bar:0, of:W.video.loads, ofLabel:'page loads', runVal:A.video.plays, run_of:A.video.loads})}
   </div>`;
 
   // Cost-per figures, only where BOTH halves exist in the same window. A cost divided by
   // a spend of zero is not "free", and a live count over a stale spend reads far too low.
-  const cp = (label, n) => {
+  const cp = (label, n, runN) => {
     if(!adWired) return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">no ad sets wired to this offer</div></div>`;
     if(noAdData) return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">no ad data in this range</div></div>`;
     if(cov === 'partial') return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">ad data covers ${W.ad.days} day(s) of this window — would read too low</div></div>`;
     if(!n)       return `<div class="kpi needs"><div class="dot needs"></div><div class="v">—</div><div class="l">${label}</div><div class="s">nothing to divide by in range</div></div>`;
-    return `<div class="kpi live"><div class="dot live"></div><div class="v">${money2(W.ad.spend/n)}</div><div class="l">${label}</div><div class="s">${money0(W.ad.spend)} over ${n} in range</div></div>`;
+    const run = (!r.all && runN) ? ` · <b>${money2(A.ad.spend/runN)}</b> running` : '';
+    return `<div class="kpi live"><div class="dot live"></div><div class="v">${money2(W.ad.spend/n)}</div><div class="l">${label}</div><div class="s">${money0(W.ad.spend)} over ${n} in range${run}</div></div>`;
   };
   h += `<div class="kpis" style="margin-top:12px">
-    ${cp('Cost / form fill', W.fills)}${cp('Cost / booked call', W.booked)}
+    ${cp('Cost / form fill', W.fills, A.fills)}${cp('Cost / booked call', W.booked, A.booked)}
     <div class="kpi ${W.leaked?'needs':'live'}"><div class="dot ${W.leaked?'needs':'live'}"></div>
       <div class="v">${wir.gate?W.leaked:'—'}</div><div class="l">Booked despite failing the gate</div>
       <div class="s">${wir.gate?'answers fail the rules but a call is booked':'no gate on this offer'}</div></div>
@@ -821,7 +838,13 @@ function engHTML(e, who){
   if(!e || !Object.keys(e).length) return '<div class="st-note">No engagement data.</div>';
   const w = e.window||{}, win = w.start ? `${w.start} → ${w.end}` : 'ad window';
   const n = v => (v===null||v===undefined) ? '—' : Number(v).toLocaleString();
-  const card = (v,l,b) => `<div class="encard"><div class="env">${v}</div><div class="enl">${l}</div><div class="enb">${b}</div></div>`;
+  // Two bases live on this card and always will: loads and plays window, while unique
+  // visitors, play rate and avg-watched cannot (Wistia exposes no per-day unique count).
+  // Each already stated its own basis in small text, but with a date range in the header
+  // the whole panel read as windowed. The badge makes the split visible without reading.
+  const card = (v,l,b,run) => `<div class="encard${run?' enrun':''}">`
+    + `<div class="env">${v}${run?'<span class="wallt">RUNNING</span>':''}</div>`
+    + `<div class="enl">${l}</div><div class="enb">${b}</div></div>`;
   let h = '';
   if(e.anomalies && e.anomalies.length){
     const a = e.anomalies;
@@ -833,9 +856,9 @@ function engHTML(e, who){
   h += '<div class="engrid">'
     + card(n(e.loads_window), 'Page loads', `${win} · all traffic, incl. reloads`)
     + card(n(e.plays_window), 'Video plays', `${win} · all traffic`)
-    + card(n(e.visitors_lifetime), 'Unique visitors', 'LIFETIME — Wistia has no per-day unique count')
-    + card(e.play_rate!=null ? e.play_rate+'%' : '—', 'Play rate', e.play_rate_basis||'plays per unique visitor')
-    + card(e.avg_percent_watched!=null ? e.avg_percent_watched+'%' : '—', 'Avg watched', 'share of the video actually watched')
+    + card(n(e.visitors_lifetime), 'Unique visitors', 'all time — Wistia has no per-day unique count', true)
+    + card(e.play_rate!=null ? e.play_rate+'%' : '—', 'Play rate', 'plays per unique visitor, all time', true)
+    + card(e.avg_percent_watched!=null ? e.avg_percent_watched+'%' : '—', 'Avg watched', 'share of the video actually watched, all time', true)
     + '</div>';
   if(e.loads_lifetime && e.loads_lifetime !== e.loads_window){
 
@@ -1045,6 +1068,12 @@ function renderShowUp(r){
   const withVerdict = nShowed + nNo + nCancel;
   const judged = nShowed + nNo;
   const rate = judged ? Math.round(1000*nShowed/judged)/10 : null;
+  // Running baseline over every call on record, so a 3-call week cannot read as the rate.
+  const allB = all.filter(b => b.past);
+  const runShowed = allB.filter(b => b.attendance === 'showed').length;
+  const runNo = allB.filter(b => b.attendance === 'no_show').length;
+  const runJudged = runShowed + runNo;
+  const runRate = runJudged ? Math.round(1000*runShowed/runJudged)/10 : null;
   // Day AI did not answer this build. Say so — an empty panel otherwise reads as "nobody
   // has been judged yet", which is a different and much more alarming claim.
   if(A.ok === false){
@@ -1065,6 +1094,7 @@ function renderShowUp(r){
       <div class="su-l">Show-up rate</div>
       <div class="su-s">${judged ? `${nShowed} showed of ${judged} judged` : 'no verdict in this range'}</div>
       <div class="su-s">${r.all ? 'all time' : r.start+' → '+r.end}</div>
+      ${!r.all && runRate !== null ? `<div class="su-run"><b>${runRate}%</b> running · ${runShowed} of ${runJudged} all time</div>` : ''}
     </div>
     <div class="su-side">
       <div class="su-row"><b>${nShowed}</b> showed up</div>

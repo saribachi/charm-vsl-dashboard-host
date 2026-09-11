@@ -713,6 +713,10 @@ def main():
     closed_detail = []
     attended = no_transcript = None
     showed = no_show = cancelled = awaiting = past_calls = 0
+    # Did the attendance pull actually run? Day AI 502s often enough that "0 of 0" and
+    # "Day AI never answered" must not look identical on the page — the first says nobody
+    # has been judged, the second says we do not know.
+    attendance_ok = False
     deals_committed, committed_value, committed_detail = None, None, []
     committed_first_invoice = None
     try:
@@ -720,7 +724,17 @@ def main():
         if _dayai.available():
             dayai_conn = True
             day = _dayai.DayAI()
-            meetings = day.recent_meetings("2026-06-01T00:00:00Z")
+            # The transcript pull is a WIDE, paginated window and 502s from time to time.
+            # It is only the secondary signal now — attendance comes from the Discovery
+            # Attended property, and cash from Closed Won opps — so its failure must not
+            # take those down with it. It used to sit outside any inner try, so one 502
+            # here wiped the show-up rate, the cash figures and the whole coverage table.
+            try:
+                meetings = day.recent_meetings("2026-06-01T00:00:00Z")
+            except Exception as exc:
+                meetings = []
+                print(f"  Day AI transcript pull failed ({exc}) — secondary signal only, "
+                      f"attendance and cash continue")
 
             # iClosed names its calendar events "<First> with Charm @ <D Mon YYYY> - <HH:MM>",
             # and Day AI exposes the prospect only as an object UUID — their email never
@@ -839,6 +853,7 @@ def main():
                 e["_held"] = True if v == "showed" else (False if v in ("no_show", "cancelled")
                                                          else e.get("_held", False))
 
+            attendance_ok = True
             showed = sum(1 for e in real_booked if e.get("_attendance") == "showed")
             no_show = sum(1 for e in real_booked if e.get("_attendance") == "no_show")
             cancelled = sum(1 for e in real_booked if e.get("_attendance") == "cancelled")
@@ -1036,7 +1051,7 @@ def main():
                          if (showed + no_show) else
                          {"status": "insufficient",
                           "text": (f"0 of {past_calls} past call(s) have a Day AI verdict"
-                                   if dayai_conn else "Day AI not connected")}),
+                                   if attendance_ok else "Day AI unreachable this build")}),
                       "label": "Show-up rate", "of": "showed ÷ (showed + no-show)"},
     }
 
@@ -1155,6 +1170,7 @@ def main():
         # verdict count, so a rate computed on 2 of 20 past calls is a rate on 2 calls,
         # and the page says so rather than implying it describes the funnel.
         "attendance": {
+            "ok": attendance_ok,
             "showed": showed, "no_show": no_show, "cancelled": cancelled,
             "awaiting": awaiting, "past_calls": past_calls,
             "with_verdict": showed + no_show + cancelled,

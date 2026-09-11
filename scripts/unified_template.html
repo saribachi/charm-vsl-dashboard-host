@@ -976,6 +976,14 @@ function renderShowUp(r){
   const withVerdict = nShowed + nNo + nCancel;
   const judged = nShowed + nNo;
   const rate = judged ? Math.round(1000*nShowed/judged)/10 : null;
+  // Day AI did not answer this build. Say so — an empty panel otherwise reads as "nobody
+  // has been judged yet", which is a different and much more alarming claim.
+  if(A.ok === false){
+    host.innerHTML = `<div class="wwarn">Day AI was unreachable on the last rebuild (usually a 502),
+      so attendance is unavailable for this build — not zero. It refreshes hourly.</div>`;
+    const c = $('oc-cnt'); if(c) c.textContent = 'Day AI unreachable';
+    return;
+  }
   const covPct = pastCalls ? Math.round(100*withVerdict/pastCalls) : null;
   const cov = `${withVerdict} of ${pastCalls} past call${(pastCalls===1)?'':'s'} judged`;
 

@@ -12,6 +12,7 @@ Usage:
         held = day.held_call("jane@acme.com")   # True if a call was held
 """
 import json
+import time
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -208,9 +209,20 @@ class DayAI:
         # as an error. Do NOT add "type" here — Day AI rejects it as a selectable name,
         # and an invalid name is silently omitted from every row, which would make the
         # value read as empty for everybody.
-        res = self.search_all([{"objectType": "native_meetingrecording"}],
-                              includeRelationships=True, propertiesToReturn=["topic"],
-                              timeframeStart=since)
+        # Retried: this is a wide paginated window and Day AI returns a transient 502 on
+        # one page often enough that a single attempt loses the whole pull.
+        last = None
+        for attempt in range(3):
+            try:
+                res = self.search_all([{"objectType": "native_meetingrecording"}],
+                                      includeRelationships=True, propertiesToReturn=["topic"],
+                                      timeframeStart=since)
+                break
+            except Exception as exc:
+                last = exc
+                time.sleep(2 * (attempt + 1))
+        else:
+            raise last
         out = []
         for m in res.get("native_meetingrecording", {}).get("results", []):
             rels = m.get("relationships") or []

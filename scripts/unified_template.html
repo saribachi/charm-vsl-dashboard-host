@@ -316,11 +316,9 @@ function renderCtx(r){
     .then(v => {
       const el = document.getElementById('stalewarn'); if(!el) return;
       const theirs = v.built || '';
-      // `built` is "YYYY-MM-DD HH:MM UTC" and generated_at is "Mon D, YYYY HH:MM UTC";
-      // comparing the minute stamps is enough to spot a different build.
-      const mm = (mine.match(/(\d{2}:\d{2}) UTC/)||[])[1];
-      const tm = (theirs.match(/(\d{2}:\d{2}) UTC/)||[])[1];
-      el.innerHTML = (mm && tm && mm !== tm)
+      // Both sides are now the SAME string — /version reads generated_at out of the page
+      // the server is currently serving — so an exact compare is safe and cannot drift.
+      el.innerHTML = (mine && theirs && theirs !== 'pending' && mine !== theirs)
         ? `You are viewing a cached copy of this page (built ${mine}); the server has a newer one (${theirs}).
            <a href="javascript:location.reload(true)">Reload</a> to see current numbers.` : '';
       el.className = el.innerHTML ? 'stale' : '';

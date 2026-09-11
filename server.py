@@ -8,6 +8,7 @@ Pure stdlib — no dependencies. All credentials come from environment variables
 import os
 import sys
 import json
+import re
 import time
 import base64
 import threading
@@ -174,7 +175,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # old build forever, and there is no way to tell by looking — which is exactly
         # how a deployed change kept appearing "not deployed".
         if path == "/version":
-            return self._send(json.dumps({"built": state["at"] or "pending"}),
+            # Read the stamp out of the SERVED page, not state["at"]. They differ by a
+            # minute or more — generated_at is stamped when the build starts, state["at"]
+            # when it finishes — so comparing them made a freshly loaded page announce
+            # itself as stale. Same string on both sides or the check is worse than none.
+            served = ""
+            try:
+                head = (DASH / "index.html").read_text()[:400000]
+                m = re.search(r'"generated_at":\s*"([^"]+)"', head)
+                served = m.group(1) if m else ""
+            except Exception:
+                pass
+            return self._send(json.dumps({"built": served or state["at"] or "pending"}),
                               "application/json")
         if not self._authed():
             return

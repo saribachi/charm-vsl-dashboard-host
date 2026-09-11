@@ -966,8 +966,8 @@ def main():
                         "ad_set": bk.get("_utm_term") if bk else None,
                     })
             print(f"Day AI VSL-attributed COMMITTED deals: {deals_committed} · "
-                  f"year-one ${committed_value:,.0f} · first invoice "
-                  f"${committed_first_invoice:,.0f} (not cash until paid)")
+                  f"year-one ${committed_value or 0:,.0f} · first invoice "
+                  f"${committed_first_invoice or 0:,.0f} (not cash until paid)")
     except Exception as ex:
         print(f"Day AI held-call pull skipped ({ex})")
 
@@ -1071,7 +1071,14 @@ def main():
                     f"Values come from confirmed contract terms (COMMITTED_TERMS), not Day AI's Amount field, which holds "
                     f"the un-corrected ceiling.") if dayai_conn else "Day AI connection unavailable this build."},
         {"stage": "Deals closed · Cash · ROAS", "source": "Day AI (Closed Won + Amount)", "status": "live" if dayai_conn else "needs",
-         "detail": f"Wired to Day AI Closed Won opps, matched to real VSL leads (external contact, internal reps excluded). {deals_closed if deals_closed is not None else '—'} closed / ${cash_collected:,.0f} collected — a deal only lands here once the MSA is signed AND first payment clears." if dayai_conn else "Day AI connection unavailable this build."},
+         "detail": (f"Wired to Day AI Closed Won opps, matched to real VSL leads (external contact, internal "
+                    f"reps excluded). {deals_closed if deals_closed is not None else '—'} closed / "
+                    f"${cash_collected:,.0f} collected — a deal only lands here once the MSA is signed AND "
+                    f"first payment clears."
+                    if (dayai_conn and cash_collected is not None) else
+                    "Day AI answered but the Closed Won pull failed this build (usually a 502) — deals and cash "
+                    "are unavailable, not zero." if dayai_conn else
+                    "Day AI connection unavailable this build.")},
     ]
 
     data = {

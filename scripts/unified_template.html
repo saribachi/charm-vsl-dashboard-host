@@ -886,7 +886,10 @@ function renderSpend(r){
     const x=P.l+step*i+(step-bw)/2, yy=y(d.spend), bh=Math.max(0,P.t+ih-yy);
     const over=d.spend>=budget;
     g+=`<rect x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="4" fill="${over?'var(--amber)':'var(--purple)'}"><title>${d.date}: $${d.spend.toFixed(2)}</title></rect>`;
-    if(showVals) g+=`<text x="${(x+bw/2).toFixed(1)}" y="${(yy-5).toFixed(1)}" font-size="10.5" fill="var(--ink2)" text-anchor="middle">$${d.spend.toFixed(0)}</text>`;
+    // Nudge the value label clear of the budget line when a bar tops out right on it —
+    // otherwise the two strings render on top of each other.
+    const ly = (Math.abs((yy-5) - by) < 9) ? yy - 14 : yy - 5;
+    if(showVals) g+=`<text x="${(x+bw/2).toFixed(1)}" y="${ly.toFixed(1)}" font-size="10.5" fill="var(--ink2)" text-anchor="middle">$${d.spend.toFixed(0)}</text>`;
     if(i % tickEvery === 0) g+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-10}" font-size="10" fill="var(--ink3)" text-anchor="middle">${shortd(d.date)}</text>`;
   });
   h+=`<div class="chart" style="margin-top:6px"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">${g}</svg></div>`;

@@ -717,6 +717,7 @@ def main():
     # "Day AI never answered" must not look identical on the page — the first says nobody
     # has been judged, the second says we do not know.
     attendance_ok = False
+    deal_by_email = {}
     deals_committed, committed_value, committed_detail = None, None, []
     committed_first_invoice = None
     try:
@@ -854,6 +855,25 @@ def main():
                                                          else e.get("_held", False))
 
             attendance_ok = True
+            # ---- qualification: a deal in the pipeline, not a hand-logged verdict ----
+            # Chris: "we know who the qualified calls were based on whether or not a deal
+            # was opened in the pipeline." That answer was in Day AI the whole time while
+            # the attribution tables read "held · needs verdict" for most of the funnel.
+            try:
+                deal_by_email = day.opportunities()
+            except Exception as exc:
+                print(f"  Day AI opportunity pull failed: {exc}")
+                deal_by_email = {}
+            for e in real_booked:
+                deal = deal_by_email.get((e.get("_email") or "").lower())
+                e["_deal_stage"] = deal["stage"] if deal else None
+                e["_deal_title"] = deal["title"] if deal else None
+                # A no-show cannot be qualified, whatever the pipeline says — the call
+                # never happened, so nobody judged them on it.
+                e["_fit"] = ("qualified" if deal and e.get("_attendance") == "showed"
+                             else "unqualified" if e.get("_attendance") == "showed"
+                             else None)
+
             showed = sum(1 for e in real_booked if e.get("_attendance") == "showed")
             no_show = sum(1 for e in real_booked if e.get("_attendance") == "no_show")
             cancelled = sum(1 for e in real_booked if e.get("_attendance") == "cancelled")
@@ -1002,35 +1022,28 @@ def main():
         return {"outcome": "auto", "fit": None}
 
     for e in real_booked:
-        pc = _normalize(post_call_leads.get((e.get("_email") or "").lower()))
-        e["_pc"] = pc
-        if pc:
-            oc, fit = pc["outcome"], pc["fit"]
-            if oc == "no_show":
-                e["_no_show"] = True
-                e["_held"] = False        # overrides Day AI transcript detection
-            elif oc == "cancelled":
-                e["_cancelled"] = True
-                e["_held"] = False
-            elif oc == "rescheduled":
-                e["_rescheduled"] = True
-                e["_held"] = False        # moved to a new time — didn't happen (yet)
-            elif oc == "held":
-                e["_held"] = True
-            # oc == "auto" → keep Day AI's _held as-is
-            # a fit verdict implies the call happened (unless explicitly not-held)
-            if fit in ("qualified", "unqualified") and oc not in ("no_show", "cancelled", "rescheduled"):
-                e["_held"] = True
-            e["_fit"] = fit
+        # ---- the manual override is retired ----
+        # Both axes are now automated: attendance from the Day AI `Discovery Attended`
+        # property, fit from whether a deal was opened in the pipeline. The hand-logged
+        # verdict used to overwrite BOTH, so a stale entry in post_call.json would now
+        # silently contradict Day AI. It is read only so an old entry still shows up in
+        # the payload for reference; it no longer decides anything.
+        e["_pc"] = _normalize(post_call_leads.get((e.get("_email") or "").lower()))
+        e["_no_show"] = e.get("_attendance") == "no_show"
+        e["_cancelled"] = e.get("_attendance") == "cancelled"
+
     meetings_held = sum(1 for e in real_booked if e.get("_held"))
     post_call = {
         "held": meetings_held,
-        "qualified": sum(1 for e in real_booked if e.get("_fit") == "qualified" and e.get("_held")),
-        "unqualified": sum(1 for e in real_booked if e.get("_fit") == "unqualified" and e.get("_held")),
+        "qualified": sum(1 for e in real_booked if e.get("_fit") == "qualified"),
+        "unqualified": sum(1 for e in real_booked if e.get("_fit") == "unqualified"),
         "no_show": sum(1 for e in real_booked if e.get("_no_show")),
         "cancelled": sum(1 for e in real_booked if e.get("_cancelled")),
         "rescheduled": sum(1 for e in real_booked if e.get("_rescheduled")),
-        "pending": sum(1 for e in real_booked if e.get("_held") and not e.get("_fit")),
+        # Showed up, but no deal in the pipeline YET. Not a to-do for anyone — it
+        # resolves itself the moment a deal is opened, or stays as a real "not a fit".
+        "pending": sum(1 for e in real_booked
+                       if e.get("_attendance") == "showed" and not e.get("_deal_stage")),
     }
     meetings_qualified = post_call["qualified"]
 
@@ -1146,12 +1159,17 @@ def main():
             # showed | no_show | cancelled | awaiting | upcoming — drives the grouped
             # dropdown under the show-up metric.
             "attendance": e.get("_attendance"),
+            # The pipeline deal is what makes a call "qualified" now, so the stage travels
+            # with the row and the attribution tables can name it instead of printing
+            # "needs verdict" at a question that was already answered.
+            "deal_stage": e.get("_deal_stage"),
+            "deal_title": e.get("_deal_title"),
             "transcript": e.get("_transcript"),
             "past": e.get("_past", False),
             "no_show": e.get("_no_show", False),
             "cancelled": e.get("_cancelled", False),
             "rescheduled": e.get("_rescheduled", False),
-            "outcome": (e.get("_pc") or {}).get("outcome", "auto"),   # manual setting → dropdown state
+            "outcome": "auto",
             "fit": e.get("_fit"),                                     # qualified|unqualified|None → dropdown state
             "post_call": (True if e.get("_fit") == "qualified" else False if e.get("_fit") == "unqualified" else None) if e.get("_held") else None,
             "form_qual": next((x["qual"] for x in sub_rows

@@ -117,6 +117,68 @@ class DayAI:
                     out[email] = key
         return out
 
+    # The sales pipeline, by stage id. A deal in ANY of these means a deal was opened —
+    # including Closed Lost and Cold, because those still say Chris judged the lead worth
+    # a deal at the call. The referral pipeline's stages are deliberately absent: a
+    # referral opportunity is not a VSL outcome.
+    SALES_STAGES = {
+        "8cc248ae-5a1f-4883-9927-c6bfa7bcb9be": "Discovery",
+        "c60c5535-998b-4042-ae27-a97bf1f8b330": "Proposal",
+        "559edc45-0431-483b-abcd-f9d960469c63": "Verbal Commit",
+        "bef2d697-5f90-4b8e-a421-b6ee3e359aed": "Closed Won",
+        "a093e42c-9d0c-4926-bf7e-a64641eca628": "Closed Lost",
+        "a0cc1763-b781-425f-ba0b-a6964339e5b1": "Cold",
+    }
+    # How far along a stage is, for picking between two deals on the same lead. Closed
+    # Lost and Cold rank BELOW the active stages: a lead sitting on both a lost deal and
+    # a live Discovery is best described by the live one.
+    STAGE_RANK = {"Closed Won": 5, "Verbal Commit": 4, "Proposal": 3,
+                  "Discovery": 2, "Cold": 1, "Closed Lost": 0}
+
+    def opportunities(self, since="2026-01-01T00:00:00Z"):
+        """{email -> {stage, title}} for every sales-pipeline opportunity.
+
+        This is how a call is judged QUALIFIED now: a deal exists for the lead. It
+        replaces the hand-logged fit verdict, which meant the attribution tables read
+        "held · needs verdict" for most of the funnel even though the answer was sitting
+        in the pipeline the whole time.
+
+        ⚠️ `stageId` is a COMPOSITE string, "<pipelineId> : native_stage : <stageId>".
+        Comparing it whole matches nothing; the stage is the last colon-separated part.
+        """
+        res = self.search_all([{"objectType": "native_opportunity"}],
+                              includeRelationships=True,
+                              propertiesToReturn=["title", "stageId", "roles"],
+                              timeframeStart=since)
+        out = {}
+        for o in res.get("native_opportunity", {}).get("results", []):
+            props = o.get("properties", {})
+            stage_id = (props.get("stageId") or "").split(":")[-1].strip()
+            stage = self.SALES_STAGES.get(stage_id)
+            if not stage:
+                continue                      # referral pipeline, or a stage we don't track
+            emails = set()
+            try:
+                for r in json.loads(props.get("roles") or "[]"):
+                    if r.get("personEmail"):
+                        emails.add(r["personEmail"].lower())
+            except (ValueError, AttributeError, TypeError):
+                pass
+            for r in (o.get("relationships") or []):
+                oid = (r.get("objectId") or "") if isinstance(r, dict) else ""
+                if isinstance(r, dict) and r.get("objectType") == "native_contact" and "@" in oid:
+                    emails.add(oid.lower())
+            for e in emails:
+                if e.endswith("@hirecharm.com"):
+                    continue                  # the internal rep is on every deal
+                prev = out.get(e)
+                # Furthest-along stage wins: a lead can sit on more than one deal (a
+                # direct opp and a referral-sourced one), and the best of them is the
+                # honest answer to "did this lead become a deal".
+                if not prev or self.STAGE_RANK[stage] > self.STAGE_RANK[prev["stage"]]:
+                    out[e] = {"stage": stage, "title": o.get("title")}
+        return out
+
     def opps_in_stage(self, stage_id, since="2026-06-01T00:00:00Z"):
         """Opportunities in one pipeline stage, with deal Amount + contact emails.
         Caller must filter to the funnel's real (external) leads — every deal also

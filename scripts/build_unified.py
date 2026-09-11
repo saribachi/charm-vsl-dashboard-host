@@ -140,12 +140,13 @@ def qualified_by_ad(bookings, eff=None):
             d["held"] += 1
         if b.get("no_show"):
             d["no_show"] += 1
-        if b.get("fit") == "qualified":
+        # Qualified = a deal was opened in the pipeline. Not a hand-logged verdict.
+        if b.get("deal_stage") and b.get("attendance") == "showed":
             d["qualified"] += 1
             d["people"].append({"name": b.get("name") or b.get("email"), "email": b.get("email"),
-                                "start": b.get("start")})
-        elif not b.get("fit") and not b.get("no_show") and not b.get("cancelled"):
-            d["pending"] += 1     # no verdict yet — keeps the rate honest
+                                "start": b.get("start"), "stage": b.get("deal_stage")})
+        elif b.get("attendance") == "upcoming":
+            d["pending"] += 1     # call hasn't happened — keeps the rate honest
     rows = []
     for key, d in ads.items():
         bk, q = d["bookings"], d["qualified"]
@@ -165,18 +166,21 @@ def qualified_by_ad(bookings, eff=None):
     # Deduped by email, since a reschedule leaves the old row and adds a new one, which
     # otherwise counts one serial rescheduler several times over.
     awaiting, upcoming = set(), set()
+    # There is no "awaiting a verdict" any more: attendance comes from Day AI and
+    # qualification from whether a deal exists, so every past call already has an answer.
+    # What is left is the real state — showed up, no deal opened (yet).
     for b in bookings or []:
-        if b.get("fit") or b.get("no_show") or b.get("cancelled"):
-            continue
         who = (b.get("email") or "").strip().lower() or f"_row{id(b)}"
-        (awaiting if b.get("held") else upcoming).add(who)
-    upcoming -= awaiting          # a held-but-unjudged call is not also "upcoming"
+        if b.get("attendance") == "showed" and not b.get("deal_stage"):
+            awaiting.add(who)
+        elif b.get("attendance") == "upcoming":
+            upcoming.add(who)
     return {"rows": rows,
             "total_qualified": tot_q,
             "attributed_qualified": sum(r["qualified"] for r in rows if r["ad"]),
             "unattributed_qualified": sum(r["qualified"] for r in rows if not r["ad"]),
             "pending_verdicts": sum(r["pending"] for r in rows),
-            "awaiting_verdicts": len(awaiting),
+            "showed_no_deal": len(awaiting),
             "upcoming_calls": len(upcoming),
             "ads_with_qualified": len([r for r in rows if r["qualified"]]),
             "per_ad_cost_available": False}

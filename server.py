@@ -157,6 +157,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ct)
         self.send_header("Content-Length", str(len(body)))
+        # No cache headers at all meant browsers fell back to heuristic caching and kept
+        # serving an old copy after a rebuild — the page genuinely looked stale while the
+        # server was returning fresh HTML. Every response here is generated per request
+        # and the data behind it changes hourly, so none of it is ever cacheable.
+        self.send_header("Cache-Control", "no-store, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
 

@@ -768,7 +768,6 @@ const D = DATA.detail;
 const mmss = s => `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`;
 let html = '';
 
-// Call outcomes — focused "what happened on this call?" queue
 // ---- Page & video engagement (BOTH funnels render through this one function) ----
 // Deliberately not a funnel stage. These count everyone who loaded the page, paid or
 // not, and Wistia exposes no per-day unique-visitor count — so loads/plays can be
@@ -1131,7 +1130,7 @@ renderShowUp(CURRENT_RANGE);
     `<div class="b"><div class="bv">${R.retarget_booked||0}</div><div class="bl">retargeting (warm)</div></div>`+
     `<div class="b"><div class="bv">${R.prospect_booked||0}</div><div class="bl">prospecting (cold)</div></div></div>`;
   h += '<div style="font-weight:600;margin:2px 0 8px">Which lead booked from which ad <span style="color:var(--ink3);font-weight:400;font-size:12px">— fit is set under “Show-up rate” above</span></div>';
-  // read-only status (editing lives in the Call outcomes queue)
+  // read-only status (fit is set under Show-up rate)
   const stCell = b => b.no_show?'<span class="tag needs">No-show</span>'
     : b.cancelled?'<span class="tag test">Cancelled</span>'
     : b.rescheduled?'<span class="tag" style="background:#eef3fb;color:#2b5aa8">Rescheduled</span>'

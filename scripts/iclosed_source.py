@@ -70,6 +70,22 @@ def _get(path, params=None):
         return json.loads(r.read().decode())
 
 
+# ---- per-build cache -------------------------------------------------------------
+# Five offers each used to re-page the ENTIRE contacts and eventCalls collections, and
+# main() pulls GTM a second time for its deep panels — 127 HTTP calls and 142 seconds per
+# build. The container's startup rebuild is synchronous, so that was ~2 minutes of Bad
+# Gateway on every deploy and every restart.
+#
+# Nothing iClosed returns changes during a single build, so each collection is fetched
+# once and each contact detail once. Cleared by reset_cache() if a caller ever needs a
+# genuinely fresh read within one process.
+_CACHE = {}
+
+
+def reset_cache():
+    _CACHE.clear()
+
+
 def _rows(payload, *keys):
     """iClosed nests its array differently per endpoint, and reading the wrong key
     returns zero rows with no error. Try each shape rather than assume one."""
@@ -89,7 +105,13 @@ def _rows(payload, *keys):
 
 def _paged(path, container, params=None, limit=50, max_pages=40):
     """⚠️ iClosed paging is ZERO-INDEXED. page=1 returns an empty array with HTTP 200
-    and a count that still reports rows exist, so starting at 1 finds nothing forever."""
+    and a count that still reports rows exist, so starting at 1 finds nothing forever.
+
+    Cached per build — see _CACHE. Every offer walks the same two collections.
+    """
+    ck = ("paged", path, container, tuple(sorted((params or {}).items())), limit)
+    if ck in _CACHE:
+        return _CACHE[ck]
     out = []
     for page in range(0, max_pages):
         payload = _get(path, {**(params or {}), "page": str(page), "limit": limit})
@@ -100,6 +122,7 @@ def _paged(path, container, params=None, limit=50, max_pages=40):
             break
         if len(batch) < limit:
             break
+    _CACHE[ck] = out
     return out
 
 
@@ -187,8 +210,9 @@ def events():
     Pulled on each build so an event created in iClosed cannot stay invisible: without
     this, a new event's bookings are filtered out by id and nothing says they exist.
     """
-    payload = _get("/v1/events", {"page": "0", "limit": "100"})
-    return _rows(payload, "events")
+    if ("events",) not in _CACHE:
+        _CACHE[("events",)] = _rows(_get("/v1/events", {"page": "0", "limit": "100"}), "events")
+    return _CACHE[("events",)]
 
 
 def submissions(offer):
@@ -201,11 +225,16 @@ def submissions(offer):
             continue
         # Answers only exist on the DETAIL endpoint — the list omits
         # CustomFieldAssociation entirely, which silently yields zero answers.
-        try:
-            detail = (_get("/v1/contacts/detail", {"contactId": row["id"]}) or {})
-            detail = detail.get("data") or detail
-        except Exception:
-            detail = row
+        dk = ("detail", str(row["id"]))
+        if dk in _CACHE:
+            detail = _CACHE[dk]
+        else:
+            try:
+                detail = (_get("/v1/contacts/detail", {"contactId": row["id"]}) or {})
+                detail = detail.get("data") or detail
+            except Exception:
+                detail = row
+            _CACHE[dk] = detail
         raw = invitee_answers(detail)
         answers = canonical_answers(offer, raw)
 

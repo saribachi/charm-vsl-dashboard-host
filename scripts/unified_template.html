@@ -173,6 +173,8 @@ a.plain{color:var(--purple);text-decoration:none}
   background:#faf8fe;border:1px solid var(--line);margin-bottom:12px}
 .su-cov.warn{background:var(--amber-bg,#fdf6e6);border-color:var(--amber-l,#e8d29a)}
 .su-cov b{color:var(--ink)}
+.wnote{font-size:12.5px;color:var(--ink3);padding:8px 12px;border-radius:8px;
+  background:#faf8fe;border:1px solid var(--line);margin:10px 0}
 .su-people{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
   color:var(--ink3);margin:14px 0 6px}
 /* ---- timeframe control ---- */
@@ -251,8 +253,7 @@ a.plain{color:var(--purple);text-decoration:none}
        it answers the same question as the panel above. -->
   <div class="alltime-h">
     <div class="section-h" style="margin:0">All time — GTM lifetime figures</div>
-    <div class="st-note" style="padding:0">Not filtered by the timeframe above. Attendance, post-call
-      verdicts and cash come from Day AI per lead, not per day, so they cannot honestly be windowed.</div>
+    <div class="st-note" style="padding:0">Not filtered by the timeframe.</div>
   </div>
   <div class="kpis" id="kpis"></div>
 
@@ -408,7 +409,13 @@ const rate   = (a,b) => (b>0) ? (Math.round(1000*a/b)/10)+'%' : null;
 function adCoverage(r, W){
   const C = DATA.ad_coverage || {}, through = C.through || DATA.ad_data_through;
   if(!through) return 'none';
-  if(W.ad.days === 0) return 'none';
+  // ⚠️ "this offer spent nothing" is NOT "we have no data". CS Flex stopped spending on
+  // 4 Sep, so in a 5-11 Sep window it has zero ad rows while the export covers those days
+  // perfectly. Reporting that as missing data sends you hunting for a broken export.
+  // Coverage is a property of the EXPORT's date span, never of one offer's spend.
+  const covers = (!C.from || r.all) ? false : (r.start >= C.from && r.end <= through
+                                               && !(C.gaps||[]).some(d => d >= r.start && d <= r.end));
+  if(W.ad.days === 0) return covers ? 'full' : 'none';
   if(r.all) return 'partial';                 // all-time always runs past the export
   if(r.end > through || (C.from && r.start < C.from)) return 'partial';
   // A HOLE IN THE MIDDLE counts too. The 11 Sep import left Aug 21-31 missing, so a
@@ -473,33 +480,24 @@ function winHTML(o, r){
   let h = `<div class="offhead"><div class="section-h" style="margin-bottom:2px">${o.name}
       ${o.domain?`<span class="on">· ${o.domain}</span>`:'<span class="on">· no landing page of its own</span>'}</div></div>
     <div class="wire-chips">${chips}</div>
-    ${o.note?`<div class="st-note" style="padding:2px 0 0">${o.note}</div>`:''}`;
+`;
 
   if(adWired && cov === 'partial'){
     const gaps = adGapDays(r);
-    h += `<div class="wwarn"><b>Ad data covers only part of this window.</b> ${gaps
-      ? `<b>${gaps} day(s) inside this range are missing from the Meta export entirely</b>
-         (${(DATA.ad_coverage.gaps||[])[0]} onward) — the export was uploaded in two pieces with a hole between them.`
-      : `The Meta export stops at <b>${DATA.ad_data_through}</b> while this range runs to <b>${r.all?'today':r.end}</b>.`}
-      Spend below counts ${W.ad.days} day(s) against form fills and bookings that count the whole range.
-      <b>Cost-per figures are withheld for this window</b> rather than shown too low — pick a range ending on or before
-      ${DATA.ad_data_through}, or upload a newer export at <code>/upload</code>.</div>`;
+    h += `<div class="wwarn">Ad data covers ${W.ad.days} of this window's days${gaps?` (${gaps} missing from the export)`:''} — <b>cost-per withheld</b>.</div>`;
   }
   // A window reaching back before the cutover shows real ad spend against zero fills,
   // because the live era starts at the iClosed/short-VSL switch and everything earlier
   // is on the frozen Historic tab by design. Without this the page looks like a funnel
   // that collapsed, which is the exact misreading the era split exists to prevent.
   if(!r.all && o.live_from && r.start < o.live_from){
-    h += `<div class="wwarn"><b>This window reaches back before ${o.name} went live on iClosed
-      (${o.live_from}).</b> Form fills and bookings from before that date are on the <b>Historic</b> tab —
-      a different data source and a VSL roughly 8x longer — so they read 0 here rather than being
-      blended into a series they are not comparable with. Ad spend in the window is still real.</div>`;
+    h += `<div class="wwarn">Window predates ${o.name} on iClosed (${o.live_from}) — earlier fills are on the <b>Historic</b> tab.</div>`;
   }
   if(noAdData){
-    h += `<div class="wwarn"><b>No ad data in this range.</b> The Meta export is uploaded by hand and stops at
-      <b>${DATA.ad_data_through||'—'}</b>, so impressions, clicks and spend below are 0 for a window that starts after it —
-      and every cost-per figure is unavailable rather than $0. Upload a newer export at <code>/upload</code>,
-      or switch the timeframe to a range the export covers.</div>`;
+    h += `<div class="wwarn">No ad data for this range — the export covers ${(DATA.ad_coverage||{}).from} to ${DATA.ad_data_through}.</div>`;
+  } else if(adWired && W.ad.days === 0){
+    // The export DOES cover this window; the offer simply did not run ads. A real zero.
+    h += `<div class="wnote">${o.name} ran no ads in this range — spend really was $0.</div>`;
   }
 
   h += `<div class="wfunnel">
@@ -509,16 +507,15 @@ function winHTML(o, r){
     ${row('Ad spend', cov==='partial'?`Meta, windowed — only ${W.ad.days} of this window's days are covered`:'Meta, windowed', W.ad.spend, {wired:adWired, bar:0, money:true})}
 
     <div class="fgroup">What the traffic did</div>
-    ${row('Form fills','iClosed contacts created in range', W.fills, {bar:bC(W.fills), of:W.ad.clicks, ofLabel:'link clicks'})}
+    ${row('Form fills','iClosed contacts', W.fills, {bar:bC(W.fills), of:W.ad.clicks, ofLabel:'link clicks'})}
     ${wir.gate
-      ? row('Passed the gate','answers meet this offer\'s rules', W.qualified, {bar:bC(W.qualified), of:W.fills, ofLabel:'form fills'})
+      ? row('Passed the gate','answers meet the rules', W.qualified, {bar:bC(W.qualified), of:W.fills, ofLabel:'form fills'})
       : row('Passed the gate','this offer screens nobody', null, {wired:false})}
-    ${row('Calls booked','by the date the call was BOOKED', W.booked, {bar:bC(W.booked), of:W.fills, ofLabel:'form fills'})}
-    ${row('Calls scheduled to run','by the date the call RUNS — a different question, so no arrow', W.ran, {bar:bC(W.ran)})}
-    ${row('Outcome logged in iClosed','rep filled in call_outcome', W.withOutcome, {bar:bC(W.withOutcome), of:W.ran, ofLabel:'calls in range'})}
+    ${row('Calls booked','by booking date', W.booked, {bar:bC(W.booked), of:W.fills, ofLabel:'form fills'})}
+    ${row('Calls scheduled to run','by call date', W.ran, {bar:bC(W.ran)})}
 
-    <div class="fgroup">Page &amp; video — all traffic, NOT a funnel stage</div>
-    ${row('Page loads','Wistia, windowed · paid + direct + organic', W.video.loads, {wired:wir.video, bar:0})}
+    <div class="fgroup">Page &amp; video — all traffic, not a funnel stage</div>
+    ${row('Page loads','Wistia, windowed', W.video.loads, {wired:wir.video, bar:0})}
     ${row('Video plays','Wistia, windowed', W.video.plays, {wired:wir.video, bar:0, of:W.video.loads, ofLabel:'page loads'})}
   </div>`;
 
@@ -634,22 +631,12 @@ function renderWindows(r){
     const through = DATA.ad_data_through;
     let warn = '';
     if(!r.all && through && r.start > through){
-      warn = `<div class="wwarn"><b>This window has no Meta ad data at all.</b> The export stops at <b>${through}</b>
-        and the window starts ${r.start}. Form fills, bookings and call outcomes below are live; impressions,
-        clicks, spend and every cost-per figure are unavailable for this range.</div>`;
+      warn = `<div class="wwarn">No Meta ad data in this window — the export stops at <b>${through}</b>.</div>`;
     } else if(through && adGapDays(r) > 0){
       const C = DATA.ad_coverage||{};
-      warn = `<div class="wwarn"><b>The Meta export has a ${adGapDays(r)}-day hole inside this window.</b>
-        It was uploaded in two pieces — ${C.from} to 2026-08-20, then 2026-09-01 to ${through} — so
-        <b>${(C.gaps||[])[0]} to ${(C.gaps||[])[(C.gaps||[]).length-1]}</b> has no ad data at all.
-        Spend, impressions and clicks for this range are understated and <b>cost-per figures are withheld</b>.
-        Export those days from Ads Manager and upload at <code>/upload</code> — imports merge, so it will fill
-        the hole without touching what is already there.</div>`;
+      warn = `<div class="wwarn">Meta export is missing ${adGapDays(r)} day(s) in this window (${(C.gaps||[])[0]} onward) — <b>cost-per withheld</b>. Upload at <code>/upload</code>.</div>`;
     } else if(through && (r.all || r.end > through)){
-      warn = `<div class="wwarn"><b>Ad data covers only part of this window.</b> The Meta export is uploaded by hand
-        and stops at <b>${through}</b>. Spend is counted to there while fills, bookings and outcomes are live to
-        ${DATA.generated_at||'now'}, so <b>cost-per figures are withheld</b> rather than shown too low.
-        Upload a newer export at <code>/upload</code>, or pick a range ending on or before ${through}.</div>`;
+      warn = `<div class="wwarn">Ad data stops at <b>${through}</b>; the rest is live — <b>cost-per withheld</b>.</div>`;
     }
     $('tfwarn').innerHTML = warn;
     try{
@@ -758,10 +745,10 @@ function renderWindows(r){
       ? `<div class="fgroup">${groupLabel[s.group]||s.group}</div>` : '';
     const basis = s.basis ? `<span class="st-basis">${s.basis}</span>` : '';
     return head + `<div class="stage ${s.status}"><div class="st-l"><span class="st-name">${s.label}</span><span class="st-src">${srcChip}${basis}</span></div>${body}</div>`;
-  }).join('') + `<div class="st-note" style="margin-top:12px;padding:0 12px">Every row above counts <b>ad-driven activity inside the ad export's date window</b>, so each percentage is a real conversion from the row named beside it. Page and video numbers are <b>not</b> on this spine — they count all traffic, paid or not, over the video's lifetime. They are in <b>Page &amp; video engagement</b> below.</div>`;
+  }).join('');
 })();
 
-$('phase-note').innerHTML = `<b>Qualifier questions added ${DATA.qualifier_form_date||'Jul 27'}.</b> Submissions and bookings before then predate the gate, so form-fill volume and booking rates aren't directly comparable across that line — the new questions will likely lower form-fill volume and change who books. <b>Two qualification axes, kept separate:</b> the <b>form gate</b> (automatic, who reaches the calendar) and <b>post-call</b> (Chris's fit judgment after the call) — a lead can pass one and fail the other.`;
+$('phase-note').remove?.();
 
 // ---------- DRILL DOWN ----------
 const D = DATA.detail;
@@ -794,7 +781,7 @@ function engHTML(e, who){
     + card(e.avg_percent_watched!=null ? e.avg_percent_watched+'%' : '—', 'Avg watched', 'share of the video actually watched')
     + '</div>';
   if(e.loads_lifetime && e.loads_lifetime !== e.loads_window){
-    h += `<div class="st-note">Lifetime page loads are ${n(e.loads_lifetime)}; ${n(e.loads_lifetime-e.loads_window)} of those fall outside the ad window and are excluded above.</div>`;
+
   }
   return h;
 }
@@ -892,9 +879,7 @@ function renderSpend(r){
     if(i % tickEvery === 0) g+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-10}" font-size="10" fill="var(--ink3)" text-anchor="middle">${shortd(d.date)}</text>`;
   });
   h+=`<div class="chart" style="margin-top:6px"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">${g}</svg></div>`;
-  h+=`<div class="st-note" style="margin-top:8px">Daily spend against the $${budget}/day budget for the selected
-      timeframe. <b>Gold</b> bars hit or exceed budget; bars climbing toward the dashed line mean Meta is
-      unthrottling delivery.${n>20?' Value labels are hidden above 20 bars — hover a bar for its exact spend.':''}</div>`;
+  h+=`<div class="st-note" style="margin-top:8px"><b>Gold</b> = at or over budget.${n>20?' Hover a bar for its exact spend.':''}</div>`;
   host.innerHTML=h;
 }
 
@@ -1013,12 +998,7 @@ function renderShowUp(r){
   </div>`;
 
   // Coverage is the honesty check. A rate on two calls is a rate on two calls.
-  h += `<div class="su-cov">
-    <b>${cov}</b>${covPct!==null?` · ${covPct}% coverage`:''} — source: ${A.source||'Day AI · Discovery Attended'},
-    written by the workspace. Nothing here needs logging by hand.
-    ${nAwait ? `A call with no verdict is <b>not</b> counted as a no-show — it sits outside the rate entirely,
-       so the number above describes ${judged} call${judged===1?'':'s'}.` : 'Every past call in this range has a verdict.'}
-  </div>`;
+  h += `<div class="su-cov"><b>${cov}</b> · source: Day AI. A call with no verdict sits outside the rate — never counted as a no-show.</div>`;
 
   // ---- the caret: individuals, grouped, all collapsed by default ----
   const when = b => (b.start||'').slice(5,16).replace('T',' · ').replace('-','/');
@@ -1161,7 +1141,6 @@ renderShowUp(CURRENT_RANGE);
       `<td>${p.cost_per_booking!=null?money0(p.cost_per_booking):'—'}</td>`+
       `<td>${p.cost_per_qualified!=null?`<b>${money0(p.cost_per_qualified)}</b>`:(p.bookings?'<span style="color:var(--ink3)">no qualified yet</span>':'—')}</td></tr>`).join('')+'</table></div>'
     : '<div class="empty">Add a Meta ad-set CSV to see cost per booking.</div>';
-  h += '<div class="st-note" style="margin-top:12px"><b>Cost / qualified is the real efficiency</b> — cost/booking flatters a path whose bookings no-show or aren\'t a fit. The <b>Video → Retargeting funnel</b> books cheap but a chunk no-show, so its true cost per qualified call is far higher. Outcomes come from your post-call logging above; <b>small samples</b> so far — read directionally until more calls are logged. Bookings are GHL deterministic (utm_content), not Meta\'s modeled Schedule.</div>';
   // per-ad-set breakdown (detail, collapsed)
   const eff = R.adset_efficiency||[];
   if(eff.length){
@@ -1260,7 +1239,6 @@ renderShowUp(CURRENT_RANGE);
   h += '<div style="font-weight:600;margin:6px 0 8px">DQ mix — which gate is firing</div>';
   h += '<table><tr><th>Outcome</th><th>Count</th></tr>'+
     ['qualified','dq_capacity','dq_acv_low','dq_revenue_acv'].map(k=>`<tr><td>${k==='qualified'?`<span class="tag live">${labels[k]}</span>`:`<span class="tag needs">${labels[k]}</span>`}</td><td>${mix[k]||0}</td></tr>`).join('')+'</table>';
-  h += '<div class="st-note" style="margin-top:12px"><b>Calendar completion</b> (booked ÷ qualified) isolates booking friction from lead quality. <b>DQ mix</b> tells you which gate to loosen — a spike in "ACV under $5K" points at traffic targeting, not the rule.</div>';
   host.innerHTML = h;
 })();
 
@@ -1285,7 +1263,6 @@ renderShowUp(CURRENT_RANGE);
     `<tr><td>Before gate</td><td>${b.subs||0}</td><td>${b.booked||0}</td><td>${b.booking_rate!=null?b.booking_rate+'%':'—'}</td></tr>`+
     `<tr><td>After gate</td><td>${a.subs||0}</td><td>${a.booked||0}</td><td>${a.booking_rate!=null?a.booking_rate+'%':'—'}</td></tr>`+
     '</table>';
-  h += '<div class="st-note" style="margin-top:12px">Free-mail isn\'t automatically low-intent — many run real businesses on gmail (see <b>free-mail w/ site</b>). Watch <b>booking rate by type</b> and the <b>before/after</b> split as post-gate volume builds; a few days in, "after" is still thin.</div>';
   host.innerHTML = h;
 })();
 

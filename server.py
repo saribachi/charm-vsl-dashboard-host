@@ -169,6 +169,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/health":
             return self._send(b"ok", "text/plain")
+        # The page polls this to notice it is looking at a stale copy. A browser that
+        # cached the HTML before Cache-Control: no-store existed will happily serve an
+        # old build forever, and there is no way to tell by looking — which is exactly
+        # how a deployed change kept appearing "not deployed".
+        if path == "/version":
+            return self._send(json.dumps({"built": state["at"] or "pending"}),
+                              "application/json")
         if not self._authed():
             return
         if path == "/upload":

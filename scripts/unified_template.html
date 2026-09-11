@@ -173,6 +173,9 @@ a.plain{color:var(--purple);text-decoration:none}
   background:#faf8fe;border:1px solid var(--line);margin-bottom:12px}
 .su-cov.warn{background:var(--amber-bg,#fdf6e6);border-color:var(--amber-l,#e8d29a)}
 .su-cov b{color:var(--ink)}
+.stale{background:#fdecef;border:1px solid #f3b6c2;color:#8a1c33;border-radius:9px;
+  padding:10px 13px;font-size:13px;margin:10px 0;font-weight:600}
+.stale a{color:#8a1c33}
 .wnote{font-size:12.5px;color:var(--ink3);padding:8px 12px;border-radius:8px;
   background:#faf8fe;border:1px solid var(--line);margin:10px 0}
 .su-people{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
@@ -240,6 +243,7 @@ a.plain{color:var(--purple);text-decoration:none}
     <span class="tfrange" id="tfrange"></span>
   </div>
   <div id="tfwarn"></div>
+  <div id="stalewarn"></div>
 
   <div class="ftabs" id="ftabs" role="tablist"></div>
 
@@ -299,6 +303,32 @@ function renderCtx(r){
     + ` &nbsp;·&nbsp; data as of ${DATA.generated_at||'—'}`;
 }
 
+
+// ---- am I looking at a stale copy? ----
+// This page is rebuilt hourly and was, for a while, served with no cache headers at all,
+// so browsers cached the HTML and kept showing an old build indefinitely. There is no way
+// to tell by looking — the timeframe control is right there and simply drives an older,
+// half-wired page. So the page asks the server what it just built and says so plainly.
+(function(){
+  const mine = DATA.generated_at || '';
+  const check = () => fetch('/version', {cache:'no-store'})
+    .then(r => r.json())
+    .then(v => {
+      const el = document.getElementById('stalewarn'); if(!el) return;
+      const theirs = v.built || '';
+      // `built` is "YYYY-MM-DD HH:MM UTC" and generated_at is "Mon D, YYYY HH:MM UTC";
+      // comparing the minute stamps is enough to spot a different build.
+      const mm = (mine.match(/(\d{2}:\d{2}) UTC/)||[])[1];
+      const tm = (theirs.match(/(\d{2}:\d{2}) UTC/)||[])[1];
+      el.innerHTML = (mm && tm && mm !== tm)
+        ? `You are viewing a cached copy of this page (built ${mine}); the server has a newer one (${theirs}).
+           <a href="javascript:location.reload(true)">Reload</a> to see current numbers.` : '';
+      el.className = el.innerHTML ? 'stale' : '';
+    })
+    .catch(() => {});
+  check();
+  setInterval(check, 5 * 60 * 1000);   // the server rebuilds hourly; catch it within five
+})();
 
 // ============================ TIMEFRAME ============================
 // One control for the whole page. It re-aggregates the dated rows each offer ships in

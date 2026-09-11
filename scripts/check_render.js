@@ -63,6 +63,13 @@ global.localStorage = { _v: {}, getItem(k){ return this._v[k] ?? null; }, setIte
 global.window.localStorage = global.localStorage;
 // The page fetches RB2B and posts verdicts. Neither should run here, and neither is
 // allowed to fail the check — only synchronous render errors matter.
+// The page polls /version on a timer to spot a stale cached copy. A real setInterval
+// keeps the node process alive forever, so the check hung instead of failing — stub it,
+// and setTimeout with it, since neither should run here.
+global.setInterval = () => 0;
+global.clearInterval = () => {};
+global.window.setInterval = global.setInterval;
+global.window.clearInterval = global.clearInterval;
 global.fetch = () => Promise.reject(new Error('network disabled in check_render'));
 global.window.fetch = global.fetch;
 

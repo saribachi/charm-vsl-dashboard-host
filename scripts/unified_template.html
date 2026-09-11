@@ -247,25 +247,12 @@ a.plain{color:var(--purple);text-decoration:none}
   <div id="pane-gtm" role="tabpanel">
   <div id="win-gtm"></div>
 
-  <!-- Everything from here down is LIFETIME, not the selected window. It is the deep
-       GTM read — Day AI attendance, post-call verdicts, cash — none of which has a
-       per-day source to window against. Labelled rather than quietly left to look like
-       it answers the same question as the panel above. -->
-  <div class="alltime-h">
-    <div class="section-h" style="margin:0">All time — GTM lifetime figures</div>
-    <div class="st-note" style="padding:0">Not filtered by the timeframe.</div>
-  </div>
-  <div class="kpis" id="kpis"></div>
-
-  <div class="section-h">The GTM funnel — where people drop off <span style="color:var(--ink3);font-weight:400;font-size:13px">— all time</span></div>
+  <!-- The all-time KPI strip and a SECOND, lifetime copy of the funnel used to sit here.
+       With the windowed spine above carrying the whole funnel down to cash, they were a
+       duplicate that contradicted it — a seven-day heading with lifetime numbers under
+       it, which is precisely what made the page misleading. Deleted rather than
+       relabelled. `freshness` stays: it is about the ad export, not a time window. -->
   <div id="freshness"></div>
-  <div class="funnel" id="funnel"></div>
-  <div class="legend">
-    <span><i class="sw" style="background:linear-gradient(90deg,var(--purple),var(--purple-d))"></i> live stage (bar = share of link clicks)</span>
-    <span><i class="sw" style="background:var(--amber-bg);border:1px solid var(--amber-l)"></i> NEEDS a source</span>
-    <span><i class="sw" style="background:var(--magenta)"></i> biggest drop</span>
-  </div>
-  <div class="banner" id="phase-note"></div>
 
   <div class="section-h" style="margin-top:30px">Drill down</div>
   <div id="details"></div>
@@ -295,16 +282,23 @@ const $ = id => document.getElementById(id);
 const tip = $('tip');
 document.title = `Charm VSL — Ad to Cash (${DATA.generated_at||''})`;
 
-// context line
-(function(){
-  const c = DATA.context;
-  $('ctx').innerHTML = `<b>${(c.impressions||0).toLocaleString()}</b> impressions · <b>${(c.reach||0).toLocaleString()}</b> reach · <b>${c.cpm||'—'}</b> CPM · <b>${c.ctr||'—'}</b> CTR &nbsp;·&nbsp; <b>GTM, all time</b> — not the selected timeframe &nbsp;·&nbsp; data as of ${DATA.generated_at||'—'}`;
-})();
+// Context line — windowed like everything else. It used to print GTM lifetime totals at
+// the very top of a page whose every other number followed the timeframe.
+function renderCtx(r){
+  const el = $('ctx'); if(!el) return;
+  const R = ((DATA.offers||{}).gtm||{}).rows||{};
+  r = r || CURRENT_RANGE;
+  const rows = r.all ? (R.ad_daily||[])
+    : (R.ad_daily||[]).filter(x => x.date >= r.start && x.date <= r.end);
+  const sum = k => rows.reduce((a,x)=>a+(x[k]||0),0);
+  const imp = sum('impressions'), clk = sum('clicks'), sp = sum('spend'), reach = sum('reach');
+  const cpm = imp ? '$'+(sp/imp*1000).toFixed(0) : '—';
+  const ctr = imp ? (Math.round(1000*clk/imp)/10)+'%' : '—';
+  el.innerHTML = `<b>${imp.toLocaleString()}</b> impressions · <b>${reach.toLocaleString()}</b> reach · `
+    + `<b>${cpm}</b> CPM · <b>${ctr}</b> CTR &nbsp;·&nbsp; GTM, ${r.all?'all time':r.start+' to '+r.end}`
+    + ` &nbsp;·&nbsp; data as of ${DATA.generated_at||'—'}`;
+}
 
-// KPI strip
-$('kpis').innerHTML = DATA.kpis.map(k =>
-  `<div class="kpi ${k.status}"><div class="dot ${k.status}"></div>
-   <div class="v">${k.value||'—'}</div><div class="l">${k.label}</div><div class="s">${k.sub||''}</div></div>`).join('');
 
 // ============================ TIMEFRAME ============================
 // One control for the whole page. It re-aggregates the dated rows each offer ships in
@@ -387,16 +381,89 @@ function windowedFunnel(o, r){
   const impressions = sumBy(ad,'impressions'), clicks = sumBy(ad,'clicks');
   const spend = Math.round(sumBy(ad,'spend')*100)/100;
   const qualified = fill.filter(f => f.qual === 'qualified').length;
-  const withOutcome = ran.filter(b => b.outcome).length;
+
+  // ---- the bottom of the funnel, on the CALL date ----
+  // Attendance, the pipeline deal and the money all belong to the call that produced
+  // them, so they are counted in the window the call ran in. Before this the spine
+  // stopped at "calls booked" and every row below it could only be shown all-time,
+  // which put a lifetime figure directly under a seven-day heading.
+  const ranAll = inRange(R.bookings, 'call', r);
+  const showed = ranAll.filter(b => b.attendance === 'showed').length;
+  const noShow = ranAll.filter(b => b.attendance === 'no_show').length;
+  // Cancellations are written by the Day AI skill from the prospect's own email. They
+  // are NOT no-shows — the prospect told us in advance — so they sit outside the
+  // show-up rate and are reported on their own.
+  const cancelledCalls = ranAll.filter(b => b.attendance === 'cancelled').length;
+  const dealOpened = ranAll.filter(b => b.deal_stage && b.attendance === 'showed').length;
+  const committed = Math.round(sumBy(ranAll,'committed_value'));
+  const cash = Math.round(sumBy(ranAll,'cash'));
+  const judged = showed + noShow;
 
   return {
     ad:{impressions, clicks, spend, days:ad.length},
     video:{loads:sumBy(vid,'loads'), plays:sumBy(vid,'plays'), days:vid.length},
     fills:fill.length, qualified, booked:bk.length, cancelled:bkAll.length-bk.length,
-    ran:ran.length, withOutcome,
+    ran:ran.length,
+    showed, noShow, cancelledCalls, judged, dealOpened, committed, cash,
+    showRate: judged ? Math.round(1000*showed/judged)/10 : null,
     leaked: fill.filter(f => f.gate_leak).length,
-    rows:{fills:fill, bookings:bkAll, ran},
+    rows:{fills:fill, bookings:bkAll, ran:ranAll},
   };
+}
+
+// ============================ WINDOWED ATTRIBUTION ============================
+// Everything below the funnel used to be lifetime while the spine above it was windowed,
+// so a seven-day heading sat directly on top of all-time attribution. These recompute
+// from the same dated rows the spine uses, on the CALL date, so the whole page answers
+// one question about one period.
+function windowedReport(r){
+  const G = (DATA.offers||{}).gtm||{}, R = G.rows||{};
+  const bookings = r.all ? (R.bookings||[])
+    : (R.bookings||[]).filter(b => b.call && b.call >= r.start && b.call <= r.end);
+  const adRows = r.all ? (R.ad_rows||[])
+    : (R.ad_rows||[]).filter(x => x.date >= r.start && x.date <= r.end);
+
+  const isQual = b => b.deal_stage && b.attendance === 'showed';
+  const byAd = {}, byAdset = {};
+  for(const b of bookings){
+    const ad = b.ad || '(unattributed / direct)';
+    const set = b.ad_set || '—';
+    (byAd[ad] = byAd[ad] || {n:0, q:0, adset:b.ad_set, retarget:b.retarget}).n++;
+    if(isQual(b)) byAd[ad].q++;
+    (byAdset[set] = byAdset[set] || {n:0, q:0, spend:0, clicks:0}).n++;
+    if(isQual(b)) byAdset[set].q++;
+  }
+  // Spend joins on the ad-set NAME the booking carried in utm_term, which arrives from
+  // iClosed half-decoded ('+' for spaces). Normalised both sides or nothing ever matches.
+  const norm = x => (x||'').toLowerCase().replace(/[+_]/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+  const spendBySet = {};
+  for(const x of adRows){
+    const k = norm(x.ad_set);
+    const acc = spendBySet[k] = spendBySet[k] || {spend:0, clicks:0, impressions:0, name:x.ad_set};
+    acc.spend += x.spend; acc.clicks += x.clicks; acc.impressions += x.impressions;
+  }
+  const eff = Object.entries(byAdset).map(([name, v]) => {
+    const sp = spendBySet[norm(name)];
+    return {ad_set:name, bookings:v.n, qualified:v.q,
+            spend: sp ? Math.round(sp.spend*100)/100 : null,
+            cost_per_booking: (sp && v.n) ? Math.round(sp.spend/v.n*100)/100 : null,
+            cost_per_qualified: (sp && v.q) ? Math.round(sp.spend/v.q*100)/100 : null};
+  }).sort((a,b) => (b.qualified-a.qualified) || (b.bookings-a.bookings));
+
+  const ads = Object.entries(byAd).map(([name,v]) => ({
+      name, ad_set:v.adset, retarget:v.retarget, bookings:v.n, qualified:v.q,
+      qualified_rate: v.n ? Math.round(1000*v.q/v.n)/10 : null,
+      people: bookings.filter(b => (b.ad||'(unattributed / direct)')===name && isQual(b))
+                      .map(b => ({name:b.name||b.email, email:b.email, stage:b.deal_stage}))
+    })).sort((a,b) => (b.qualified-a.qualified) || (b.bookings-a.bookings));
+
+  const totalSpend = Math.round(adRows.reduce((a,x)=>a+x.spend,0)*100)/100;
+  const totalQual = bookings.filter(isQual).length;
+  return {bookings, ads, eff, byAd, byAdset, totalSpend, totalQual,
+          attributed: bookings.filter(b => b.ad && isQual(b)).length,
+          showedNoDeal: bookings.filter(b => b.attendance==='showed' && !b.deal_stage).length,
+          upcoming: bookings.filter(b => b.attendance==='upcoming').length,
+          adsProducing: ads.filter(a => a.qualified>0).length};
 }
 
 const money0 = n => (n===null||n===undefined) ? '—' : '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
@@ -512,7 +579,21 @@ function winHTML(o, r){
       ? row('Passed the gate','answers meet the rules', W.qualified, {bar:bC(W.qualified), of:W.fills, ofLabel:'form fills'})
       : row('Passed the gate','this offer screens nobody', null, {wired:false})}
     ${row('Calls booked','by booking date', W.booked, {bar:bC(W.booked), of:W.fills, ofLabel:'form fills'})}
-    ${row('Calls scheduled to run','by call date', W.ran, {bar:bC(W.ran)})}
+    ${row('Calls that ran','by call date — a different question, so no arrow', W.ran, {bar:bC(W.ran)})}
+    ${wir.held
+      ? row('Showed up','Day AI · Discovery Attended', W.showed, {bar:bC(W.showed), of:W.judged, ofLabel:'calls judged'})
+      : row('Showed up','no attendance source', null, {wired:false})}
+    ${wir.held ? row('No-show','prospect never joined', W.noShow, {bar:bC(W.noShow)}) : ''}
+    ${wir.held ? row('Cancelled','told us in advance — outside the show-up rate', W.cancelledCalls, {bar:bC(W.cancelledCalls)}) : ''}
+    ${wir.held
+      ? row('Qualified','a deal was opened in the pipeline', W.dealOpened, {bar:bC(W.dealOpened), of:W.showed, ofLabel:'showed up'})
+      : row('Qualified','no pipeline source', null, {wired:false})}
+    ${wir.cash
+      ? row('Committed','year-one contracted, not yet cash', W.committed, {bar:0, money:true})
+      : row('Committed','no pipeline source', null, {wired:false})}
+    ${wir.cash
+      ? row('Cash collected','attributed to the call that produced it', W.cash, {bar:0, money:true})
+      : row('Cash collected','no pipeline source', null, {wired:false})}
 
     <div class="fgroup">Page &amp; video — all traffic, not a funnel stage</div>
     ${row('Page loads','Wistia, windowed', W.video.loads, {wired:wir.video, bar:0})}
@@ -696,59 +777,7 @@ function renderWindows(r){
   host.innerHTML = `<div class="fresh ${cls}">${msg}</div>`;
 })();
 
-// FUNNEL
-(function(){
-  // biggest drop within the acquisition funnel (ignore 0-volume + post-booking
-  // stages like held/qualified, whose "drop" is just calls scheduled in the future)
-  const postBook = ['Calls held','Qualified','Committed (verbal yes)','Deals closed','Cash collected'];
-  let biggestDrop = {i:-1, d:0};
-  DATA.funnel.forEach((s,i)=>{
-    const prev = DATA.funnel[i-1];
-    if(s.conv && s.raw>0 && prev && prev.raw>0 && !postBook.includes(s.label)){
-      const c=parseFloat(s.conv); const d = 100 - c;
-      if(c<=100 && d > biggestDrop.d){ biggestDrop = {i, d}; } }
-  });
-  // Bars scale within their group. 'traffic' (impressions, clicks) is linear against
-  // impressions; 'conversion' (clicks onward) is linear against clicks. One linear
-  // scale across both would render every post-click row as an invisible sliver.
-  const groupLabel = {traffic:'Traffic bought', conversion:'What the traffic did'};
-  $('funnel').innerHTML = DATA.funnel.map((s,i)=>{
-    const srcChip = `<span class="chip">${s.source}</span>`;
-    let body;
-    if(s.status === 'needs'){
-      body = `<div class="st-body"><div class="needs-track">NEEDS: ${s.source} data</div>
-              <div class="st-right"></div></div>`;
-    } else {
-      const w = Math.max(s.bar*100, s.raw>0?4:0);
-      const inside = w > 22;
-      const numHtml = s.raw!=null ? `<span class="st-num ${inside?'':'out'}">${s.value}</span>` : '';
-      const isDrop = i === biggestDrop.i;
-      let conv = '';
-      if(s.conv){
-        const c = parseFloat(s.conv);
-        const of = s.conv_of ? `<span style="color:var(--ink3);font-weight:400"> of ${s.conv_of}</span>` : '';
-        // A rate over 100% on this spine means a denominator bug, not overlapping
-        // paths. It is called out rather than smoothed over — the old page printed
-        // "more than prior step" for a 129% that was comparing two different
-        // populations, and that wording is what let it survive.
-        if(c > 100) conv = `<div class="st-conv" style="color:var(--magenta)">⚠ ${s.conv}${of}<div class="st-cost">over 100% — denominator mismatch, do not read this rate</div></div>`;
-        else if(isDrop) conv = `<div class="st-conv"><span class="drop">▼ ${s.conv}${of} — biggest drop</span></div>`;
-        else conv = `<div class="st-conv">${s.conv}${of}</div>`;
-      }
-      body = `<div class="st-body">
-        <div class="st-track">${inside?'':numHtml}<div class="st-fill" style="width:${w}%">${inside?numHtml:''}</div></div>
-        <div class="st-right">${conv}${s.cost?`<div class="st-cost">${s.cost}</div>`:''}${s.note?`<div class="st-note">${s.note}</div>`:''}</div>
-      </div>`;
-    }
-    const prevG = i>0 ? DATA.funnel[i-1].group : null;
-    const head = s.group && s.group!==prevG
-      ? `<div class="fgroup">${groupLabel[s.group]||s.group}</div>` : '';
-    const basis = s.basis ? `<span class="st-basis">${s.basis}</span>` : '';
-    return head + `<div class="stage ${s.status}"><div class="st-l"><span class="st-name">${s.label}</span><span class="st-src">${srcChip}${basis}</span></div>${body}</div>`;
-  }).join('');
-})();
 
-$('phase-note').remove?.();
 
 // ---------- DRILL DOWN ----------
 const D = DATA.detail;
@@ -826,7 +855,19 @@ html += `<details><summary>Ad angles <span class="cnt">${(D.angles||[]).length} 
 html += `<details><summary>Data source coverage <span class="cnt">what's live vs pending</span></summary><div class="det-body" id="coverage"></div></details>`;
 $('details').innerHTML = html;
 // Fill the engagement panel now that its container exists in the DOM.
-(function(){ const el=$('engpanel'); if(el) el.innerHTML = engHTML(DATA.engagement||{}, 'GTM'); })();
+function renderEngagement(r){
+  const el = $('engpanel'); if(!el) return;
+  const base = DATA.engagement||{};
+  const daily = ((DATA.offers||{}).gtm||{}).rows?.video_daily || [];
+  r = r || CURRENT_RANGE;
+  const rows = r.all ? daily : daily.filter(d => d.date >= r.start && d.date <= r.end);
+  // Loads and plays are windowed from Wistia's by_date. Unique visitors is NOT — Wistia
+  // exposes no per-day unique count — so it keeps its lifetime value and its own label.
+  el.innerHTML = engHTML({...base,
+      window: r.all ? base.window : {start:r.start, end:r.end},
+      loads_window: rows.reduce((a,d)=>a+(d.loads||0),0),
+      plays_window: rows.reduce((a,d)=>a+(d.plays||0),0)}, 'GTM');
+}
 
 // daily ad spend bar chart — NOW WINDOWED by the timeframe control.
 // It used to render every day the export held on one axis: at 54 days the bars were a
@@ -1054,13 +1095,19 @@ function renderShowUp(r){
 }
 // Both panels follow the timeframe from here on. Registered AFTER the drill-down HTML
 // is injected, then called once for the range already selected.
-TF_LISTENERS.push(renderSpend, renderShowUp);
-renderSpend(CURRENT_RANGE);
-renderShowUp(CURRENT_RANGE);
+TF_LISTENERS.push(renderSpend, renderShowUp, renderQByAd, renderReport, renderEngagement,
+                  renderQualification, renderLeadQuality, renderCtx);
+[renderSpend, renderShowUp, renderQByAd, renderReport, renderEngagement,
+ renderQualification, renderLeadQuality, renderCtx]
+  .forEach(fn => { try { fn(CURRENT_RANGE); } catch(e){ console.error(e); } });
 
 // Where qualified leads come from — ranked by ad creative, names behind each row
-(function(){
+function renderQByAd(r){
   const host = $('qbyad'); if(!host) return;
+  const WR = windowedReport(r || CURRENT_RANGE);
+  const QA = {total_qualified:WR.totalQual, ads_with_qualified:WR.adsProducing,
+              attributed_qualified:WR.attributed, showed_no_deal:WR.showedNoDeal,
+              upcoming_calls:WR.upcoming, rows:WR.ads};
   const rows = QA.rows||[];
   if(!rows.length){ host.innerHTML = '<div class="empty">No bookings yet.</div>'; return; }
   const money0 = v => '$'+(v||0).toLocaleString(undefined,{maximumFractionDigits:0});
@@ -1101,11 +1148,20 @@ renderShowUp(CURRENT_RANGE);
     `There is no cost-per-qualified <i>per ad</i>: Meta's export is broken down by ad set, so the last column is the whole <b>set's</b> figure, shared by every creative in it. `+
     `Small samples — treat hit rates as direction, not proof.</div>`;
   host.innerHTML = h;
-})();
+}
 
 // report: best ads + which lead booked from which ad
-(function(){
-  const R = D.report||{}, bookings = R.bookings||[];
+function renderReport(r){
+  const WR = windowedReport(r || CURRENT_RANGE);
+  // Same shape the lifetime payload had, rebuilt from the windowed rows so the rest of
+  // this block is untouched. `bookings` here are GTM offer rows (call/booked dates), not
+  // the old report rows, so `start` becomes `call`.
+  const R = {bookings: WR.bookings, by_ad: WR.byAd, adset_efficiency: WR.eff,
+             total_bookings: WR.bookings.length, ad_attributed: WR.attributed,
+             retarget_booked: WR.bookings.filter(b=>b.retarget).length,
+             prospect_booked: WR.bookings.filter(b=>b.ad && !b.retarget).length,
+             path_efficiency: []};
+  const bookings = R.bookings||[];
   const fmtd = t => (t||'').slice(0,16).replace('T',' ');
   const retag = '<span class="tag" style="background:#eef3fb;color:#2b5aa8">retargeting</span>';
   // per-ad rollup carrying ad set + retarget flag
@@ -1128,7 +1184,7 @@ renderShowUp(CURRENT_RANGE);
     : b.attendance==='upcoming'?'<span style="color:var(--ink3)">upcoming</span>'
     : '<span style="color:var(--ink3)">—</span>';
   h += bookings.length ? `<div class="scroll" style="overflow-x:auto"><table><tr><th>Lead</th><th>Booked</th><th>Ad</th><th>Ad set</th><th>Status</th></tr>` +
-    bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.start)}</td>`+
+    bookings.map(b=>`<tr><td>${b.name||b.email||''}<div class="st-src">${b.email||''}</div></td><td>${fmtd(b.call)}</td>`+
       `<td>${b.ad?`<span class="adname">${b.ad}</span>`:'<span style="color:var(--ink3)">direct — pre-UTM</span>'}</td>`+
       `<td style="font-size:12px">${b.ad_set?`${b.ad_set} ${b.retarget?retag:''}`:'<span style="color:var(--ink3)">—</span>'}</td>`+
       `<td>${stCell(b)}</td></tr>`).join('')+'</table></div>'
@@ -1161,7 +1217,8 @@ renderShowUp(CURRENT_RANGE);
         `<td>${r.cost_per_qualified!=null?`<b>${money0(r.cost_per_qualified)}</b>`:(r.bookings?'no qual yet':'—')}</td></tr>`).join('')+'</table></div></details>';
   }
   $('report').innerHTML = h;
-})();
+}
+
 
 // CS Flex funnel — its own funnel, not merged into GTM's numbers
 (function(){
@@ -1232,9 +1289,50 @@ renderShowUp(CURRENT_RANGE);
   host.innerHTML = h;
 })();
 
-// qualification (form gate)
-(function(){
-  const Q = D.qualification||{}, host = $('qual');
+// Qualification and lead quality, rebuilt from the windowed fill rows. Both used to be
+// lifetime aggregates computed server-side, so they contradicted the spine above them.
+function windowedLeads(r){
+  const G = (DATA.offers||{}).gtm||{}, R = G.rows||{};
+  r = r || CURRENT_RANGE;
+  const fills = r.all ? (R.fills||[])
+    : (R.fills||[]).filter(f => f.date && f.date >= r.start && f.date <= r.end);
+  const booked = new Set((r.all ? (R.bookings||[])
+    : (R.bookings||[]).filter(b => b.booked && b.booked >= r.start && b.booked <= r.end))
+    .map(b => (b.email||'').toLowerCase()).filter(Boolean));
+
+  const graded = fills.filter(f => f.qual);
+  const mix = {};
+  graded.forEach(f => { mix[f.qual] = (mix[f.qual]||0) + 1; });
+  const nQ = mix.qualified||0;
+  const qEmails = new Set(graded.filter(f=>f.qual==='qualified').map(f=>(f.email||'').toLowerCase()));
+  let bookedQual = 0; qEmails.forEach(e => { if(booked.has(e)) bookedQual++; });
+
+  const comp = fills.filter(f => !f.free_mail), free = fills.filter(f => f.free_mail);
+  const rate = (a,b) => b ? Math.round(1000*a/b)/10 : null;
+  const bookedIn = rows => rows.filter(f => booked.has((f.email||'').toLowerCase())).length;
+  return {
+    qualification: {
+      with_answers: graded.length, qualified: nQ, mix,
+      qualification_rate: rate(nQ, graded.length),
+      booked_qualified: bookedQual,
+      calendar_completion: rate(bookedQual, nQ),
+      gate_leak: fills.filter(f => f.gate_leak).length,
+      gate_leak_detail: fills.filter(f => f.gate_leak).map(f => ({email:f.email, qual:f.qual})),
+    },
+    lead_quality: {
+      total: fills.length, company: comp.length, free: free.length,
+      company_pct: rate(comp.length, fills.length), free_pct: rate(free.length, fills.length),
+      website_pct: rate(fills.filter(f=>f.has_site).length, fills.length),
+      free_with_site: free.filter(f=>f.has_site).length,
+      free_with_site_pct: rate(free.filter(f=>f.has_site).length, free.length),
+      by_type: {company:{n:comp.length, booked:bookedIn(comp), booking_rate:rate(bookedIn(comp), comp.length)},
+                free:{n:free.length, booked:bookedIn(free), booking_rate:rate(bookedIn(free), free.length)}},
+    },
+  };
+}
+
+function renderQualification(r){
+  const Q = windowedLeads(r).qualification, host = $('qual');
   if(!Q.with_answers){
     host.innerHTML = '<div class="empty">The qualifier form is live and <b>records all submissions incl. disqualified</b> (verified), so rates will be accurate. Metrics appear once real (non-test) submissions carry the qualifier answers.</div>';
     return;
@@ -1249,11 +1347,11 @@ renderShowUp(CURRENT_RANGE);
   h += '<table><tr><th>Outcome</th><th>Count</th></tr>'+
     ['qualified','dq_capacity','dq_acv_low','dq_revenue_acv'].map(k=>`<tr><td>${k==='qualified'?`<span class="tag live">${labels[k]}</span>`:`<span class="tag needs">${labels[k]}</span>`}</td><td>${mix[k]||0}</td></tr>`).join('')+'</table>';
   host.innerHTML = h;
-})();
+}
 
 // lead quality + qualifier impact
-(function(){
-  const L = D.lead_quality||{}, QI = D.qualifier_impact||{}, host = $('quality');
+function renderLeadQuality(r){
+  const L = windowedLeads(r).lead_quality, QI = D.qualifier_impact||{}, host = $('quality');
   if(!L.total){ host.innerHTML = '<div class="empty">Awaiting real submissions.</div>'; return; }
   const bt = L.by_type||{}, c = bt.company||{}, f = bt.free||{};
   let h = `<div class="mini" style="grid-template-columns:repeat(4,1fr)">`+
@@ -1273,7 +1371,7 @@ renderShowUp(CURRENT_RANGE);
     `<tr><td>After gate</td><td>${a.subs||0}</td><td>${a.booked||0}</td><td>${a.booking_rate!=null?a.booking_rate+'%':'—'}</td></tr>`+
     '</table>';
   host.innerHTML = h;
-})();
+}
 
 // engagement curve
 (function(){

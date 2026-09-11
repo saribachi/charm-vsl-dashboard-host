@@ -195,6 +195,12 @@ def is_test(email, name=""):
     return bool(re.search(r"\b(test|goober)\b", (name or "").lower()))
 
 
+FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "ymail.com",
+             "hotmail.com", "hotmail.co.uk", "outlook.com", "live.com", "msn.com",
+             "icloud.com", "me.com", "mac.com", "aol.com", "protonmail.com", "proton.me",
+             "pm.me", "gmx.com", "gmx.net", "mail.com", "zoho.com", "yandex.com", "hey.com",
+             "comcast.net", "verizon.net", "sbcglobal.net", "att.net", "cox.net", "fastmail.com"}
+
 # ------------------------------------------------------------- offer funnels --
 # One generic funnel, driven by the registry in offers.py. This replaces cs_funnel(),
 # which was a near-copy of the GTM computation and had already drifted from it (it
@@ -393,6 +399,10 @@ def offer_funnel(offer, now):
         "qual": x.get("_qual"),
         "status": x.get("_status"),
         "gate_leak": x.get("_gate_leak", False),
+        # The two facts the lead-quality panel needs, per row, so it can be windowed
+        # rather than shipped as a lifetime aggregate under a seven-day heading.
+        "free_mail": (x.get("email") or "").split("@")[-1].lower() in FREE_MAIL,
+        "has_site": bool((x.get("others") or {}).get("website")),
         "answers": x.get("answers") or {},
     } for x in real_subs]
 
@@ -491,6 +501,14 @@ def offer_funnel(offer, now):
                      "total_calls": len(real_events)},
         "rows": {"fills": fill_rows, "bookings": booking_rows,
                  "ad_daily": ad_daily_for(offer),
+                 # Per DAY per AD SET, so the efficiency tables can be windowed too.
+                 # ad_daily is already summed across sets, which cannot answer
+                 # "cost per qualified for this set, in this range".
+                 "ad_rows": [{"date": x.get("date"), "ad_set": x.get("ad_set_name"),
+                              "spend": round(float(x.get("spend") or 0), 2),
+                              "clicks": int(x.get("link_clicks") or 0),
+                              "impressions": int(x.get("impressions") or 0)}
+                             for x in offer_ad_rows(offer) if x.get("date")],
                  "video_daily": (eng or {}).get("daily", [])},
         "cost_per_fill": div(ad["spend"], fills),
         "cost_per_booking": div(ad["spend"], books),
@@ -614,11 +632,8 @@ def main():
                         "before": cohort(before), "after": cohort(after)}
 
     # ---- lead quality: free-mail vs company domain, website, email↔site match ----
-    FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "ymail.com",
-                 "hotmail.com", "hotmail.co.uk", "outlook.com", "live.com", "msn.com",
-                 "icloud.com", "me.com", "mac.com", "aol.com", "protonmail.com", "proton.me",
-                 "pm.me", "gmx.com", "gmx.net", "mail.com", "zoho.com", "yandex.com", "hey.com",
-                 "comcast.net", "verizon.net", "sbcglobal.net", "att.net", "cox.net", "fastmail.com"}
+    # (hoisted to module scope — offer_funnel needs it too)
+
 
     def email_dom(s):
         s = (s or "").lower().strip()
@@ -1109,6 +1124,20 @@ def main():
                     "Day AI connection unavailable this build.")},
     ]
 
+    # Cash and contracted value, keyed by the lead's email, so each booking row can carry
+    # its own money. Without this the windowed funnel cannot show cash at all: Day AI's
+    # Closed Won opportunities have no close DATE we can read, so the only honest way to
+    # place cash in time is by the call that produced it.
+    cash_by_email, committed_by_email = {}, {}
+    for c in (closed_detail or []):
+        e = (c.get("email") or "").lower()
+        if e:
+            cash_by_email[e] = cash_by_email.get(e, 0) + (c.get("value") or 0)
+    for c in (committed_detail or []):
+        e = (c.get("email") or "").lower()
+        if e:
+            committed_by_email[e] = committed_by_email.get(e, 0) + (c.get("year_one") or 0)
+
     data = {
         "generated_at": now.strftime("%b %d, %Y %H:%M UTC"),
         "dayai_pulled_at": dayai["pulled_at"],
@@ -1159,6 +1188,12 @@ def main():
             # showed | no_show | cancelled | awaiting | upcoming — drives the grouped
             # dropdown under the show-up metric.
             "attendance": e.get("_attendance"),
+            # Booked-at as well as call-at. The timeframe control needs both: "booked
+            # last week" and "ran last week" are different questions and a call routinely
+            # straddles the two windows.
+            "booked_at": (e.get("_booked_at") or "")[:10],
+            "cash": cash_by_email.get((e.get("_email") or "").lower(), 0),
+            "committed_value": committed_by_email.get((e.get("_email") or "").lower(), 0),
             # The pipeline deal is what makes a call "qualified" now, so the stage travels
             # with the row and the attribution tables can name it instead of printing
             # "needs verdict" at a question that was already answered.
@@ -1234,6 +1269,25 @@ def main():
             data["offers"][off.key] = {"key": off.key, "name": off.name, "tag": off.tag,
                                        "color": off.color, "error": str(e)}
             print(f"  {off.key} FAILED (other offers unaffected): {e}")
+
+    # GTM's deep per-lead facts — attendance, the pipeline deal, cash — are computed in
+    # main() long after offer_funnel() ran, so they are merged onto its booking rows here.
+    # One row set per offer is what lets the windowed funnel carry the WHOLE funnel:
+    # without this the spine stopped at "calls booked" and everything below it could only
+    # be shown all-time, which is exactly the inconsistency that made the page misleading.
+    _deep = {(b.get("email") or "").lower(): b for b in data["real_bookings_detail"]}
+    for row in data["offers"].get("gtm", {}).get("rows", {}).get("bookings", []):
+        d = _deep.get((row.get("email") or "").lower())
+        if not d:
+            continue
+        row.update({
+            "attendance": d.get("attendance"),
+            "deal_stage": d.get("deal_stage"),
+            "cash": d.get("cash") or 0,
+            "committed_value": d.get("committed_value") or 0,
+            "retarget": d.get("retarget"),
+            "form_qual": d.get("form_qual"),
+        })
 
     # Back-compat alias. build_unified.py and the historic snapshot still read data["cs"].
     data["cs"] = data["offers"].get("cs", {})

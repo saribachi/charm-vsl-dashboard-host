@@ -751,6 +751,16 @@ let CURRENT_RANGE = TF.resolve('last7');
     .map(k => `<div id="pane-${k}" role="tabpanel" hidden><div id="win-${k}"></div></div>`).join('');
 })();
 
+// The chip is a short label for the offer. iClosed's own names are already short — "GTM",
+// "CS Flex" — so once names come from the API the chip often just repeats the name. Drop
+// it when it does rather than printing "GTM  GTM".
+function tagChip(o){
+  const n = (o.name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const t = (o.tag||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(!t || n.includes(t) || t.includes(n)) return '';
+  return `<span class="ftag" style="background:${o.color};color:#fff">${o.tag}</span>&nbsp;&nbsp;`;
+}
+
 function renderTabs(r){
   const host = $('ftabs'); if(!host) return;
   const cur = document.querySelector('.ftab[aria-selected="true"]');
@@ -767,7 +777,7 @@ function renderTabs(r){
       [(adCoverage(r, W) === 'full' && W.booked) ? money0(W.ad.spend/W.booked) : '—', 'cost / booked'],
     ] : [['—','impressions'],['—','link clicks'],['—','ad spend'],['—','form fills'],['—','booked'],['—','cost / booked']];
     return `<button class="ftab" id="tab-${k}" role="tab" aria-selected="${k===sel?'true':'false'}" aria-controls="pane-${k}">
-       <div class="th"><div class="tn"><span class="ftag" style="background:${o.color};color:#fff">${o.tag}</span> &nbsp;${o.name}</div>
+       <div class="th"><div class="tn">${tagChip(o)}${o.name}</div>
          <div class="td">${o.domain||'no page of its own'}</div></div>
        <div class="tr">${cells.map(c=>`<div><div class="tv">${c[0]}</div><div class="tl">${c[1]}</div></div>`).join('')}</div>
      </button>`;

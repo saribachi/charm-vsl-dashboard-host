@@ -43,6 +43,23 @@ class Offer:
         self.deep = deep                          # gets the Day AI / RB2B / cash panels
         self.live_from = live_from                # start of this offer's live era
         self.note = note
+        # Set from the iClosed API each build by apply_live_names(). The registry name is
+        # only the fallback: events get renamed in iClosed (48804 went from "XYZ CALLS" to
+        # "Partnership Management Call"), and a hardcoded name means the dashboard quietly
+        # keeps showing the old one.
+        self.live_name = None
+
+    @property
+    def display_name(self):
+        """What the page shows. iClosed's own name wins, minus the redundant Charm prefix."""
+        n = (self.live_name or "").strip()
+        if not n:
+            return self.name
+        for prefix in ("Charm - ", "Charm — ", "Charm "):
+            if n.startswith(prefix):
+                n = n[len(prefix):]
+                break
+        return n or self.name
 
     # ---- wiring ----------------------------------------------------------------
     # Which funnel stages this offer actually has a source for. Read by the builder to
@@ -158,7 +175,7 @@ OFFERS = [
              "judge it on cost per booking, not cost per qualified.",
     ),
     Offer(
-        key="xyz", name="XYZ calls", tag="XYZ", color="#17e885",
+        key="xyz", name="Partnership management", tag="PARTNER", color="#17e885",
         iclosed_event_ids=[48804],
         # No lander, no VSL, no ad sets of its own. Its first booking arrived carrying
         # gtm.hirecharm.com as the source page and a GTM VSL tag, i.e. GTM traffic routed
@@ -226,6 +243,23 @@ def event_owner(event_id):
         if int(event_id) in o.iclosed_event_ids:
             return o
     return None
+
+
+def apply_live_names(events):
+    """Stamp each offer with its current iClosed event name.
+
+    Called once per build. Names live in iClosed and change there; carrying a copy in this
+    file means every rename needs a code edit and, until someone makes it, the dashboard
+    shows a name nobody uses any more.
+    """
+    by_id = {int(e["id"]): (e.get("name") or "").strip()
+             for e in (events or []) if e.get("id") and not e.get("deletedAt")}
+    for o in OFFERS:
+        for eid in o.iclosed_event_ids:
+            if by_id.get(eid):
+                o.live_name = by_id[eid]
+                break
+    return {o.key: o.display_name for o in OFFERS}
 
 
 def unregistered(events):

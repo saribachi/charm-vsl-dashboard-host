@@ -477,7 +477,7 @@ def offer_funnel(offer, now):
     div = lambda a, b: round(a / b, 2) if b else None
 
     return {
-        "key": offer.key, "name": offer.name, "tag": offer.tag, "color": offer.color,
+        "key": offer.key, "name": offer.display_name, "tag": offer.tag, "color": offer.color,
         "domain": offer.domain, "note": offer.note, "live_from": offer.live_from,
         "wiring": offer.wiring,
         "event_ids": offer.iclosed_event_ids,
@@ -1257,6 +1257,13 @@ def main():
     # blocks (attendance, cash, RB2B) stay on the top-level payload above; what lands
     # here is the spine every offer shares, plus the dated rows the timeframe control
     # re-aggregates in the browser.
+    # Event names come from iClosed, not from the registry — see apply_live_names().
+    try:
+        _names = offers.apply_live_names(iclosed_source.events())
+        print(f"  offer names from iClosed: {_names}")
+    except Exception as e:
+        print(f"  could not refresh offer names from iClosed ({e}) — using registry names")
+
     data["offers"] = {}
     for off in offers.OFFERS:
         try:
@@ -1266,7 +1273,7 @@ def main():
                   f"${f['ad']['spend']:,.2f} spend"
                   + ("" if f["wiring"]["ads"] else "  [no ad sets wired]"))
         except Exception as e:
-            data["offers"][off.key] = {"key": off.key, "name": off.name, "tag": off.tag,
+            data["offers"][off.key] = {"key": off.key, "name": off.display_name, "tag": off.tag,
                                        "color": off.color, "error": str(e)}
             print(f"  {off.key} FAILED (other offers unaffected): {e}")
 

@@ -178,6 +178,19 @@ a.plain{color:var(--purple);text-decoration:none}
 .stale{background:#fdecef;border:1px solid #f3b6c2;color:#8a1c33;border-radius:9px;
   padding:10px 13px;font-size:13px;margin:10px 0;font-weight:600}
 .stale a{color:#8a1c33}
+.reftab-row{margin:0 0 14px}
+.reftab{font:inherit;font-size:12.5px;color:var(--ink3);background:none;border:0;
+  border-bottom:1px dashed var(--rule-strong,#bbb);padding:2px 0;cursor:pointer}
+.reftab:hover,.reftab[aria-selected="true"]{color:var(--purple)}
+.refwrap h3{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);
+  margin:22px 0 8px;font-weight:700}
+.refwrap h3:first-child{margin-top:4px}
+.refwrap table{width:100%;border-collapse:collapse;font-size:13px}
+.refwrap th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink3);padding:6px 10px;border-bottom:1px solid var(--line)}
+.refwrap td{padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.refwrap td:first-child{font-weight:600;white-space:nowrap}
+.refwrap .ok{color:var(--good)} .refwrap .no{color:var(--amber-ink,#8a6100)}
 .wnote{font-size:12.5px;color:var(--ink3);padding:8px 12px;border-radius:8px;
   background:#faf8fe;border:1px solid var(--line);margin:10px 0}
 .su-people{font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
@@ -251,6 +264,8 @@ a.plain{color:var(--purple);text-decoration:none}
   <div id="stalewarn"></div>
 
   <div class="ftabs" id="ftabs" role="tablist"></div>
+  <div class="reftab-row"><button class="reftab" id="tab-reference" role="tab" aria-selected="false"
+     aria-controls="pane-reference">How this dashboard is configured</button></div>
 
 
   <div id="pane-gtm" role="tabpanel">
@@ -280,6 +295,8 @@ a.plain{color:var(--purple);text-decoration:none}
   <!-- Panes for every other registered offer are generated here, so adding an offer is
        a registry entry in offers.py and nothing in this file changes. -->
   <div id="panes-extra"></div>
+  <!-- Every caveat that used to sit on top of the numbers lives here instead. -->
+  <div id="pane-reference" role="tabpanel" hidden></div>
 
   <footer id="footer"></footer>
 </div>
@@ -293,6 +310,79 @@ document.title = `Charm VSL — Ad to Cash (${DATA.generated_at||''})`;
 
 // Context line — windowed like everything else. It used to print GTM lifetime totals at
 // the very top of a page whose every other number followed the timeframe.
+function renderReference(){
+  const host = $('pane-reference'); if(!host) return;
+  const C = DATA.ad_coverage||{}, A = (DATA.detail||{}).attendance||{};
+  const gaps = (C.gaps||[]).length;
+  const row = (a,b,c) => `<tr><td>${a}</td><td>${b}</td><td>${c||''}</td></tr>`;
+  host.innerHTML = `<div class="refwrap">
+
+  <h3>Which date each stage counts on</h3>
+  <table><tr><th>Stage</th><th>Date used</th><th>Source</th></tr>
+  ${row('Impressions, clicks, spend','the ad day','Meta export, uploaded at /upload')}
+  ${row('Form fills','contact created','iClosed')}
+  ${row('Passed the gate','contact created','iClosed answers vs the offer rules')}
+  ${row('Calls booked','the day the call was booked','iClosed')}
+  ${row('Calls that ran, showed up, no-show, cancelled','the day the call ran','Day AI · Discovery Attended')}
+  ${row('Qualified','the day the call ran','a deal exists in the Day AI pipeline')}
+  ${row('Committed, cash','the day the call ran','Day AI opportunity value')}
+  </table>
+  <p class="st-note">Booked and ran are never divided into one another — a call booked Friday for the
+  following Tuesday belongs to different weeks depending which you ask.</p>
+
+  <h3>Windowed vs running</h3>
+  <table><tr><th>Behaviour</th><th>What</th></tr>
+  ${row('Follows the timeframe','all counts, spend, and every cost-per figure')}
+  ${row('Window + running shown','every rate — CTR, gate pass, booking, show-up, qualified')}
+  ${row('Always all time','unique visitors, play rate, avg watched — Wistia exposes no per-day unique count')}
+  </table>
+
+  <h3>Ad data coverage</h3>
+  <table><tr><th>Field</th><th>Value</th></tr>
+  ${row('Export covers', (C.from||'—')+' to '+(C.through||'—'))}
+  ${row('Days present', (C.days||[]).length)}
+  ${row('Missing days', gaps ? `<span class="no">${gaps} — ${(C.gaps||[])[0]} onward</span>` : '<span class="ok">none</span>')}
+  ${row('Cost-per figures','withheld for any window the export does not fully cover, rather than shown too low')}
+  </table>
+  <p class="st-note">The Meta export is uploaded by hand at <code>/upload</code>. Imports merge, so a
+  partial export fills gaps without overwriting history.</p>
+
+  <h3>Show-up rate</h3>
+  <table><tr><th>Field</th><th>Value</th></tr>
+  ${row('Source','Day AI contact property <b>Discovery Attended</b>, written by the workspace')}
+  ${row('Formula','showed ÷ (showed + no-show)')}
+  ${row('Cancelled','counted and shown, but in neither half of the rate — the prospect told us in advance')}
+  ${row('No verdict','sits outside the rate entirely; never counted as a no-show')}
+  ${row('Coverage now', `${A.with_verdict||0} of ${A.past_calls||0} past calls judged`)}
+  </table>
+
+  <h3>Qualified</h3>
+  <p class="st-note">A call counts as qualified when the lead showed up <b>and</b> a deal exists for them
+  in the Day AI sales pipeline — Discovery, Proposal, Verbal Commit, Closed Won, Closed Lost or Cold.
+  Lost and Cold still count: a deal was opened. Nothing here is logged by hand.</p>
+
+  <h3>Offers</h3>
+  <table><tr><th>Offer</th><th>Landing page</th><th>Wired</th></tr>
+  ${(DATA.offer_order||[]).map(k => { const o=(DATA.offers||{})[k]||{}; const w=o.wiring||{};
+      const on=Object.keys(w).filter(x=>w[x]); const off=Object.keys(w).filter(x=>!w[x]);
+      return row(o.name||k, o.domain||'none of its own',
+        off.length ? `<span class="no">not wired: ${off.join(', ')}</span>` : '<span class="ok">fully wired</span>');
+    }).join('')}
+  </table>
+  <p class="st-note">A stage with no source reads <b>NOT WIRED</b> rather than 0 — zero would claim
+  nothing happened, when nobody is measuring.</p>
+
+  <h3>Cash</h3>
+  <p class="st-note">Day AI exposes no readable close date, so cash and committed value are placed on the
+  day of the call that produced them. Windows before the iClosed cutover show $0 because that revenue
+  belongs to leads on the Historic tab.</p>
+
+  <h3>Build</h3>
+  <p class="st-note">Rebuilt hourly from Wistia, iClosed and Day AI. This page was built
+  <b>${DATA.generated_at||'—'}</b>. A red banner appears if you are viewing a cached copy.</p>
+  </div>`;
+}
+
 function renderCtx(r){
   const el = $('ctx'); if(!el) return;
   const R = ((DATA.offers||{}).gtm||{}).rows||{};
@@ -593,24 +683,6 @@ function winHTML(o, r){
     <div class="wire-chips">${chips}</div>
 `;
 
-  if(adWired && cov === 'partial'){
-    const gaps = adGapDays(r);
-    h += `<div class="wwarn">Ad data covers ${W.ad.days} of this window's days${gaps?` (${gaps} missing from the export)`:''} — <b>cost-per withheld</b>.</div>`;
-  }
-  // A window reaching back before the cutover shows real ad spend against zero fills,
-  // because the live era starts at the iClosed/short-VSL switch and everything earlier
-  // is on the frozen Historic tab by design. Without this the page looks like a funnel
-  // that collapsed, which is the exact misreading the era split exists to prevent.
-  if(!r.all && o.live_from && r.start < o.live_from){
-    h += `<div class="wwarn">Window predates ${o.name} on iClosed (${o.live_from}) — earlier fills are on the <b>Historic</b> tab.</div>`;
-  }
-  if(noAdData){
-    h += `<div class="wwarn">No ad data for this range — the export covers ${(DATA.ad_coverage||{}).from} to ${DATA.ad_data_through}.</div>`;
-  } else if(adWired && W.ad.days === 0){
-    // The export DOES cover this window; the offer simply did not run ads. A real zero.
-    h += `<div class="wnote">${o.name} ran no ads in this range — spend really was $0.</div>`;
-  }
-
   h += `<div class="wfunnel">
     <div class="fgroup">Traffic bought${W.ad.days?` · ${W.ad.days} day(s) of ad data in range`:''}</div>
     ${row('Impressions','Meta, windowed', W.ad.impressions, {wired:adWired, bar:bT(W.ad.impressions)})}
@@ -708,12 +780,16 @@ function renderTabs(r){
      </button>`;
   }).join('');
   OFFER_KEYS.forEach(k => { const t = $('tab-'+k); if(t) t.addEventListener('click', () => show(k)); });
+  const rt = $('tab-reference'); if(rt && !rt._wired){ rt._wired = 1; rt.addEventListener('click', () => show('reference')); }
 }
 
 function show(which){
+  const ref = $('pane-reference'), reft = $('tab-reference');
+  if(ref) ref.hidden = which !== 'reference';
+  if(reft) reft.setAttribute('aria-selected', which === 'reference' ? 'true' : 'false');
   OFFER_KEYS.forEach(k => {
     const on = k===which;
-    const pane = $('pane-'+k); if(pane) pane.hidden = !on;
+    const pane = $('pane-'+k); if(pane) pane.hidden = !on || which === 'reference';
     const t = $('tab-'+k); if(t) t.setAttribute('aria-selected', on ? 'true' : 'false');
   });
   try{ localStorage.setItem('vslFunnel', which); }catch(e){}
@@ -754,17 +830,7 @@ function renderWindows(r){
     // The ad export is uploaded by hand. Say so at the top of the page whenever the
     // selected window runs past where it stops, rather than letting five panes each
     // show a silent zero.
-    const through = DATA.ad_data_through;
-    let warn = '';
-    if(!r.all && through && r.start > through){
-      warn = `<div class="wwarn">No Meta ad data in this window — the export stops at <b>${through}</b>.</div>`;
-    } else if(through && adGapDays(r) > 0){
-      const C = DATA.ad_coverage||{};
-      warn = `<div class="wwarn">Meta export is missing ${adGapDays(r)} day(s) in this window (${(C.gaps||[])[0]} onward) — <b>cost-per withheld</b>. Upload at <code>/upload</code>.</div>`;
-    } else if(through && (r.all || r.end > through)){
-      warn = `<div class="wwarn">Ad data stops at <b>${through}</b>; the rest is live — <b>cost-per withheld</b>.</div>`;
-    }
-    $('tfwarn').innerHTML = warn;
+    // Coverage caveats live on the Reference tab, not on top of the numbers.
     try{
       localStorage.setItem('vslRange', key);
       localStorage.setItem('vslRangeFrom', $('tfrom').value||'');
@@ -847,11 +913,8 @@ function engHTML(e, who){
     + `<div class="enl">${l}</div><div class="enb">${b}</div></div>`;
   let h = '';
   if(e.anomalies && e.anomalies.length){
-    const a = e.anomalies;
-    h += `<div class="anom"><b>⚠ ${a.length} day(s) of traffic the ads did not buy.</b> `
-      + a.map(x=>`<b>${x.date}</b>: ${n(x.loads)} page loads against ${n(x.clicks)} ad click(s)`).join(' · ')
-      + `. That is ${n(e.anomaly_loads)} loads — <b>${Math.round(100*e.anomaly_loads/(e.loads_window||1))}% of ${who}'s windowed page loads</b> — from direct, organic or bot traffic. `
-      + `Nothing is deleted; the loads are real, but they are not ad performance and no conversion rate should be read against them.</div>`;
+    h += `<div class="anom">${n(e.anomaly_loads)} page loads in this range came from non-ad traffic `
+      + `(${e.anomalies.map(x=>x.date).join(', ')})</div>`;
   }
   h += '<div class="engrid">'
     + card(n(e.loads_window), 'Page loads', `${win} · all traffic, incl. reloads`)
@@ -1105,7 +1168,7 @@ function renderShowUp(r){
   </div>`;
 
   // Coverage is the honesty check. A rate on two calls is a rate on two calls.
-  h += `<div class="su-cov"><b>${cov}</b> · source: Day AI. A call with no verdict sits outside the rate — never counted as a no-show.</div>`;
+  h += `<div class="su-cov"><b>${cov}</b></div>`;
 
   // ---- the caret: individuals, grouped, all collapsed by default ----
   const when = b => (b.start||'').slice(5,16).replace('T',' · ').replace('-','/');
@@ -1154,9 +1217,9 @@ function renderShowUp(r){
 // Both panels follow the timeframe from here on. Registered AFTER the drill-down HTML
 // is injected, then called once for the range already selected.
 TF_LISTENERS.push(renderSpend, renderShowUp, renderQByAd, renderReport, renderEngagement,
-                  renderQualification, renderLeadQuality, renderCtx);
+                  renderQualification, renderLeadQuality, renderCtx, renderReference);
 [renderSpend, renderShowUp, renderQByAd, renderReport, renderEngagement,
- renderQualification, renderLeadQuality, renderCtx]
+ renderQualification, renderLeadQuality, renderCtx, renderReference]
   .forEach(fn => { try { fn(CURRENT_RANGE); } catch(e){ console.error(e); } });
 
 // Where qualified leads come from — ranked by ad creative, names behind each row

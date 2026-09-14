@@ -529,7 +529,6 @@ function windowedFunnel(o, r){
     ran:ran.length,
     showed, noShow, cancelledCalls, judged, dealOpened, committed, cash,
     showRate: judged ? Math.round(1000*showed/judged)/10 : null,
-    leaked: fill.filter(f => f.gate_leak).length,
     rows:{fills:fill, bookings:bkAll, ran:ranAll},
   };
 }
@@ -728,9 +727,6 @@ function winHTML(o, r){
   };
   h += `<div class="kpis" style="margin-top:12px">
     ${cp('Cost / form fill', W.fills, A.fills)}${cp('Cost / booked call', W.booked, A.booked)}
-    <div class="kpi ${W.leaked?'needs':'live'}"><div class="dot ${W.leaked?'needs':'live'}"></div>
-      <div class="v">${wir.gate?W.leaked:'—'}</div><div class="l">Booked despite failing the gate</div>
-      <div class="s">${wir.gate?'answers fail the rules but a call is booked':'no gate on this offer'}</div></div>
   </div>`;
   return h;
 }
@@ -1437,8 +1433,6 @@ function windowedLeads(r){
       qualification_rate: rate(nQ, graded.length),
       booked_qualified: bookedQual,
       calendar_completion: rate(bookedQual, nQ),
-      gate_leak: fills.filter(f => f.gate_leak).length,
-      gate_leak_detail: fills.filter(f => f.gate_leak).map(f => ({email:f.email, qual:f.qual})),
     },
     lead_quality: {
       total: fills.length, company: comp.length, free: free.length,

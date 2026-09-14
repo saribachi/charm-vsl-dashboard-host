@@ -271,12 +271,9 @@ a.plain{color:var(--purple);text-decoration:none}
   <div id="pane-gtm" role="tabpanel">
   <div id="win-gtm"></div>
 
-  <!-- The all-time KPI strip and a SECOND, lifetime copy of the funnel used to sit here.
-       With the windowed spine above carrying the whole funnel down to cash, they were a
-       duplicate that contradicted it — a seven-day heading with lifetime numbers under
-       it, which is precisely what made the page misleading. Deleted rather than
-       relabelled. `freshness` stays: it is about the ad export, not a time window. -->
-  <div id="freshness"></div>
+  <!-- The all-time KPI strip, a second lifetime copy of the funnel, and the ad-export
+       freshness banner all used to sit here. Export coverage is on the Reference tab now;
+       it does not belong on top of the numbers. -->
 
   <div class="section-h" style="margin-top:30px">Drill down</div>
   <div id="details"></div>
@@ -853,36 +850,7 @@ function renderWindows(r){
   apply();
 })();
 
-// DATA FRESHNESS — the two clocks on this page, and what happens when they diverge.
-// Meta arrives by manual CSV upload and stops where that export stopped; GHL and Day AI
-// are pulled live every rebuild. Cost-per-anything divides one by the other, so a
-// lagging export makes every cost metric read LOW. Meta also RESTATES recent days, so a
-// same-day export is not merely incomplete — it can invert the read (Aug 20 2026 revised
-// Aug 19 from ~7 GTM clicks to 502, taking post-rebuild click→fill from 6.4% to 1.6%).
-(function(){
-  const f = DATA.freshness||{}; const host = $('freshness'); if(!host) return;
-  if(!f.ad_end){ host.innerHTML = '<div class="fresh warn"><b>No ad data.</b> Upload a Meta export at <code>/upload</code>.</div>'; return; }
-  const lag = f.lag_days;
-  let cls = 'ok', msg;
-  if(f.stale){
-    cls = 'warn';
-    msg = `<b>⚠ Ad data is ${lag} days behind the rest of this page.</b> Meta stops at <b>${f.ad_end}</b>; `
-      + `form fills, bookings and call outcomes are live as of ${f.generated_at}. `
-      + `<b>Every cost metric on this page is therefore too LOW</b> — stale spend divided by live counts. `
-      + `Upload the newest export at <code>/upload</code> before acting on cost per lead, per booking or per qualified.`;
-  } else if(f.partial_today){
-    cls = 'ok';
-    msg = `<b>Ad data includes today (${f.ad_end}), which Meta has not finished counting.</b> `
-      + `Today's clicks and spend will be restated upward over the next day or two — `
-      + `Meta revised 19 Aug from ~7 GTM clicks to 502 after the fact. `
-      + `<b>Do not judge today's CPC, CTR or click→fill until the next export lands.</b> `
-      + `Everything else on this page is live as of ${f.generated_at}.`;
-  } else {
-    msg = `<b>Ad data runs ${f.ad_window}</b> (Meta, uploaded CSV) · everything else live as of ${f.generated_at}. `
-      + `Meta's most recent day or two is always restated upward, so treat the tail of any trend as provisional.`;
-  }
-  host.innerHTML = `<div class="fresh ${cls}">${msg}</div>`;
-})();
+// Ad-export freshness is reported on the Reference tab, not as a banner.
 
 
 
@@ -1369,12 +1337,6 @@ function renderReport(r){
     '</table>';
 
   (function(){
-    const f = DATA.freshness||{};
-    if(f.ad_end) h += `<div class="fresh ${f.stale?'warn':'ok'}" style="margin-top:12px">`
-      + (f.stale
-         ? `<b>⚠ CS ad data is ${f.lag_days} days behind.</b> Spend and clicks stop at <b>${f.ad_end}</b> while form fills and bookings are live — so cost per fill and cost per booking read too LOW.`
-         : `<b>Ad data runs ${f.ad_window}</b> (uploaded CSV, same export as GTM) · fills and bookings live as of ${f.generated_at}. Meta restates its most recent day or two upward, so the tail is provisional.`)
-      + `</div>`;
   })();
 
   h += '<div class="fgroup" style="padding-left:0">Page &amp; video engagement <span style="text-transform:none;letter-spacing:0;font-weight:400">— all traffic, NOT a funnel stage</span></div>'

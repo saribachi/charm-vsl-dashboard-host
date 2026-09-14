@@ -22,7 +22,8 @@ const file = process.argv[2] || path.join(__dirname, '..', 'dashboard', 'index.h
 const CONTAINERS = {
   // 'kpis' and 'funnel' are gone on purpose: they were a lifetime copy of the funnel
   // sitting under a windowed heading. The windowed spine (win-<offer>) replaced them.
-  unified: ['ftabs', 'csflex', 'details', 'engpanel', 'freshness',
+  // 'freshness' is gone: ad-export coverage moved to the Reference tab.
+  unified: ['ftabs', 'csflex', 'details', 'engpanel',
             'outcomes',   // the show-up rate panel that replaced the manual queue
             'report', 'qbyad', 'dspend',   // windowed attribution + spend
             // the timeframe control and one windowed pane per registered offer

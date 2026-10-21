@@ -76,6 +76,21 @@ def contact_is_website(detail):
     return is_website_traffic([ref], tags)
 
 
+def _vsl_call_emails():
+    """Everyone with a booking that is NOT website traffic. Cached with the call pages.
+
+    A contact's referrerUrl is their LATEST page. Someone who came in on a Meta ad and
+    later returned through the website would otherwise read as website traffic, and the
+    deal they close would drop out of ad-attributed revenue. A non-website booking on
+    record keeps them an ad lead.
+    """
+    if ("vsl_emails",) not in _CACHE:
+        _CACHE[("vsl_emails",)] = {str(c.get("inviteeEmail") or "").lower()
+                                   for c in _paged("/v1/eventCalls", "eventCalls")
+                                   if c.get("inviteeEmail") and not call_is_website(c)}
+    return _CACHE[("vsl_emails",)]
+
+
 def call_is_website(call):
     """A call's page is a utm[] KEY with an empty value; `tags` is an ordinary pair."""
     pairs = [p for p in (call.get("utm") or []) if isinstance(p, dict) and p.get("utmKey")]
@@ -278,7 +293,7 @@ def submissions(offer):
             except Exception:
                 detail = row
             _CACHE[dk] = detail
-        if contact_is_website(detail):
+        if contact_is_website(detail) and str(detail.get("email") or "").lower() not in _vsl_call_emails():
             continue
         raw = invitee_answers(detail)
         answers = canonical_answers(offer, raw)

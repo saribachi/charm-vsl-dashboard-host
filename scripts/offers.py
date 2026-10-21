@@ -217,6 +217,12 @@ OFFERS = [
 
 BY_KEY = {o.key: o for o in OFFERS}
 
+# The website's own copies of the GTM and CS events (21 Oct 2026). Website traffic is not
+# ad traffic, so these belong to no offer: their bookings stay out of every VSL number
+# and out of ad-attributed cash. Listed so unregistered() knows they are left out on
+# purpose rather than forgotten.
+WEBSITE_EVENT_IDS = {52921, 52922}
+
 # Ad sets that match no offer's prefixes land here. GTM has always been the catch-all —
 # the previous code defined CS by prefix and gave GTM everything else — and that stays,
 # because the alternative silently DROPS a newly named GTM ad set out of the spend
@@ -273,7 +279,7 @@ def unregistered(events):
     for e in events or []:
         if e.get("deletedAt"):
             continue
-        if not event_owner(e.get("id")):
+        if not event_owner(e.get("id")) and int(e.get("id") or 0) not in WEBSITE_EVENT_IDS:
             out.append({"id": e.get("id"), "name": e.get("name"),
                         "status": e.get("status"), "link": e.get("linkPrefix")})
     return out

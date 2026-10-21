@@ -83,16 +83,37 @@ def _vsl_call_emails():
     later returned through the website would otherwise read as website traffic, and the
     deal they close would drop out of ad-attributed revenue. A non-website booking on
     record keeps them an ad lead.
+
+    Only a booking on an event with a VSL lander counts. The Follow Up call is booked by
+    the setter for website leads too, so counting it would turn every website lead who
+    reached a closing call back into an ad lead.
     """
     if ("vsl_emails",) not in _CACHE:
         _CACHE[("vsl_emails",)] = {str(c.get("inviteeEmail") or "").lower()
                                    for c in _paged("/v1/eventCalls", "eventCalls")
-                                   if c.get("inviteeEmail") and not call_is_website(c)}
+                                   if c.get("inviteeEmail") and _is_lander_event(c.get("eventId"))
+                                   and not call_is_website(c)}
     return _CACHE[("vsl_emails",)]
 
 
+def _is_lander_event(event_id):
+    try:
+        owner = offers_mod.event_owner(event_id)
+    except (TypeError, ValueError):
+        return False
+    return bool(owner and owner.domain)
+
+
 def call_is_website(call):
-    """A call's page is a utm[] KEY with an empty value; `tags` is an ordinary pair."""
+    """A call's page is a utm[] KEY with an empty value; `tags` is an ordinary pair.
+
+    A booking on one of the website's own events is website traffic whatever its URL says.
+    """
+    try:
+        if int(call.get("eventId") or 0) in offers_mod.WEBSITE_EVENT_IDS:
+            return True
+    except (TypeError, ValueError):
+        pass
     pairs = [p for p in (call.get("utm") or []) if isinstance(p, dict) and p.get("utmKey")]
     pages = [str(p["utmKey"]) for p in pairs if str(p["utmKey"]).lower().startswith("http")]
     tags = next((p.get("utmValue") for p in pairs if str(p["utmKey"]).lower() == "tags"), "")

@@ -41,6 +41,49 @@ QUAL_FIELDS = {
     "capacity": "UX6TIRA7aL6rjW65oKwV",
 }
 
+# ⚠️ WEBSITE BOOKINGS ARE NOT VSL BOOKINGS, though they land on the SAME events.
+#
+# hirecharm.com embeds 47452 and 47740, the VSL events, so filtering by event id counts
+# every website booking as a VSL form fill and booking, which inflates conversion and
+# understates cost per booking. The page decides instead, by the same rule as the bridge's
+# trafficChannel() in day-ai-sdk/iclosed-bookings.mjs: the embed's `tags` first
+# (`Website+GTM` vs `GTM+VSL`), then the page host when it points one way. Only website
+# traffic is dropped; anything else is counted as before.
+WEBSITE_HOSTS = {h.strip().lower() for h in
+                 os.environ.get("ICLOSED_WEBSITE_HOSTS", "hirecharm.com,www.hirecharm.com").split(",") if h.strip()}
+VSL_HOSTS = {h.strip().lower() for h in
+             os.environ.get("ICLOSED_VSL_HOSTS", "gtm.hirecharm.com,cs.hirecharm.com,apply.hirecharm.com").split(",")
+             if h.strip()}
+
+
+def is_website_traffic(pages=(), tags=""):
+    words = [w for w in str(tags or "").lower().replace("+", " ").replace(",", " ").split() if w]
+    if "website" in words:
+        return True
+    if "vsl" in words or "apply" in words:
+        return False
+    hosts = {urllib.parse.urlparse(p).hostname or "" for p in pages}
+    hosts.discard("")
+    return bool(hosts & WEBSITE_HOSTS) and not (hosts & VSL_HOSTS)
+
+
+def contact_is_website(detail):
+    """A contact's page is its referrerUrl: the parent page, query string and all."""
+    ref = str((detail or {}).get("referrerUrl") or "")
+    if not ref:
+        return False
+    tags = urllib.parse.parse_qs(urllib.parse.urlparse(ref).query).get("tags", [""])[0]
+    return is_website_traffic([ref], tags)
+
+
+def call_is_website(call):
+    """A call's page is a utm[] KEY with an empty value; `tags` is an ordinary pair."""
+    pairs = [p for p in (call.get("utm") or []) if isinstance(p, dict) and p.get("utmKey")]
+    pages = [str(p["utmKey"]) for p in pairs if str(p["utmKey"]).lower().startswith("http")]
+    tags = next((p.get("utmValue") for p in pairs if str(p["utmKey"]).lower() == "tags"), "")
+    return is_website_traffic(pages, tags)
+
+
 # ⚠️ THE QUESTION MAP IS PER OFFER AND LIVES IN offers.py, NOT HERE.
 #
 # It used to be one global list, and that list was GTM's. Every offer asks its own
@@ -235,6 +278,8 @@ def submissions(offer):
             except Exception:
                 detail = row
             _CACHE[dk] = detail
+        if contact_is_website(detail):
+            continue
         raw = invitee_answers(detail)
         answers = canonical_answers(offer, raw)
 
@@ -304,6 +349,8 @@ def appointments(offer):
     out = []
     for c in _paged("/v1/eventCalls", "eventCalls"):
         if int(c.get("eventId") or 0) not in wanted:
+            continue
+        if call_is_website(c):
             continue
         utm = {str(p.get("utmKey")): p.get("utmValue")
                for p in (c.get("utm") or []) if isinstance(p, dict) and p.get("utmKey")}

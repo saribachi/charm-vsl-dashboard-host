@@ -124,7 +124,7 @@ def _match(actual, op, expected):
 OFFERS = [
     Offer(
         key="gtm", name="Lead generation", tag="GTM", color="#8247f5",
-        iclosed_event_ids=[47452],
+        iclosed_event_ids=[47452, 53522],
         domain="gtm.hirecharm.com",
         # ⚠️ The VSL was replaced 26 Aug 2026 with a version 8x shorter. Watch metrics are
         # ratios against duration, so nothing spanning that date is comparable. The prior
